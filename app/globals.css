@@ -1,26 +1,69 @@
 @import "tailwindcss";
 
+/* Palette: one burgundy ink on warm paper. Everything else is a tint. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ink: #4a0c18;
+  --burgundy: #4a0c18;
+  --burgundy-deep: #4a0c18;
+  --thread: #8c2f43;
+  --thread-hi: #f2c4cb;
+  --muted: #9b747a;
+  --rail: rgba(140, 47, 67, 0.28);
+  --grid: rgba(74, 12, 24, 0.13);
+  --cream: #faf5eb;
+  --paper: #f8f3ea;
+  --note: #fffaf0;
+  --page: #f0e6d2; /* cream paper the sketchbook page sits on */
+  --page-text: #4a0c18;
+  --term-bg: #2a0a12;
+  --term-text: #f5e6e0;
+  --term-prompt: #f0a0b0;
 }
+
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-burgundy: var(--burgundy);
+  --color-thread: var(--thread);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --font-display: var(--font-display);
+  --font-hand: var(--font-hand);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--page);
 }
 
+/* the desk: cream paper with the left and right edges shaded in burgundy
+   colored pencil (public/desk-pencil-*.svg); the middle stays bare paper */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--page);
+  background-image:
+    url("/desk-pencil-left.webp"),
+    url("/desk-pencil-right.webp");
+  background-size: auto 100%, auto 100%;
+  background-position: left top, right top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--page-text);
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* paper tooth over everything, very quiet */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.14;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .22  0 0 0 0 .16  0 0 0 .2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+::selection {
+  background: var(--burgundy);
+  color: var(--cream);
 }
