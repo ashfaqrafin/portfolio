@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, date, index, integer, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, check, date, index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import type { Connection } from "../blog/types";
 
 /* Mirrors db/migrations/0001_articles.sql. The SQL file is the source of truth for the database. */
@@ -26,3 +26,17 @@ export const articles = pgTable(
 );
 
 export type ArticleRow = typeof articles.$inferSelect;
+
+/* Mirrors db/migrations/0002_messages.sql. */
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    name: text("name").notNull().default(""),
+    via: text("via").notNull(),
+    reply: text("reply").notNull(),
+    message: text("message").notNull(),
+  },
+  (t) => [index("messages_created_idx").on(t.createdAt), check("messages_via_check", sql`${t.via} in ('email','linkedin')`)],
+);

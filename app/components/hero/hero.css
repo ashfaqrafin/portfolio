@@ -64,7 +64,7 @@
 
 .hero-nav {
   display: flex;
-  gap: 18px;
+  gap: 8px;
   font-family: var(--font-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
@@ -765,8 +765,12 @@
     align-items: center;
   }
   .hero-nav {
+    gap: 6px;
     font-size: 10px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.12em;
+  }
+  .hero-nav a {
+    padding: 7px 10px 6px;
   }
   .hero-card {
     padding: 12px 12px 10px;
@@ -886,6 +890,10 @@
 
 /* narrow phones */
 @media (max-width: 420px) {
+  /* the board is right below the hero anyway */
+  .hero-nav-wide {
+    display: none;
+  }
   .hero-mark {
     font-size: 28px;
   }

@@ -1,4 +1,5 @@
 import BlogSection from "./components/blog/BlogSection";
+import Contact from "./components/contact/Contact";
 import Hero from "./components/hero/Hero";
 import Intro from "./components/intro/Intro";
 import ProjectsSection from "./components/projects/ProjectsSection";
@@ -14,6 +15,9 @@ export default function Home() {
       </ChapterSeam>
       <ChapterSeam id="projects" part="III" title="Projects" side="left" line="Pull a thread long enough and it becomes a thing.">
         <ProjectsSection />
+      </ChapterSeam>
+      <ChapterSeam id="contact" part="IV" title="Contact" line="Every thread ends at someone’s door. This one’s mine.">
+        <Contact />
       </ChapterSeam>
     </main>
   );

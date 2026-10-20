@@ -9,7 +9,7 @@ Articles are pins on a thread board. Related pieces are tied together by threads
 | `/` (below the hero) and `/blog` | The board. It also has a list view, and it works without JavaScript because every pin is a real link |
 | `/blog/<slug>` | The full article. A direct visit, a refresh or a shared link always shows the full page |
 | `app/@modal/(.)blog/[slug]` | The quick-read popup. It only appears when you click a pin inside the app |
-| `/signin`, `/studio`, `/studio/new`, `/studio/import`, `/studio/<slug>` | Owner-only publishing. The public site never links here |
+| `/signin`, `/studio`, `/studio/new`, `/studio/import`, `/studio/<slug>`, `/studio/inbox` | Owner-only publishing and the contact inbox. The public site never links here |
 | `lib/blog/` | Framework-agnostic rules: thread graph (`graph.ts`), deterministic layout (`layout.ts`), quick read, schema |
 | `app/components/threadboard/` | The board, the reader popup and Markdown rendering (plain CSS under `.tb` and `.tbr`) |
 | `lib/store/` | Storage behind one `ArticleStore` interface. `index.ts` picks Postgres when `DATABASE_URL` is set and the Markdown files in `content/articles/` otherwise |
@@ -60,7 +60,7 @@ npm run test:rule        # the owner rule fails closed
 npm run test:unit        # graph, layout, quick read, schema
 npm run build
 npm start &              # a production build, in another shell:
-npm run test:e2e         # 38 checks: reading flow, drafts, access, owner flow, uploads, replay attacks, the intro, the projects sketchbook
+npm run test:e2e         # 45 checks: reading flow, drafts, access, owner flow, uploads, replay attacks, the intro, the projects sketchbook, the contact form and inbox
 ```
 
 `test:e2e` reads `AUTH_SECRET` and `OWNER_GITHUB_ID` from `.env.local` (or the environment) and mints fresh session cookies through `scripts/mint-session.mjs`. Set `BASE_URL` if the server isn't on port 3000, and `DATABASE_URL` when the server runs on Postgres.

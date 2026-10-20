@@ -707,3 +707,54 @@
   font-size: 12.5px;
   line-height: 1.55;
 }
+
+/* ── inbox ─────────────────────────────────────────────────────────────── */
+.st-inbox {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.st-msg {
+  padding: 16px 18px;
+  border: 1.4px dashed rgba(140, 47, 67, 0.45);
+  border-radius: 4px;
+  background: rgba(255, 252, 246, 0.6);
+}
+.st-msg-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 16px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.st-msg-head strong {
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+.st-msg-body {
+  margin: 10px 0 0;
+  font-family: var(--font-read), Georgia, serif;
+  font-size: 17px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.st-msg-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 12px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+}
+.st-msg-foot a {
+  color: var(--thread);
+  overflow-wrap: anywhere;
+}

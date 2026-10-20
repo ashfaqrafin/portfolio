@@ -22,6 +22,7 @@ export default function StudioLayout({ children }: LayoutProps<"/studio">) {
           <Link href="/studio">Articles</Link>
           <Link href="/studio/new">New article</Link>
           <Link href="/studio/import">Import .md</Link>
+          <Link href="/studio/inbox">Inbox</Link>
           <Link href="/blog">View the board</Link>
           <form action={signOutAction}>
             <button type="submit" className="st-link">

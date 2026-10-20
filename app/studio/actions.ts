@@ -10,6 +10,7 @@ import { IMPORT_MAX_BYTES, IMPORT_MAX_FILES, parseImport } from "@/lib/blog/impo
 import { articleSchema, slugSchema } from "@/lib/blog/schema";
 import { isTopic } from "@/lib/blog/topics";
 import type { Article } from "@/lib/blog/types";
+import { inbox } from "@/lib/inbox";
 import { store } from "@/lib/store";
 
 /* Every exported action begins with `await requireOwner()` (gate 3). That check is
@@ -167,6 +168,16 @@ export async function deleteArticle(formData: FormData): Promise<void> {
   await store.remove(slug.data);
   refresh(slug.data);
   redirect("/studio?deleted=1");
+}
+
+export async function deleteMessage(formData: FormData): Promise<void> {
+  await requireOwner();
+
+  const id = z.uuid().safeParse(formData.get("id"));
+  if (!id.success) throw new Error("Invalid message id");
+  await inbox.remove(id.data);
+  revalidatePath("/studio/inbox");
+  redirect("/studio/inbox?deleted=1");
 }
 
 export async function signOutAction(): Promise<void> {

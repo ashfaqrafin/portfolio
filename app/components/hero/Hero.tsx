@@ -132,7 +132,11 @@ export default function Hero() {
           </svg>
         </p>
         <nav className="hero-nav" aria-label="Sections">
-          <a href="#blog">Thread board</a>
+          <a className="hero-nav-wide" href="#blog">
+            Thread board
+          </a>
+          <a href="#projects">Projects</a>
+          <a href="#contact">Contact</a>
         </nav>
       </div>
 

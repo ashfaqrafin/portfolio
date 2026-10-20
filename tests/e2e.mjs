@@ -325,6 +325,68 @@ await check("access", "the sign-in page offers GitHub only", async () => {
   assert(!/password|sign up|register/i.test(html), "unexpected auth options");
 });
 
+// ── contact form ────────────────────────────────────────────────────────────
+const stamp = Date.now();
+const API_LINE = `e2e-contact-api-${stamp}`;
+const UI_LINE = `e2e-contact-ui-${stamp}`;
+const BOT_LINE = `e2e-contact-bot-${stamp}`;
+const contactBody = (over = {}) =>
+  JSON.stringify({ message: `Hello from the test suite. ${API_LINE}`, name: "E2E", via: "email", reply: "e2e@example.com", elapsed: 9000, ...over });
+const postContact = (body, headers = {}) =>
+  fetch(BASE + "/api/contact", { method: "POST", headers: { "content-type": "application/json", origin: BASE, ...headers }, body });
+
+await check("contact", "a message is accepted; bad ones are refused with a reason", async () => {
+  const good = await postContact(contactBody());
+  assert(good.status === 200 && (await good.json()).ok === true, `good message → ${good.status}`);
+  const cases = [
+    [contactBody({ message: "too short" }), {}, 400, "message"],
+    [contactBody({ via: "linkedin", reply: "https://evil.example/in/x" }), {}, 400, "reply"],
+    [contactBody({ isOwner: true }), {}, 400, null],
+    [contactBody(), { origin: "https://evil.example" }, 403, null],
+    ["x".repeat(9000), {}, 413, null],
+    ["{not json", {}, 400, null],
+  ];
+  for (const [body, headers, status, field] of cases) {
+    const res = await postContact(body, headers);
+    assert(res.status === status, `expected ${status}, got ${res.status}`);
+    if (field) assert((await res.json()).fields?.[field], `no reason given for ${field}`);
+  }
+});
+
+await check("contact", "bots (honeypot filled, or sent too fast) get an ok and nothing is stored", async () => {
+  for (const over of [{ website: "http://spam.example", message: `Buy now! ${BOT_LINE}` }, { elapsed: 300, message: `Too quick ${BOT_LINE}` }]) {
+    const res = await postContact(contactBody(over));
+    assert(res.status === 200 && (await res.json()).ok === true, `bot got ${res.status}`);
+  }
+});
+
+for (const [who, token] of [
+  ["a visitor", null],
+  ["a signed-in stranger", tokens.stranger],
+  ["a forged isOwner token", tokens.forged],
+]) {
+  await check("contact", `${who} cannot open the inbox`, async () => {
+    const res = await get("/studio/inbox", token);
+    const loc = res.headers.get("location") ?? "";
+    assert(res.status >= 300 && res.status < 400 && /\/signin/.test(loc), `/studio/inbox → ${res.status} ${loc}`);
+    assert(!(await res.text()).includes(API_LINE), "the inbox leaked a message");
+  });
+}
+
+await check("contact", "the form sends a message through the pipeline", async () => {
+  const p = await ctx.newPage();
+  watch(p, "contact");
+  await p.goto(BASE + "/#contact", { waitUntil: "load" });
+  await p.locator(".ct-textarea").fill(`Hello through the pipeline. ${UI_LINE}`);
+  await p.locator(".ct-input").first().fill("e2e-ui@example.com");
+  await p.waitForTimeout(2700); // a person takes longer than 2.5 s
+  await p.locator(".ct-btn").click();
+  await p.waitForSelector(".ct-route[data-step='0']", { timeout: 2000 });
+  await p.waitForFunction(() => /received/i.test(document.querySelector(".ct-status")?.textContent ?? ""), null, { timeout: 10_000 });
+  assert(await p.locator(".ct-thanks").isVisible(), "no thank-you after sending");
+  await p.close();
+});
+
 // ── owner flow ──────────────────────────────────────────────────────────────
 const host = new URL(BASE).hostname;
 const ownerCtx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
@@ -340,6 +402,21 @@ const studioSlugs = async (token = tokens.owner) => {
   const html = await (await get("/studio", token)).text();
   return [...html.matchAll(/data-slug="([a-z0-9-]+)"/g)].map((m) => m[1]);
 };
+
+await check("contact", "the owner reads messages in the studio inbox, and deletes them", async () => {
+  await op.goto(BASE + "/studio/inbox", { waitUntil: "load" });
+  const html = await op.content();
+  assert(html.includes(API_LINE) && html.includes(UI_LINE), "a message is missing from the inbox");
+  assert(!html.includes(BOT_LINE), "a bot's message was stored");
+  for (const line of [API_LINE, UI_LINE]) {
+    await op.locator(".st-msg", { hasText: line }).getByRole("button", { name: "Delete" }).click();
+    await op.waitForURL(/\/studio\/inbox\?deleted=1/, { timeout: 10_000 });
+    // the refreshed list streams in after the URL changes
+    await op
+      .waitForFunction((l) => !document.body.innerText.includes(l), line, { timeout: 10_000 })
+      .catch(() => assert(false, `${line} is still in the inbox`));
+  }
+});
 
 await check("owner", "the owner sees the studio, drafts included", async () => {
   const res = await op.goto(BASE + "/studio", { waitUntil: "networkidle" });
