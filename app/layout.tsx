@@ -34,12 +34,24 @@ export const metadata: Metadata = {
     "A creative who can't pick a lane: tailor, fashion enthusiast, Linux tech guy \u2014 and, eventually, all of them at once.",
 };
 
+/* Decides, before the first paint, whether the home page opens with the
+   stitched intro (app/components/intro): only when the home page is where the
+   visit starts, once per browser session, never for a deep link (/#projects) or
+   with reduced motion. Without JavaScript the attribute is never set, so the
+   intro never shows. */
+const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1")}catch(e){}`;
+
 export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
       className={`${display.variable} ${hand.variable} ${mono.variable} ${read.variable} h-full antialiased`}
+      // INTRO_GATE sets data-intro before React hydrates
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <RoughDefs />
         {children}

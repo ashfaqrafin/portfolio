@@ -2,6 +2,7 @@
 
 A tailor's-sketchbook portfolio built with Next.js 16 (App Router, Cache Components).
 
+- **Intro** (`app/components/intro/`): the home page opens as a sheet of pattern paper; a needle stitches across it, the name is written in, and the paper parts along the seam onto the hero. First visit per session only; skipped by any input, deep links and reduced motion.
 - **Hero** (`app/components/hero/`): a four-stage, thread-and-cloth identity animation.
 - **Thread Board blog** (`app/components/threadboard/`, `lib/blog/`): articles are pins tied together by threads. Clicking a pin opens a quick read; the full article lives at `/blog/<slug>`.
 - **Studio** (`/studio`): owner-only. Write, import `.md` files, draft, publish and delete. Only one GitHub account can sign in.

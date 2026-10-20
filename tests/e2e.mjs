@@ -222,6 +222,38 @@ await check("visitor", "without JavaScript, pins are links to the full page", as
   await noJs.close();
 });
 
+// ── home page intro ─────────────────────────────────────────────────────────
+await check("intro", "a first visit opens with the intro, and a click skips it", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p = await c.newPage();
+  watch(p, "intro");
+  await p.goto(BASE + "/", { waitUntil: "commit" });
+  await p.waitForSelector(".intro", { state: "visible", timeout: 5000 });
+  await p.mouse.click(640, 450);
+  const t0 = Date.now();
+  await p.waitForFunction(() => document.documentElement.dataset.intro === "seen", null, { timeout: 2500 });
+  assert(Date.now() - t0 < 1500, "skipping took too long");
+  assert(!(await p.locator(".intro").isVisible()), "the intro is still showing");
+  await c.close();
+});
+
+await check("intro", "never on a reload, a deep link or another page first", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p = await c.newPage();
+  await p.goto(BASE + "/#projects", { waitUntil: "load" });
+  assert(!(await p.locator(".intro").isVisible()), "intro on a deep link");
+  const c2 = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p2 = await c2.newPage();
+  await p2.goto(BASE + "/blog", { waitUntil: "load" });
+  await p2.goto(BASE + "/", { waitUntil: "load" });
+  assert(!(await p2.locator(".intro").isVisible()), "intro after arriving on another page");
+  const c3 = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+  const p3 = await c3.newPage();
+  await p3.goto(BASE + "/", { waitUntil: "load" });
+  assert(!(await p3.locator(".intro").isVisible()), "intro with reduced motion");
+  await Promise.all([c.close(), c2.close(), c3.close()]);
+});
+
 // ── projects sketchbook ─────────────────────────────────────────────────────
 const projectFiles = readdirSync(path.join(ROOT, "content/projects")).filter((f) => f.endsWith(".md"));
 const draftProjects = projectFiles.filter((f) => /^draft:\s*true\s*$/m.test(readFileSync(path.join(ROOT, "content/projects", f), "utf8")));

@@ -1,0 +1,253 @@
+/* ── Intro: pattern paper, a running stitch, and the paper parting on it ───
+   Shown only while html[data-intro="play"] (see INTRO_GATE in app/layout.tsx).
+   Timeline: needle 0.2–1.3 s · name 0.35–1.2 s · tug 1.35 s · part 1.75–2.5 s ·
+   hero rises 1.8–2.9 s. data-skip swaps in the "-fast" animations, which start
+   afresh (a new animation name restarts; a new delay would not). */
+
+.intro {
+  display: none;
+}
+html[data-intro="play"] .intro {
+  --s: 11px; /* pinking: tooth height */
+  --ease-sew: cubic-bezier(0.55, 0.05, 0.35, 1);
+  display: block;
+  position: fixed;
+  inset: 0;
+  /* under the paper grain (z 60), over everything else */
+  z-index: 55;
+  container-type: size;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* two halves of one sheet, cut along the seam with pinking shears */
+.intro-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(50% + var(--s));
+  pointer-events: auto;
+  background-color: #f6efe2;
+  background-image:
+    linear-gradient(rgba(140, 47, 67, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 47, 67, 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(140, 47, 67, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 47, 67, 0.06) 1px, transparent 1px);
+  background-size:
+    120px 120px,
+    120px 120px,
+    24px 24px,
+    24px 24px;
+  will-change: transform;
+}
+.intro-top {
+  top: 0;
+  background-position: calc(50cqw - 60px) calc(50cqh - 60px);
+  mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--s)) 100%;
+  animation: intro-part-top 0.75s cubic-bezier(0.75, 0, 0.2, 1) 1.75s both;
+  filter: drop-shadow(0 6px 10px rgba(74, 12, 24, 0.22));
+}
+.intro-bottom {
+  bottom: 0;
+  /* the same grid, carried on across the cut */
+  background-position: calc(50cqw - 60px) calc(var(--s) - 60px);
+  mask: conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--s)) 100%;
+  animation: intro-part-bottom 0.75s cubic-bezier(0.75, 0, 0.2, 1) 1.75s both;
+}
+@keyframes intro-part-top {
+  to {
+    transform: translateY(-104%);
+  }
+}
+@keyframes intro-part-bottom {
+  to {
+    transform: translateY(104%);
+  }
+}
+@keyframes intro-part-top-fast {
+  to {
+    transform: translateY(-104%);
+  }
+}
+@keyframes intro-part-bottom-fast {
+  to {
+    transform: translateY(104%);
+  }
+}
+
+/* words written in left to right: a window that slides open over still text
+   (two opposite transforms, so it stays on the compositor) */
+.intro-reveal {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.12em 0.18em 0.2em;
+  animation: intro-open 0.85s var(--ease-sew) 0.35s both;
+}
+.intro-reveal > span {
+  display: inline-block;
+  animation: intro-hold 0.85s var(--ease-sew) 0.35s both;
+}
+.intro-line .intro-reveal,
+.intro-line .intro-reveal > span {
+  animation-duration: 0.6s;
+  animation-delay: 0.85s;
+}
+@keyframes intro-open {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes intro-hold {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.intro-name,
+.intro-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-hand), cursive;
+  line-height: 0.9;
+}
+.intro-name {
+  bottom: calc(var(--s) + clamp(14px, 3cqh, 30px));
+  font-size: clamp(76px, 15cqw, 176px);
+  color: var(--ink);
+  rotate: -3deg;
+}
+.intro-line {
+  top: calc(var(--s) + clamp(16px, 3.4cqh, 34px));
+  font-size: clamp(24px, 3.4cqw, 36px);
+  color: var(--thread);
+}
+
+/* the seam */
+.intro-seam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 24px;
+  margin-top: -12px;
+  animation:
+    intro-tug 0.4s ease-in-out 1.35s,
+    intro-fade 0.2s ease 1.75s both;
+}
+.intro-stitch {
+  height: 100%;
+  overflow: hidden;
+  animation: intro-open 1.1s var(--ease-sew) 0.2s both;
+}
+.intro-stitch-in {
+  height: 100%;
+  animation: intro-hold 1.1s var(--ease-sew) 0.2s both;
+}
+.intro-stitch svg {
+  display: block;
+}
+.intro-thread {
+  stroke: var(--thread);
+  stroke-width: 2.6;
+  stroke-dasharray: 16 11;
+  stroke-linecap: round;
+}
+.intro-thread-hi {
+  stroke: var(--thread-hi);
+  stroke-width: 0.9;
+  stroke-dasharray: 16 11;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+/* the needle leads the stitch: its eye rides the stitch's leading edge */
+.intro-needle {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  margin-top: -16px;
+  animation: intro-sew 1.1s var(--ease-sew) 0.2s both;
+}
+.intro-needle-bob {
+  display: block;
+  fill: var(--ink);
+  transform-origin: 20% 50%;
+  animation: intro-bob 0.18s ease-in-out 0.2s 6 alternate both;
+}
+.intro-needle ellipse {
+  fill: #f6efe2;
+}
+@keyframes intro-sew {
+  from {
+    transform: translateX(-10px);
+  }
+  to {
+    transform: translateX(calc(100cqw + 40px));
+  }
+}
+/* in and out of the cloth */
+@keyframes intro-bob {
+  from {
+    transform: translateY(-3px) rotate(-9deg);
+  }
+  to {
+    transform: translateY(3px) rotate(7deg);
+  }
+}
+/* the thread pulled taut */
+@keyframes intro-tug {
+  40% {
+    transform: scaleY(1.9);
+  }
+}
+@keyframes intro-fade {
+  to {
+    opacity: 0;
+  }
+}
+
+/* the hero rises into place as the paper parts */
+html[data-intro="play"] .intro ~ .hero {
+  animation: intro-hero 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 1.8s backwards;
+}
+@keyframes intro-hero {
+  from {
+    opacity: 0.35;
+    transform: translateY(36px) scale(0.975);
+  }
+}
+@keyframes intro-hero-fast {
+  from {
+    opacity: 0.35;
+    transform: translateY(36px) scale(0.975);
+  }
+}
+
+/* skipped: part now */
+html[data-intro="play"] .intro[data-skip] .intro-top {
+  animation: intro-part-top-fast 0.55s cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+html[data-intro="play"] .intro[data-skip] .intro-bottom {
+  animation: intro-part-bottom-fast 0.55s cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+html[data-intro="play"] .intro[data-skip] .intro-seam {
+  animation: none;
+  opacity: 0;
+}
+html[data-intro="play"] .intro[data-skip] ~ .hero {
+  animation: intro-hero-fast 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.05s backwards;
+}
+
+@media (max-width: 720px) {
+  html[data-intro="play"] .intro {
+    --s: 8px;
+  }
+  .intro-name {
+    font-size: clamp(72px, 24cqw, 120px);
+  }
+  .intro-line {
+    font-size: 24px;
+  }
+}
