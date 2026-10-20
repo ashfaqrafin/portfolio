@@ -60,7 +60,7 @@ npm run test:rule        # the owner rule fails closed
 npm run test:unit        # graph, layout, quick read, schema
 npm run build
 npm start &              # a production build, in another shell:
-npm run test:e2e         # 33 checks: reading flow, drafts, access, owner flow, uploads, replay attacks
+npm run test:e2e         # 36 checks: reading flow, drafts, access, owner flow, uploads, replay attacks, the projects sketchbook
 ```
 
 `test:e2e` reads `AUTH_SECRET` and `OWNER_GITHUB_ID` from `.env.local` (or the environment) and mints fresh session cookies through `scripts/mint-session.mjs`. Set `BASE_URL` if the server isn't on port 3000, and `DATABASE_URL` when the server runs on Postgres.

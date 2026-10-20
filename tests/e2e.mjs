@@ -222,6 +222,47 @@ await check("visitor", "without JavaScript, pins are links to the full page", as
   await noJs.close();
 });
 
+// ── projects sketchbook ─────────────────────────────────────────────────────
+const projectFiles = readdirSync(path.join(ROOT, "content/projects")).filter((f) => f.endsWith(".md"));
+const draftProjects = projectFiles.filter((f) => /^draft:\s*true\s*$/m.test(readFileSync(path.join(ROOT, "content/projects", f), "utf8")));
+
+await check("projects", "every page is in the home page HTML, drafts are not", async () => {
+  const html = await (await get("/")).text();
+  const pages = html.match(/class="pj-page"/g)?.length ?? 0;
+  assert(pages === projectFiles.length - draftProjects.length, `${pages} pages for ${projectFiles.length - draftProjects.length} projects`);
+  for (const f of draftProjects) assert(!html.includes(`project-${f.slice(0, -3)}`), `draft ${f} is public`);
+});
+
+await check("projects", "links are plain web links that open safely in a new tab", async () => {
+  const p = await ctx.newPage();
+  watch(p, "projects");
+  await p.goto(BASE + "/", { waitUntil: "load" });
+  const links = await p.$$eval(".pj-link", (as) => as.map((a) => [a.getAttribute("href"), a.target, a.rel]));
+  assert(links.length > 0, "no project links");
+  for (const [href, target, rel] of links) {
+    assert(/^https?:\/\//.test(href), `unsafe href ${href}`);
+    assert(target === "_blank" && /noopener/.test(rel) && /noreferrer/.test(rel), `${href} opens without noopener`);
+  }
+  await p.close();
+});
+
+await check("projects", "turning a page lands on the next one and draws it", async () => {
+  const p = await ctx.newPage();
+  watch(p, "projects");
+  await p.goto(BASE + "/#projects", { waitUntil: "load" });
+  await p.waitForSelector(".pj-page[data-role=top][data-draw=go]", { timeout: 5000 });
+  await p.getByRole("button", { name: "Next page" }).click();
+  await p.waitForSelector(".pj-page[data-role=leaf]", { timeout: 2000 });
+  await p.waitForFunction(() => document.querySelector('.pj-tab[aria-current="page"] .pj-tab-no')?.textContent === "02", null, { timeout: 3000 });
+  const top = await p.$eval(".pj-page[data-role=top]", (e) => [e.id, e.dataset.draw]);
+  assert(top[1] === "go", `the new page is ${top[1]}, not drawing`);
+  const hidden = await p.$$eval(".pj-page:not([data-role=top])", (es) => es.every((e) => e.inert && e.getAttribute("aria-hidden") === "true"));
+  assert(hidden, "pages that aren't showing are still reachable");
+  await p.keyboard.press("ArrowLeft");
+  await p.waitForFunction(() => document.querySelector('.pj-tab[aria-current="page"] .pj-tab-no')?.textContent === "01", null, { timeout: 3000 });
+  await p.close();
+});
+
 await check("hygiene", "security headers are set", async () => {
   const h = (await get("/blog")).headers;
   assert(h.get("x-content-type-options") === "nosniff", "nosniff");

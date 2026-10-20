@@ -156,6 +156,10 @@
     margin-top: -20px;
   }
 }
+/* a chapter after a chapter starts at the previous sheet's bottom edge too */
+.chapter + .chapter {
+  margin-top: calc(-1 * clamp(28px, 5vw, 72px));
+}
 @media (max-width: 640px) {
   .chapter-label {
     left: 53%;
