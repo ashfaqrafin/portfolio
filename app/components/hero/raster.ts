@@ -29,20 +29,34 @@ export interface Raster {
   rows: RowSet;
 }
 
-export async function loadImage(url: string): Promise<HTMLImageElement> {
-  const img = new Image();
-  img.decoding = "async";
-  img.src = url;
-  await img.decode();
-  return img;
+export type ArtSource = ImageBitmap | HTMLImageElement;
+
+/**
+ * WebP art decodes off the main thread straight into an ImageBitmap, so drawing
+ * it into the rasters below is a plain copy. (An <img> that was decode()d still
+ * gets decoded again by each canvas drawImage, on the main thread.) SVGs can't go
+ * through createImageBitmap, so they keep the <img> path.
+ */
+export async function loadArt(url: string): Promise<ArtSource> {
+  if (url.endsWith(".svg")) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await img.decode();
+    return img;
+  }
+  // a plain same-origin fetch, so it picks up the <link rel=preload as=fetch> from Hero.tsx
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return createImageBitmap(await res.blob());
 }
 
 /**
- * Rasterise an SVG once at stage size × dpr, keep a small alpha grid (never
+ * Rasterise the art once at stage size × dpr, keep a small alpha grid (never
  * read back per frame) and build the loom rows used by the weaving system.
  */
 export function rasterize(
-  img: HTMLImageElement,
+  img: ArtSource,
   w: number,
   h: number,
   dpr: number,

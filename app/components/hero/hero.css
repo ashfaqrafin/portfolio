@@ -62,24 +62,42 @@
   overflow: visible;
 }
 
-.hero-meta {
-  margin: 0;
+.hero-nav {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0;
+  gap: 18px;
   font-family: var(--font-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
-.hero-annot {
-  font-family: var(--font-hand), cursive;
-  font-size: 21px;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--thread);
-  line-height: 1;
+/* a paper tag, so it reads over the desk's pencil hatching */
+.hero-nav a {
+  position: relative;
+  padding: 8px 13px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.hero-nav a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid var(--ink);
+  border-radius: 999px;
+  filter: url(#rough-s);
+  pointer-events: none;
+}
+.hero-nav a:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.hero-nav a:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 /* card: a sketchbook page with a doubled, wobbly outline */
@@ -96,6 +114,13 @@
   display: flex;
   flex-direction: column;
   gap: clamp(8px, 1vw, 14px);
+}
+/* portrait tablets: the card is far shorter than the screen, so don't pad the
+   hero out to a full screen height; the seam follows straight on */
+@media (min-width: 721px) and (orientation: portrait) {
+  .hero {
+    min-height: 0;
+  }
 }
 @media (min-width: 721px) {
   .hero-card {
@@ -122,18 +147,74 @@
   filter: url(#rough-b);
 }
 
-/* caption */
-.hero-caption {
+/* heading: the page's h1 on the left, the live stage readout on the right */
+.hero-head {
   position: relative;
+  z-index: 2;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
   min-height: clamp(62px, 7vw, 90px);
-  z-index: 2;
+}
+.hero-h1 {
+  /* takes what the readout leaves: the readout keeps its own width so a long
+     stage title never wraps on tablets */
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.32em;
+  font-weight: 400;
+}
+.hero-kicker {
+  flex-basis: 100%;
+  margin-bottom: 10px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero-h1-main {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(30px, 3.5vw, 50px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+/* the aside is written in the margin afterwards, and stitched under */
+.hero-h1-hand {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(32px, 3.6vw, 52px);
+  line-height: 1;
+  color: var(--thread);
+  transform: rotate(-4deg) translateY(-3px);
+  transform-origin: 0 100%;
+}
+.hero-h1-hand svg {
+  position: absolute;
+  left: -3%;
+  bottom: -7px;
+  width: 106%;
+  height: 11px;
+  overflow: visible;
+}
+
+.hero-caption {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
 }
 .hero-stageno {
-  margin: 0 0 6px;
+  margin: 0;
   font-family: var(--font-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
@@ -142,18 +223,16 @@
 .hero-title {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-size: clamp(22px, 3.2vw, 44px);
-  line-height: 1;
+  font-style: italic;
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1.05;
+  color: var(--ink);
 }
 .hero-sub {
   margin: 0;
   max-width: 34ch;
-  text-align: right;
   font-family: var(--font-hand), cursive;
-  font-size: clamp(18px, 1.8vw, 24px);
+  font-size: clamp(17px, 1.6vw, 22px);
   line-height: 1.05;
   color: var(--thread);
 }
@@ -245,13 +324,43 @@
 .hero[data-ready] .hero-loading {
   display: none;
 }
-.hero-fallback {
+/* the first stage as plain images, placed where stage-layout.ts puts the art
+   (LAYOUT in config.ts): seen as soon as they download, and without JS or WebGL.
+   The canvas is opaque and fades in over them once its first frame is drawn. */
+.hero-poster {
   position: absolute;
-  top: 1%;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-poster img {
+  position: absolute;
   left: 58.5%;
-  height: 98%;
   transform: translateX(-50%);
-  z-index: 2;
+  /* the shader prints the art's whites as paper; #hero-paper (Hero.tsx) does too */
+  filter: url(#hero-paper);
+}
+/* once the canvas has faded in over it, stop painting it at all */
+.hero[data-ready] .hero-poster {
+  visibility: hidden;
+  transition: visibility 0s 0.3s;
+}
+.hero-poster-fig {
+  top: 1%;
+  height: 98%;
+}
+.hero-poster-pat {
+  top: 5%;
+  height: 90%;
+  aspect-ratio: 1;
+}
+.hero-canvas canvas {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.hero[data-ready] .hero-canvas canvas {
+  opacity: 1;
 }
 
 /* ── thought note ───────────────────────────────────────────────────────── */
@@ -515,7 +624,7 @@
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: clamp(8px, 1.2vw, 16px);
   padding: 2px 4px 0;
@@ -527,6 +636,8 @@
   width: 38px;
   height: 38px;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   border: 0;
   border-radius: 50%;
   background: transparent;
@@ -570,7 +681,7 @@
 
 .hero-track {
   position: relative;
-  height: 50px;
+  height: 30px;
   margin: 0 14px;
 }
 .hero-rail {
@@ -604,6 +715,14 @@
   color: var(--ink);
   cursor: pointer;
   transform: translateX(-50%);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+/* larger invisible hit area for touch */
+.hero-dot::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
 }
 .hero-dot .n {
   display: grid;
@@ -620,13 +739,7 @@
     background 0.2s ease,
     color 0.2s ease;
 }
-.hero-dot .tl {
-  font-family: var(--font-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  white-space: nowrap;
-}
+
 .hero-dot.done .n {
   border-color: var(--burgundy);
   color: var(--burgundy);
@@ -641,41 +754,105 @@
   border-color: var(--thread);
   color: var(--cream);
 }
-.hero-readout {
-  min-width: 27ch;
-  margin: 0;
-  text-align: right;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  font-variant-numeric: tabular-nums;
-}
 
-/* ── mobile: the note moves above the stage ─────────────────────────────── */
+/* ── mobile: the note moves below the stage ─────────────────────────────── */
 @media (max-width: 720px) {
-  .hero-annot {
-    display: none;
+  .hero {
+    gap: 12px;
+    padding: 12px 12px 20px;
   }
-  .hero-caption {
+  .hero-masthead {
+    align-items: center;
+  }
+  .hero-nav {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .hero-card {
+    padding: 12px 12px 10px;
+    gap: 12px;
+  }
+  .hero-head {
     flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    min-height: 0;
+  }
+  .hero-h1 {
+    flex: none;
+  }
+  .hero-kicker {
+    margin-bottom: 8px;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .hero-h1-main {
+    font-size: clamp(30px, 9vw, 38px);
+  }
+  .hero-h1-hand {
+    font-size: clamp(32px, 9.6vw, 40px);
+  }
+  /* the readout sits under the heading, below a stitched seam; its height is
+     reserved so a longer stage title never shifts the art */
+  .hero-caption {
     align-items: flex-start;
-    gap: 6px;
+    text-align: left;
+    gap: 3px;
+    min-height: 82px;
+    padding-top: 12px;
+    border-top: 1.5px dashed rgba(140, 47, 67, 0.32);
+  }
+  .hero-stageno {
+    font-size: 10px;
+  }
+  .hero-title {
+    font-size: 23px;
   }
   .hero-sub {
-    text-align: left;
+    max-width: none;
+    font-size: 19px;
+  }
+  .hbtn {
+    width: 44px;
+    height: 44px;
+  }
+  .hero-controls {
+    gap: 10px;
+    padding: 0;
+  }
+  .hero-track {
+    height: 34px;
+    margin: 0 10px;
+  }
+  .hero-dot .n {
+    width: 28px;
+    height: 28px;
+  }
+  .hero-rail {
+    top: 14px;
   }
   .hero-stagebox {
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
+  /* the art comes first on a phone, so it is on screen straight away; the
+     thought note follows it */
   .hero-note {
+    order: 1;
     position: relative;
     left: auto;
     top: auto;
     width: 100%;
-    min-height: 148px;
-    padding-top: 6px;
+    min-height: 136px;
+    padding: 6px 0 12px;
+  }
+  .qbox[data-skin="3"] .q-deco-a {
+    left: -6px;
+  }
+  .qbox[data-skin="3"] .q-deco-b {
+    right: -4px;
+    bottom: -30px;
   }
   .qbox {
     font-size: 15px;
@@ -689,18 +866,32 @@
   .hero-thread {
     display: none;
   }
-  .hero-controls {
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  .hero-canvas {
+    touch-action: pan-y;
   }
-  .hero-readout {
-    grid-column: 1 / -1;
-    min-width: 0;
-    text-align: center;
-  }
-  .hero-fallback {
+  .hero-poster img {
     left: 50%;
+  }
+  .hero-poster-fig {
     top: 6%;
     height: 92%;
+  }
+  .hero-poster .hero-poster-pat {
+    top: 50%;
+    width: 98%;
+    height: auto;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* narrow phones */
+@media (max-width: 420px) {
+  .hero-mark {
+    font-size: 28px;
+  }
+  .qbox {
+    padding-left: 13px;
+    padding-right: 13px;
   }
 }
 
@@ -712,5 +903,12 @@
   }
   .qbox[data-skin="2"] .c.caret::after {
     animation: none;
+  }
+  /* the engine starts on the last stage, which has no pattern sheet */
+  .hero-poster-pat {
+    display: none;
+  }
+  .hero-canvas canvas {
+    transition: none;
   }
 }

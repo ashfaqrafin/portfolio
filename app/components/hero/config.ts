@@ -34,6 +34,14 @@ function artExt(): "webp" | "svg" {
   return figPx > HERO_ART_PX ? "svg" : "webp";
 }
 
+/** Viewports where artExt() always picks the WebPs: desktop, and phones up to
+   530px wide (530 × 4/3 × 0.92 × dpr 2 ≈ HERO_ART_PX). Hero.tsx preloads them there
+   so they download while the page boots instead of after the engine starts. */
+export const ART_WEBP_MEDIA = "(min-width: 721px), (max-width: 530px)";
+export const ART_WEBP_URLS = ["avatar-1", "avatar-2", "avatar-3", "avatar-4", "suit", "patterns"].map(
+  (n) => `/hero/${n}.webp`,
+);
+
 export const ART_URLS = {
   get avatars(): readonly string[] {
     const e = artExt();
@@ -123,6 +131,14 @@ export const MOTION = {
 } as const;
 
 // ── Content ────────────────────────────────────────────────────────────────
+/** The hero's heading (the page's h1): name, then the line and its hand-written aside. */
+export const INTRO = {
+  name: "Ashfaq Khan Rafin",
+  year: "MMXXVI",
+  headline: "Pick a lane.",
+  aside: "or don\u2019t.",
+};
+
 export interface QuoteSeg {
   text: string;
   kind?: "chip" | "stitch";

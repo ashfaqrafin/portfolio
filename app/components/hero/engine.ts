@@ -25,7 +25,7 @@ import {
 } from "./config";
 import { computeLayout, type Layout } from "./stage-layout";
 import { QuoteController } from "./quote";
-import { loadImage, randomOpaque, rasterize, type Raster } from "./raster";
+import { loadArt, randomOpaque, rasterize, type ArtSource, type Raster } from "./raster";
 import { RibbonBatch } from "./ribbons";
 import { BG_FRAG, BG_VERT } from "./shaders";
 import { buildShardMesh, poseShards, POSE_STRIDE, type ShardMesh } from "./shards";
@@ -109,24 +109,17 @@ export async function createEngine(
   const nextBtn = q<HTMLButtonElement>("next");
   const playBtn = q<HTMLButtonElement>("play");
   const fillEl = q("fill");
-  const readout = q("readout");
+
   const dots = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-step]"));
   const threadSvg = q<SVGSVGElement>("thread");
   const threadPath = q<SVGPathElement>("thread-path");
   const threadDot = q<SVGCircleElement>("thread-dot");
   const noteRoot = q("note")!;
 
-  // artwork first: decode is the slow part, and a cancelled mount (React
-  // StrictMode) should stop here without touching the page
+  // the artwork decodes off the main thread (see loadArt) while the renderer is made
   const urls = [...ART_URLS.avatars, ART_URLS.suit, ART_URLS.patterns];
-  const images = await Promise.all(urls.map(loadImage));
-  dbg("images decoded");
-  if (isCancelled()) throw new CancelledError();
-  const avImgs = images.slice(0, 4);
-  const suitImg = images[4];
-  const patImg = images[5];
-
-  const quote = new QuoteController(noteRoot);
+  const loading = Promise.all(urls.map(loadArt));
+  loading.catch(() => {}); // abandoned if WebGL is unavailable below
 
   // ── renderer ────────────────────────────────────────────────────────────────────────────
   let renderer: THREE.WebGLRenderer;
@@ -141,6 +134,30 @@ export async function createEngine(
   }
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
   renderer.setClearColor(new THREE.Color(PALETTE.paper), 1);
+
+  let images: ArtSource[];
+  try {
+    images = await loading;
+  } catch (err) {
+    renderer.dispose();
+    renderer.forceContextLoss();
+    throw err;
+  }
+  const closeImages = () => images.forEach((im) => "close" in im && im.close());
+  dbg("images decoded");
+  // a cancelled mount (React StrictMode) stops here without touching the page
+  if (isCancelled()) {
+    closeImages();
+    renderer.dispose();
+    renderer.forceContextLoss();
+    throw new CancelledError();
+  }
+  const avImgs = images.slice(0, 4);
+  const suitImg = images[4];
+  const patImg = images[5];
+
+  const quote = new QuoteController(noteRoot);
+
   const canvas = renderer.domElement;
   canvas.setAttribute("role", "img");
   canvas.setAttribute("aria-label", STAGES[0].alt);
@@ -482,8 +499,7 @@ export async function createEngine(
   }
 
   // ── DOM sync ────────────────────────────────────────────────────────────
-  let lastHdr = "";
-  let lastRead = "";
+  let lastHdr = -1;
   let lastShow = -1;
   let lastAria = "";
 
@@ -518,18 +534,13 @@ export async function createEngine(
     const { k, u, p } = clock(tm);
     const nxt = (k + 1) % STAGE_COUNT;
 
-    const hdr = `${k}|${u > 0 ? 1 : 0}`;
-    if (hdr !== lastHdr) {
-      lastHdr = hdr;
-      if (u > 0) {
-        if (stageNo) stageNo.textContent = `TRANSITION ${pad(k + 1)} \u2192 ${pad(nxt + 1)}`;
-        if (titleEl) titleEl.textContent = TRANSITIONS[k].name;
-        if (subEl) subEl.textContent = TRANSITIONS[k].desc;
-      } else {
-        if (stageNo) stageNo.textContent = `STAGE ${pad(k + 1)} / ${pad(STAGE_COUNT)}`;
-        if (titleEl) titleEl.textContent = `\u201C${STAGES[k].title}\u201D`;
-        if (subEl) subEl.textContent = STAGES[k].sub;
-      }
+    // the caption always names a stage; mid-transition it switches to the incoming one
+    const cap = u >= 0.45 ? nxt : k;
+    if (cap !== lastHdr) {
+      lastHdr = cap;
+      if (stageNo) stageNo.textContent = `STAGE ${pad(cap + 1)} / ${pad(STAGE_COUNT)}`;
+      if (titleEl) titleEl.textContent = STAGES[cap].title;
+      if (subEl) subEl.textContent = STAGES[cap].sub;
       if (caption) {
         caption.classList.remove("flip");
         void caption.offsetWidth;
@@ -556,17 +567,7 @@ export async function createEngine(
     });
     if (fillEl) fillEl.style.transform = `scaleX(${(Math.min(p, STAGE_COUNT - 1) / (STAGE_COUNT - 1)).toFixed(4)})`;
 
-    const wrapped = ((tm % LEN) + LEN) % LEN;
-    const read =
-      u > 0
-        ? `t = ${wrapped.toFixed(1)}s \u00B7 transition ${k + 1} \u2192 ${nxt + 1}`
-        : `t = ${wrapped.toFixed(1)}s \u00B7 stage ${k + 1} of ${STAGE_COUNT}`;
-    if (read !== lastRead) {
-      lastRead = read;
-      if (readout) readout.textContent = read;
-    }
-
-    const aria = u > 0 ? `Transition: ${TRANSITIONS[k].name}. ${TRANSITIONS[k].desc}` : STAGES[k].alt;
+    const aria = STAGES[cap].alt;
     if (aria !== lastAria) {
       lastAria = aria;
       canvas.setAttribute("aria-label", aria);
@@ -657,7 +658,9 @@ export async function createEngine(
         setPlaying(resume);
       }
       dirty = true;
-    } else if (playing) {
+    } else if (playing && document.documentElement.dataset.intro !== "play") {
+      // the clock waits while the home page's intro (app/components/intro) still
+      // covers the hero, so the first stage gets its full hold once revealed
       t += dt;
       dirty = true;
     }
@@ -681,12 +684,14 @@ export async function createEngine(
   };
 
   // ── observers ───────────────────────────────────────────────────────────
+  // animate only while the hero is meaningfully on screen: once most of it has
+  // scrolled away, its frames would only compete with scrolling the page below
   const io = new IntersectionObserver(
     (entries) => {
-      visible = entries.some((e) => e.isIntersecting);
+      visible = entries.some((e) => e.isIntersecting && e.intersectionRatio >= 0.35);
       if (visible) kick();
     },
-    { threshold: 0.05 },
+    { threshold: [0, 0.35] },
   );
   io.observe(root);
 
@@ -727,7 +732,13 @@ export async function createEngine(
   lastW = Math.round(stage.clientWidth);
   lastH = Math.round(stage.clientHeight);
   rebuild();
+  // compile every shader in parallel, off the main thread (KHR_parallel_shader_compile),
+  // before the first frame; otherwise that frame blocks the page for ~0.4 s
+  const first = built as Built | null; // assigned inside rebuild(): TS can't see it
+  if (first) await renderer.compileAsync(first.scene, camera);
+  dbg("shaders compiled");
   renderFrame(t);
+  dbg("first frame");
   syncDom(t);
   const readyToken = String(Math.random());
   root.dataset.ready = readyToken;
@@ -780,6 +791,7 @@ export async function createEngine(
       if (built) disposeBuilt(built);
       built = null;
       renderer.dispose();
+      closeImages();
       canvas.remove();
       if (root.dataset.ready === readyToken) delete root.dataset.ready;
     },
