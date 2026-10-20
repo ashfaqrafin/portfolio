@@ -13,6 +13,9 @@
      padding (hero.css: clamp(16px, 2.4vw, 32px), 20px on phones) */
   margin-top: calc(-1 * clamp(16px, 2.4vw, 32px));
   scroll-margin-top: 0;
+  /* the hanging sheet is tilted until the thread pulls it straight; its corners
+     must not widen the page (phones would zoom out to fit them) */
+  overflow-x: clip;
 }
 
 .chapter-seam {
@@ -143,6 +146,10 @@
   justify-content: center;
   transform-origin: 50% 0;
 }
+/* a flex item would otherwise refuse to shrink below its content on phones */
+.chapter-sheet > * {
+  min-width: 0;
+}
 
 @media (max-width: 720px) {
   .chapter {
@@ -166,7 +173,30 @@
     font-size: 22px;
   }
   .chapter-cue {
+    right: 12px;
     font-size: 9px;
     letter-spacing: 0.12em;
+    white-space: normal;
+  }
+}
+
+/* on narrower or taller screens the label lands over the desk's pencil
+   hatching: hang it on a paper tag so it stays readable */
+@media (max-aspect-ratio: 4/3) {
+  .chapter-label {
+    padding: 10px 12px 12px;
+    background: var(--paper);
+    box-shadow:
+      4px 5px 0 -1px rgba(140, 47, 67, 0.12),
+      0 10px 20px -12px rgba(74, 12, 24, 0.35);
+  }
+  .chapter-label::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1.4px solid var(--ink);
+    border-radius: 3px;
+    filter: url(#tb-rough-s);
+    pointer-events: none;
   }
 }

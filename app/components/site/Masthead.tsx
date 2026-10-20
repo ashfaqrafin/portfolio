@@ -12,7 +12,6 @@ export default function Masthead({ current }: { current?: "board" | "article" })
         </svg>
       </Link>
       <div className="site-meta">
-        <span className="site-annot">pick a lane. or don&rsquo;t.</span>
         <nav className="site-nav" aria-label="Site">
           <Link href="/">Portfolio</Link>
           <Link href="/blog" aria-current={current === "board" ? "page" : undefined}>

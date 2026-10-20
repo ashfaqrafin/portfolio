@@ -62,6 +62,14 @@ body::after {
   background-repeat: no-repeat;
   will-change: transform;
 }
+/* phones and portrait tablets: the strips are as wide as 0.4 × the screen
+   height, which would cover most of a tall screen; show only their outer,
+   densest edge */
+@media (orientation: portrait) {
+  body::after {
+    background-position: left -29vh top, right -29vh top;
+  }
+}
 
 /* paper tooth over everything, very quiet. Its own layer and no blend mode:
    a full-screen multiply blend is re-done for every frame of the page */

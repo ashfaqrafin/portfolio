@@ -46,26 +46,36 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
-.site-annot {
-  font-family: var(--font-hand), cursive;
-  font-size: 21px;
-  line-height: 1;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--thread);
-}
 .site-nav {
   display: flex;
-  gap: 14px;
+  gap: 8px;
+  margin-top: 4px;
 }
+/* paper tags, like the hero's, so they read over the desk's pencil hatching */
 .site-nav a {
-  color: inherit;
+  position: relative;
+  padding: 8px 12px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
   text-decoration: none;
-  border-bottom: 1.5px dashed transparent;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.site-nav a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid var(--ink);
+  border-radius: 999px;
+  filter: url(#tb-rough-s);
+  pointer-events: none;
 }
 .site-nav a:hover,
 .site-nav a[aria-current="page"] {
-  border-bottom-color: var(--thread);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 /* the paper card everything sits on: a doubled, wobbly outline like the hero's */
@@ -106,9 +116,6 @@
   .site-meta {
     font-size: 10px;
     letter-spacing: 0.16em;
-  }
-  .site-annot {
-    display: none;
   }
   .sheet {
     padding: 12px;

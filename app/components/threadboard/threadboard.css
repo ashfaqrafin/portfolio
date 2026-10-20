@@ -36,8 +36,7 @@
   font-weight: 400;
   font-size: clamp(26px, 3.4vw, 46px);
   line-height: 1;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
 .tb-sub {
   margin: 0;
@@ -1108,6 +1107,27 @@
   .tb-world {
     --u: 0.6px;
     left: calc(100cqw - var(--bw) * var(--u));
+  }
+  /* the lane labels sit in the board's left margin, off screen here: keep just
+     the name, as a tag that sticks to the stage's left edge */
+  .tb-lane-no,
+  .tb-lane-annot {
+    display: none;
+  }
+  .tb-lane-name {
+    position: sticky;
+    left: 6px;
+    top: 0;
+    display: inline-block;
+    margin: 5px 0 0 6px;
+    padding: 3px 7px 2px;
+    border: 1px solid rgba(140, 47, 67, 0.45);
+    border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--font-mono), monospace;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--thread);
   }
   .tb-hint {
     display: block;

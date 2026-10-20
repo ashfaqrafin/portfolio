@@ -459,7 +459,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
             The archive &middot; {board.total} pins &middot; {edges.length} threads &middot; {board.loose.length} loose
           </p>
           <Heading className="tb-title" id={`${uid}-title`}>
-            &ldquo;The Thread Board&rdquo;
+            The Thread Board
           </Heading>
         </div>
         <p className="tb-sub">every idea pulls on another</p>
