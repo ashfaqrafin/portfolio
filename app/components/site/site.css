@@ -91,12 +91,15 @@
   inset: 0;
   border: 2px solid var(--ink);
   filter: url(#tb-rough-a);
+  /* own layer: the turbulence filter is computed once, not on every repaint inside */
+  will-change: transform;
 }
 .sheet::after {
   inset: -5px -3px 4px 4px;
   border: 1.2px solid var(--burgundy);
   opacity: 0.6;
   filter: url(#tb-rough-b);
+  will-change: transform;
 }
 
 @media (max-width: 720px) {

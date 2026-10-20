@@ -505,19 +505,18 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
 
           {/* threads, behind the cards */}
           <svg className="tb-svg tb-back" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
-            <defs>
-              {threads.map((t, i) => (
-                <mask key={i} id={`${uid}m${i}`} maskUnits="userSpaceOnUse" x="0" y="0" width={W} height={H}>
-                  <path className="tb-draw" d={t.g.d} pathLength={1} style={{ "--i": t.i } as CSSProperties} />
-                </mask>
-              ))}
-            </defs>
-            {threads.map((t, i) => (
-              <g key={i} className="tb-thread" data-kind={t.e.kind} data-state={threadState(t.e)} mask={`url(#${uid}m${i})`}>
-                <path className="tb-t" d={t.g.d} />
-                {t.e.kind !== "topic" && <path className="tb-t-hi" d={t.g.d} />}
-              </g>
-            ))}
+            {/* solid threads draw themselves in with a dash offset (pathLength 1); dashed
+                topic threads keep their stitch pattern and fade in. No masks: a mask is a
+                full-board offscreen buffer, re-rendered every frame of the animation. */}
+            {threads.map((t, i) => {
+              const draw = t.e.kind !== "topic" ? 1 : undefined;
+              return (
+                <g key={i} className="tb-thread" data-kind={t.e.kind} data-state={threadState(t.e)} style={{ "--i": t.i } as CSSProperties}>
+                  <path className="tb-t" d={t.g.d} pathLength={draw} />
+                  {t.e.kind !== "topic" && <path className="tb-t-hi" d={t.g.d} pathLength={draw} />}
+                </g>
+              );
+            })}
             {threads.map((t, i) => (
               <path
                 key={`h${i}`}

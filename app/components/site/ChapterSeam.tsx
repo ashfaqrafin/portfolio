@@ -8,8 +8,11 @@ import "./chapter.css";
    chapter label and ends as the pin that holds up the next section's sheet. The
    sheet hangs loose until the thread pulls it straight.
 
-   One scroll progress, `--p` (0 → 1), drives everything; without JavaScript, or
+   One scroll progress, `--p` (0 → 1), drives the seam; without JavaScript, or
    with reduced motion, it stays at 1: the thread is drawn and the sheet is straight.
+   Performance: `--p` lives on the small seam only (on the section it would restyle
+   the whole board every frame), the sheet gets one composited transform, and
+   nothing runs while the seam is off screen.
    Reuse it for every chapter: <ChapterSeam part="III" title="Projects" side="left">. */
 
 // viewBox 0 0 640 480: out of the card at the top, a long drop into one overhand
@@ -32,22 +35,23 @@ type Props = {
 };
 
 export default function ChapterSeam({ part, title, line, side = "right", id, children }: Props) {
-  const rootRef = useRef<HTMLElement>(null);
   const seamRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
   const needleRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
-    const root = rootRef.current;
     const seam = seamRef.current;
+    const sheet = sheetRef.current;
     const path = pathRef.current;
     const needle = needleRef.current;
-    if (!root || !seam || !path || !needle) return;
+    if (!seam || !sheet || !path || !needle) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const len = path.getTotalLength();
+    let len = 0; // measured on first use, not at hydration
     let raf = 0;
     let last = -1;
+    let wasSettled: boolean | null = null;
     const update = () => {
       raf = 0;
       const vh = window.innerHeight;
@@ -58,10 +62,19 @@ export default function ChapterSeam({ part, title, line, side = "right", id, chi
       const end = vh * 0.52 - r.height;
       const p = Math.min(1, Math.max(0, (start - r.top) / (start - end)));
       if (Math.abs(p - last) < 0.0005) return;
+      const settled = p >= 1;
+      if (settled !== wasSettled) {
+        wasSettled = settled;
+        seam.toggleAttribute("data-settled", settled);
+        // its own GPU layer only while it moves: the board isn't repainted per frame
+        sheet.style.willChange = settled ? "" : "transform";
+      }
       last = p;
-      root.style.setProperty("--p", p.toFixed(4));
-      root.toggleAttribute("data-settled", p >= 1);
+      seam.style.setProperty("--p", p.toFixed(4));
+      // the sheet hangs loose and is pulled straight as the thread tightens
+      sheet.style.transform = settled ? "" : `translateY(${((1 - p) * 36).toFixed(2)}px) rotate(${((1 - p) * -1.2).toFixed(3)}deg)`;
       // the needle leads the thread, pointing along it
+      len ||= path.getTotalLength();
       const at = Math.max(0.001, p) * len;
       const a = path.getPointAtLength(Math.max(0, at - 1));
       const b = path.getPointAtLength(at);
@@ -71,22 +84,38 @@ export default function ChapterSeam({ part, title, line, side = "right", id, chi
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
     };
-    root.setAttribute("data-live", "");
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    // listen only while the seam is within a screen of the viewport
+    let listening = false;
+    const listen = (on: boolean) => {
+      if (on === listening) return;
+      listening = on;
+      if (on) {
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        onScroll();
+      } else {
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onScroll);
+      }
+    };
+    const io = new IntersectionObserver((entries) => listen(entries.some((e) => e.isIntersecting)), { rootMargin: "100% 0px" });
+    seam.setAttribute("data-live", "");
+    io.observe(seam); // the first update runs once the seam is within a screen of view
     return () => {
+      io.disconnect();
+      listen(false);
       cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      root.removeAttribute("data-live");
-      root.style.removeProperty("--p");
+      seam.removeAttribute("data-live");
+      seam.removeAttribute("data-settled");
+      seam.style.removeProperty("--p");
+      sheet.style.transform = "";
+      sheet.style.willChange = "";
     };
   }, []);
 
   return (
-    <section className="chapter" id={id} ref={rootRef} data-side={side} aria-labelledby={id ? `${id}-chapter` : undefined} style={{ "--p": 1 } as CSSProperties}>
-      <div className="chapter-seam" ref={seamRef}>
+    <section className="chapter" id={id} data-side={side} aria-labelledby={id ? `${id}-chapter` : undefined}>
+      <div className="chapter-seam" ref={seamRef} style={{ "--p": 1 } as CSSProperties}>
         <svg className="chapter-thread" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
           <circle className="chapter-knot" cx="320" cy="3" r="3.4" />
           <path className="chapter-t" ref={pathRef} d={PATH} pathLength={1} />
@@ -113,7 +142,9 @@ export default function ChapterSeam({ part, title, line, side = "right", id, chi
         </div>
       </div>
 
-      <div className="chapter-sheet">{children}</div>
+      <div className="chapter-sheet" ref={sheetRef}>
+        {children}
+      </div>
     </section>
   );
 }

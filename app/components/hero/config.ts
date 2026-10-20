@@ -16,16 +16,36 @@ export const LEN = STAGE_COUNT * P; // full loop
 export const ART_W = 894; // shared viewBox of avatars + suit
 export const ART_H = 1342;
 export const ART_ASPECT = ART_W / ART_H;
+/* The artwork ships twice: the source SVGs, and WebPs pre-rendered from them at
+   HERO_ART_PX tall by `npm run hero:art`. The WebPs decode off the main thread and
+   are ~5× smaller; rasterising the SVGs cost ~0.8 s of main-thread work on load.
+   Only a stage that would draw the figure taller than the WebP (portrait tablets
+   at 2×) gets the SVGs. Decided once, when the engine loads the art. */
+export const HERO_ART_PX = 1300;
+
+function artExt(): "webp" | "svg" {
+  if (typeof window === "undefined") return "webp";
+  const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+  const mobile = window.matchMedia(MOBILE_QUERY).matches;
+  // tallest the figure can be drawn: mobile stages are 3:4 at full width, desktop
+  // stages are capped by the 1240px card (≈ 630px tall)
+  const stageH = mobile ? (window.innerWidth * 4) / 3 : 630;
+  const figPx = stageH * (mobile ? LAYOUT.mobile : LAYOUT.desktop).figHeight * dpr;
+  return figPx > HERO_ART_PX ? "svg" : "webp";
+}
+
 export const ART_URLS = {
-  avatars: [
-    "/hero/avatar-1.svg",
-    "/hero/avatar-2.svg",
-    "/hero/avatar-3.svg",
-    "/hero/avatar-4.svg",
-  ],
-  suit: "/hero/suit.svg",
-  patterns: "/hero/patterns.svg",
-} as const;
+  get avatars(): readonly string[] {
+    const e = artExt();
+    return [1, 2, 3, 4].map((i) => `/hero/avatar-${i}.${e}`);
+  },
+  get suit() {
+    return `/hero/suit.${artExt()}`;
+  },
+  get patterns() {
+    return `/hero/patterns.${artExt()}`;
+  },
+};
 
 // ── Palette: one burgundy ink on warm paper, plus tints. ────────────────
 export const PALETTE = {

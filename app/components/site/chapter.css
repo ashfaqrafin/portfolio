@@ -1,9 +1,9 @@
 /* ── Chapter seam: the thread from one section into the next ──────────────
-   `--p` (0 → 1) is the scroll progress, set by ChapterSeam.tsx. It defaults to 1,
-   which is also the no-JS and reduced-motion state: thread drawn, sheet straight. */
+   `--p` (0 → 1) is the scroll progress, set on .chapter-seam by ChapterSeam.tsx.
+   It defaults to 1, which is also the no-JS and reduced-motion state: thread
+   drawn, sheet straight. The sheet's own transform is set from script. */
 
 .chapter {
-  --p: 1;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -16,6 +16,7 @@
 }
 
 .chapter-seam {
+  --p: 1;
   position: relative;
   z-index: 2;
   width: min(640px, 100%);
@@ -65,7 +66,7 @@
 .chapter-eye {
   fill: var(--paper);
 }
-.chapter[data-live]:not([data-settled]) .chapter-needle {
+.chapter-seam[data-live]:not([data-settled]) .chapter-needle {
   opacity: 1;
 }
 
@@ -141,9 +142,6 @@
   display: flex;
   justify-content: center;
   transform-origin: 50% 0;
-}
-.chapter[data-live]:not([data-settled]) .chapter-sheet {
-  transform: translateY(calc((1 - var(--p)) * 36px)) rotate(calc((1 - var(--p)) * -1.2deg));
 }
 
 @media (max-width: 720px) {

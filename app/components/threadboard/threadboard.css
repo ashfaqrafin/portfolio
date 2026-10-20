@@ -86,6 +86,7 @@
   pointer-events: none;
   border: 1.6px solid var(--ink);
   filter: url(#tb-rough-s);
+  will-change: transform;
 }
 .tb[data-dragging] .tb-stage,
 .tb-stage:active {
@@ -305,26 +306,29 @@
   opacity: 0.12;
 }
 
-/* the stitch-in: each thread draws from the newer pin to the older, staggered by date */
-.tb-draw {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 12;
-  stroke-linecap: round;
+/* the stitch-in: each thread draws from the newer pin to the older, staggered by
+   date. Solid threads animate their own dash offset (they have pathLength="1");
+   dashed topic threads fade in so their 6/5 stitch pattern is kept. */
+.tb-thread:not([data-kind="topic"]) path {
   stroke-dasharray: 1 1;
   stroke-dashoffset: 0;
 }
 @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-  .tb[data-stitch="wait"] .tb-draw {
+  .tb[data-stitch="wait"] .tb-thread:not([data-kind="topic"]) path {
     stroke-dashoffset: 1;
   }
+  .tb[data-stitch="wait"] .tb-thread[data-kind="topic"],
   .tb[data-stitch="wait"] .tb-cap,
   .tb[data-stitch="wait"] .tb-dangle {
     opacity: 0;
   }
-  .tb[data-stitch="go"] .tb-draw {
+  .tb[data-stitch="go"] .tb-thread:not([data-kind="topic"]) path {
     animation: tb-stitch 0.9s cubic-bezier(0.55, 0, 0.25, 1) both;
     animation-delay: calc(var(--i) * 70ms);
+  }
+  .tb[data-stitch="go"] .tb-thread[data-kind="topic"] {
+    animation: tb-fade 0.7s ease both;
+    animation-delay: calc(var(--i) * 70ms + 0.2s);
   }
   .tb[data-stitch="go"] .tb-cap {
     animation: tb-fade 0.35s ease both;
