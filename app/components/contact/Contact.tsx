@@ -6,12 +6,15 @@ import "../site/site.css";
 import "./contact.css";
 import "./pipeline.css";
 
-/* Contact, as a transmission pipeline (the scene is Pipeline.tsx). Sending plays
-   it act by act while the request is really in flight: the tailor stitches the
-   words into a packet, the coder breaks the errors blocking the route, the
-   dakpion runs it to the post box. He keeps running until the server answers;
-   the drop only happens once it has accepted the message, and a refusal stamps
-   it "returned to sender" with the reason.
+/* Contact, as a transmission pipeline (the scene is Pipeline.tsx). Until a
+   message is sent the section is only the form and its airmail label: the
+   cast takes no room. "Seal and send" folds the form away and opens the stage
+   in its place, and each character walks on as their act begins: the tailor
+   stitches the words into a packet, the coder breaks the errors blocking the
+   route, the dakpion runs it to the post box. He keeps running until the
+   server answers; the drop only happens once it has accepted the message. A
+   refusal stamps "returned to sender", then the form comes back with the
+   reason and everything that was typed.
 
    POSTs to app/api/contact (validated, rate-limited, honeypot) and lands in the
    owner's studio inbox. Without JavaScript the form can't send, so the direct
@@ -83,6 +86,8 @@ export default function Contact() {
   const [fields, setFields] = useState<Fields>({});
   const [error, setError] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
+  // a refused packet stays on stage for a moment ("returned to sender") before the form returns
+  const [bounced, setBounced] = useState(false);
   const shownAt = useRef(0);
   const sceneRef = useRef<HTMLDivElement>(null);
   const alive = useRef(true);
@@ -115,11 +120,12 @@ export default function Contact() {
       await wait(T(ms));
       return alive.current;
     };
-    // the scene is the show: bring it into view if the form is far below it
-    const r = sceneRef.current?.getBoundingClientRect();
-    if (r && (r.top < 0 || r.bottom > window.innerHeight)) sceneRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
-
     setPhase("sending");
+    // the stage opens where the form was: keep it in view
+    requestAnimationFrame(() => {
+      const r = sceneRef.current?.getBoundingClientRect();
+      if (r && (r.top < 0 || r.bottom > window.innerHeight)) sceneRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+    });
     setHits(0);
     setAct(1);
     const request: Promise<Answer> = fetch("/api/contact", {
@@ -154,6 +160,9 @@ export default function Contact() {
       setPhase("returned");
       setError(res.error ?? "Something went wrong.");
       setFields(res.fields ?? {});
+      setBounced(true);
+      if (!(await step(1600))) return;
+      setBounced(false);
     }
   }
 
@@ -173,7 +182,8 @@ export default function Contact() {
         ? `Returned to sender · ${error}`
         : phase === "sending"
           ? ACT_STATUS[act]
-          : "Four hands carry every message. Write below and watch them work.";
+          : "Four pairs of hands carry every message. Send one and watch.";
+  const stage = phase === "sending" || phase === "sent" || bounced;
   const errId = (k: keyof Fields) => (fields[k] ? `${uid}-${k}-err` : undefined);
   const snippet = message.trim().slice(0, 30) + (message.trim().length > 30 ? "…" : "");
 
@@ -191,24 +201,28 @@ export default function Contact() {
         </p>
       </header>
 
-      <div className="ct-scene" ref={sceneRef}>
-        <Pipeline act={act} hits={hits} snippet={snippet} replyTo={replyShown} failed={phase === "returned"} receivedAt={receivedAt} />
-      </div>
-
-      <div className="ct-body">
-        {phase === "sent" ? (
-          <div className="ct-thanks">
-            <p className="ct-thanks-k">Transmission received</p>
-            <p className="ct-thanks-h">Thank you{name.trim() ? `, ${name.trim()}` : ""}.</p>
-            <p className="ct-thanks-p">
-              Your packet is in my post box. I&rsquo;ll reply {via === "email" ? "by email" : via === "whatsapp" ? "on WhatsApp" : "through your profile"}, usually within a few
-              days.
-            </p>
-            <button type="button" className="ct-btn ct-btn-ghost" onClick={again}>
-              Write another
-            </button>
+      {stage ? (
+        <div className="ct-stage" ref={sceneRef} data-phase={phase}>
+          <div className="ct-scene">
+            <Pipeline act={act} hits={hits} snippet={snippet} replyTo={replyShown} failed={phase === "returned"} receivedAt={receivedAt} />
           </div>
-        ) : (
+          {phase === "sent" && (
+            <div className="ct-thanks">
+              <div>
+                <p className="ct-thanks-h">Thank you{name.trim() ? `, ${name.trim()}` : ""}.</p>
+                <p className="ct-thanks-p">
+                  Your packet is in my post box. I&rsquo;ll reply {via === "email" ? "by email" : via === "whatsapp" ? "on WhatsApp" : "through your profile"}, usually within a
+                  few days.
+                </p>
+              </div>
+              <button type="button" className="ct-btn ct-btn-ghost" onClick={again}>
+                Write another
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="ct-body">
           <form className="ct-form" onSubmit={send} noValidate aria-busy={busy}>
             <div className="ct-field">
               <label className="ct-label-k" htmlFor={`${uid}-message`}>
@@ -313,50 +327,43 @@ export default function Contact() {
               <span aria-hidden="true">&nbsp;&rarr;</span>
             </button>
           </form>
-        )}
 
-        {/* the packet as it will be posted, filled in as you type */}
-        <aside className="ct-label" aria-label="Your packet, as it will be posted" data-phase={phase}>
-          <div className="ct-label-in">
-            <p className="ct-label-k">Your packet</p>
-            <span className="ct-stamp" aria-hidden="true">
-              <svg viewBox="0 0 40 40" focusable="false">
-                <path d="M9 31L29 9M27 8C30 5 34 6 33 9C32 12 29 11 30 9" />
-                <path d="M30 10C38 18 20 24 24 32C26 36 31 35 32 33" />
-              </svg>
-              <span>MMXXVI</span>
-            </span>
-            <dl className="ct-addr">
-              <dt>To</dt>
-              <dd className="ct-hand">Ashfaq</dd>
-              <dt>From</dt>
-              <dd className="ct-hand">{name.trim() || "you"}</dd>
-              <dt>Reply by</dt>
-              <dd className="ct-mono">{replyShown || VIA[via].label}</dd>
-            </dl>
-            <p className="ct-contents-k">Contents</p>
-            <p className="ct-contents">
-              <span aria-hidden="true">{"{ "}</span>
-              {message.trim() ? message.trim().slice(0, 180) + (message.trim().length > 180 ? "…" : "") : <span className="ct-ph">inquiry</span>}
-              <span aria-hidden="true">{" }"}</span>
-            </p>
-            {phase === "sent" && (
-              <span className="ct-postmark" aria-hidden="true">
-                received
-                <br />
-                {new Date(receivedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+          {/* the packet as it will be posted, filled in as you type */}
+          <aside className="ct-label" aria-label="Your packet, as it will be posted" data-phase={phase}>
+            <div className="ct-label-in">
+              <p className="ct-label-k">Your packet</p>
+              <span className="ct-stamp" aria-hidden="true">
+                <svg viewBox="0 0 40 40" focusable="false">
+                  <path d="M9 31L29 9M27 8C30 5 34 6 33 9C32 12 29 11 30 9" />
+                  <path d="M30 10C38 18 20 24 24 32C26 36 31 35 32 33" />
+                </svg>
+                <span>MMXXVI</span>
               </span>
-            )}
-            {phase === "returned" && (
-              <span className="ct-postmark ct-postmark-back" aria-hidden="true">
-                return to
-                <br />
-                sender
-              </span>
-            )}
-          </div>
-        </aside>
-      </div>
+              <dl className="ct-addr">
+                <dt>To</dt>
+                <dd className="ct-hand">Ashfaq</dd>
+                <dt>From</dt>
+                <dd className="ct-hand">{name.trim() || "you"}</dd>
+                <dt>Reply by</dt>
+                <dd className="ct-mono">{replyShown || VIA[via].label}</dd>
+              </dl>
+              <p className="ct-contents-k">Contents</p>
+              <p className="ct-contents">
+                <span aria-hidden="true">{"{ "}</span>
+                {message.trim() ? message.trim().slice(0, 180) + (message.trim().length > 180 ? "…" : "") : <span className="ct-ph">inquiry</span>}
+                <span aria-hidden="true">{" }"}</span>
+              </p>
+              {phase === "returned" && (
+                <span className="ct-postmark ct-postmark-back" aria-hidden="true">
+                  return to
+                  <br />
+                  sender
+                </span>
+              )}
+            </div>
+          </aside>
+        </div>
+      )}
 
       <p className="ct-direct">
         <span>Rather skip the post?</span>

@@ -1,6 +1,6 @@
 # Contact: the transmission pipeline
 
-Part IV of the home page: one illustrated scene (`app/components/contact/Pipeline.tsx`, `pipeline.css`) where each character does their job while the message is really being sent:
+Part IV of the home page. Until a message is sent, the section is only the form and its live airmail label: the cast takes no room. "Seal and send" folds the form away and unrolls a stage in its place (`app/components/contact/Pipeline.tsx`, `pipeline.css`). Each character walks on as their act begins and steps back into pencil when it ends, so by the end the whole route reads as one strip:
 
 | Act | Who | What you see |
 | --- | --- | --- |
@@ -9,9 +9,9 @@ Part IV of the home page: one illustrated scene (`app/components/contact/Pipelin
 | 3 · Delivery sprint | the dakpion | the packet hops into his satchel and he runs for the post box, kicking up dust, for as long as the server takes to answer |
 | 4 · Dakpion drop | the post box | the packet arcs into the slot and the box shudders; "Transmission received", with how I'll reply |
 
-The drop only happens once the server has accepted the message. If it refuses, a "Returned to sender" stamp lands with the reason, and the form keeps what was typed. The airmail label beside the form fills in as you type.
+The drop only happens once the server has accepted the message; a thank-you and "Write another" then appear under the final frame. If it refuses, a "Returned to sender" stamp lands, then the form comes back with the reason and everything that was typed.
 
-**On phones** the scene isn't shrunk: it's a camera that zooms in and follows whoever is working, and drifts slowly across the cast while idle. **With reduced motion** each act shows its end state at once.
+**On phones** the scene isn't shrunk: it's a camera that zooms in and follows whoever is working. **With reduced motion** each act shows its end state at once.
 
 Visitors choose how to be answered: **Mail**, **WhatsApp** (a number with its country code) or a **Social link** (a profile on LinkedIn, GitHub, X, Instagram, Facebook, Behance, Dribbble, Threads or Bluesky, normalised to a clean https URL). The studio inbox turns each into a reply link (`mailto:`, `wa.me/…` or the profile).
 

@@ -23,19 +23,6 @@
   transform: translateX(var(--cam-x, 0px)) scale(var(--s, 1));
   transition: transform 0.9s cubic-bezier(0.5, 0, 0.3, 1);
 }
-/* a phone, idle: drift slowly across the cast */
-.pl[data-phone][data-state="idle"] .pl-stage {
-  animation: pl-pan 24s ease-in-out infinite alternate;
-}
-@keyframes pl-pan {
-  from {
-    transform: translateX(0) scale(var(--s, 1));
-  }
-  to {
-    transform: translateX(var(--pan, 0px)) scale(var(--s, 1));
-  }
-}
-
 /* ── the route ──────────────────────────────────────────────────────────── */
 .pl-route {
   position: absolute;
@@ -94,6 +81,17 @@
 }
 .pl[data-state="run"] .pl-actor {
   transition: opacity 0.4s ease;
+}
+/* off stage until their act; then they walk on */
+.pl-actor:not([data-in]) {
+  visibility: hidden;
+  opacity: 0;
+}
+.pl-actor[data-in] {
+  animation: pl-enter 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.pl-cap:not([data-in]) {
+  opacity: 0;
 }
 /* the one at work is in ink; the rest wait in pencil */
 .pl[data-state="run"] .pl-actor {
@@ -435,6 +433,9 @@
 /* who does what, under the route */
 .pl-cap {
   position: absolute;
+  transition:
+    opacity 0.5s ease,
+    color 0.3s ease;
   margin: 0;
   translate: -50% 0;
   font-family: var(--font-mono), monospace;
@@ -444,7 +445,6 @@
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--ink);
-  transition: color 0.3s ease;
 }
 .pl-cap span {
   color: var(--thread);
@@ -500,6 +500,12 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+@keyframes pl-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.96);
   }
 }
 @keyframes pl-sway {
@@ -613,8 +619,5 @@
     animation-delay: 0s !important;
     transition-duration: 0.01ms !important;
     transition-delay: 0s !important;
-  }
-  .pl[data-phone][data-state="idle"] .pl-stage {
-    animation: none;
   }
 }

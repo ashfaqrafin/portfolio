@@ -14,8 +14,11 @@ import { useLayoutEffect, useRef, type CSSProperties } from "react";
      4 drop    the packet arcs into the slot, the box shudders
      5 done    transmission received; the reply tag shows how I'll answer
 
-   Desktop sees the whole stage. On a phone the stage is a camera: it zooms in
-   and follows the act (and drifts slowly across the cast while idle). */
+   It is only mounted once a message is on its way (Contact.tsx), and the cast
+   is off stage until needed: each character walks on as their act begins and
+   steps back into pencil when it ends, so by the end the whole route reads as
+   one strip. Desktop sees the whole stage; on a phone the stage is a camera
+   that zooms in and follows the act. */
 
 export const STAGE_W = 1200;
 export const STAGE_H = 420;
@@ -30,6 +33,9 @@ const BLOCKS = [
 const CMDS = ["$ git push origin main", "curl -I → 200 OK", "rm -rf bugs/", "deploy --prod ✓"];
 const CMD_X = 420;
 const CMD_Y = (i: number) => 52 + i * 42;
+// the act each caption (and its character) walks on in; the post box comes on
+// with the dakpion, so he has somewhere to run
+const CAP_IN = [1, 2, 3, 3];
 // where each act happens, for the phone camera
 const FOCUS = [600, 150, 500, 900, 1020, 1000];
 // pseudo-random but fixed shard directions, so the server and client agree
@@ -91,7 +97,7 @@ export default function Pipeline({ act, hits, snippet, replyTo, failed, received
         </svg>
 
         {/* act 1: the tailor */}
-        <div className="pl-actor pl-tailor" style={{ left: 30, height: 250 }}>
+        <div className="pl-actor pl-tailor" data-in={act >= 1 || undefined} style={{ left: 30, height: 250 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/contact/tailor.webp" width={366} height={510} alt="" decoding="async" loading="lazy" />
         </div>
@@ -103,7 +109,7 @@ export default function Pipeline({ act, hits, snippet, replyTo, failed, received
         </svg>
 
         {/* act 2: the coder, his commands, and the blocks they break */}
-        <div className="pl-actor pl-coder" style={{ left: 232, height: 232 }}>
+        <div className="pl-actor pl-coder" data-in={act >= 2 || undefined} style={{ left: 232, height: 232 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/contact/coder.webp" width={528} height={510} alt="" decoding="async" loading="lazy" />
         </div>
@@ -125,7 +131,7 @@ export default function Pipeline({ act, hits, snippet, replyTo, failed, received
         </span>
 
         {/* act 3: the dakpion, with the packet in his satchel */}
-        <div className="pl-actor pl-dakpion" style={{ left: 720, height: 236 }}>
+        <div className="pl-actor pl-dakpion" data-in={act >= 3 || undefined} style={{ left: 720, height: 236 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/contact/dakpion.webp" width={506} height={511} alt="" decoding="async" loading="lazy" />
           <span className="pl-carried" />
@@ -135,7 +141,7 @@ export default function Pipeline({ act, hits, snippet, replyTo, failed, received
         </div>
 
         {/* act 4: the post box */}
-        <div className="pl-actor pl-box" style={{ left: 1086, height: 250 }}>
+        <div className="pl-actor pl-box" data-in={act >= 3 || undefined} style={{ left: 1086, height: 250 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/contact/postbox.webp" width={191} height={507} alt="" decoding="async" loading="lazy" />
         </div>
@@ -164,9 +170,9 @@ export default function Pipeline({ act, hits, snippet, replyTo, failed, received
           { x: 120, n: "01", t: "Packet weaving" },
           { x: 350, n: "02", t: "Path clearing" },
           { x: 810, n: "03", t: "Delivery sprint" },
-          { x: 1120, n: "04", t: "Dakpion drop" },
+          { x: 1095, n: "04", t: "Dakpion drop" },
         ].map((c, i) => (
-          <p key={c.n} className="pl-cap" data-on={act === i + 1 || (i === 3 && act === 5) || undefined} style={{ left: c.x, top: GROUND + 10 }}>
+          <p key={c.n} className="pl-cap" data-in={act >= CAP_IN[i] || undefined} data-on={act === i + 1 || (i === 3 && act === 5) || undefined} style={{ left: c.x, top: GROUND + 10 }}>
             <span>{c.n}</span> {c.t}
           </p>
         ))}
