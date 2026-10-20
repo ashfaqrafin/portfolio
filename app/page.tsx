@@ -1,13 +1,14 @@
 import BlogSection from "./components/blog/BlogSection";
 import Hero from "./components/hero/Hero";
+import ChapterSeam from "./components/site/ChapterSeam";
 
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col">
       <Hero />
-      <section id="blog" className="home-blog" aria-label="Writing">
+      <ChapterSeam id="blog" part="II" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">
         <BlogSection />
-      </section>
+      </ChapterSeam>
     </main>
   );
 }

@@ -1,0 +1,173 @@
+/* ── Chapter seam: the thread from one section into the next ──────────────
+   `--p` (0 → 1) is the scroll progress, set by ChapterSeam.tsx. It defaults to 1,
+   which is also the no-JS and reduced-motion state: thread drawn, sheet straight. */
+
+.chapter {
+  --p: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 clamp(12px, 2.4vw, 32px) clamp(28px, 5vw, 72px);
+  /* start at the previous card's bottom edge: pull up over the hero's bottom
+     padding (hero.css: clamp(16px, 2.4vw, 32px), 20px on phones) */
+  margin-top: calc(-1 * clamp(16px, 2.4vw, 32px));
+  scroll-margin-top: 0;
+}
+
+.chapter-seam {
+  position: relative;
+  z-index: 2;
+  width: min(640px, 100%);
+  aspect-ratio: 640 / 240;
+  /* the pin (y 230 of 240) lands on the sheet's top edge */
+  margin-bottom: calc(min(640px, 100%) * -10 / 640);
+  pointer-events: none;
+}
+
+.chapter-thread {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.chapter[data-side="left"] .chapter-thread {
+  transform: scaleX(-1);
+}
+.chapter-t,
+.chapter-t-hi {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: calc(1 - var(--p));
+}
+.chapter-t {
+  stroke: var(--thread);
+  stroke-width: 2.4;
+}
+.chapter-t-hi {
+  stroke: var(--thread-hi);
+  stroke-width: 0.8;
+  transform: translate(-0.7px, -0.9px);
+  opacity: 0.9;
+}
+.chapter-knot {
+  fill: var(--ink);
+}
+
+.chapter-needle {
+  fill: var(--ink);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.chapter-eye {
+  fill: var(--paper);
+}
+.chapter[data-live]:not([data-settled]) .chapter-needle {
+  opacity: 1;
+}
+
+.chapter-pin {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(clamp(0, calc((var(--p) - 0.9) * 10), 1));
+}
+.chapter-pin circle:first-child {
+  fill: var(--ink);
+  stroke: var(--paper);
+  stroke-width: 1.2;
+}
+.chapter-pin-hi {
+  fill: var(--thread-hi);
+}
+
+/* the cue that peeks below the hero, gone as soon as the thread starts */
+.chapter-cue {
+  position: absolute;
+  left: calc(50% + 14px);
+  top: 3px;
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+  opacity: clamp(0, calc(1 - var(--p) * 8), 1);
+}
+
+.chapter-label {
+  position: absolute;
+  left: 54%;
+  top: 30%;
+  width: max-content;
+  max-width: min(400px, 44vw);
+  opacity: clamp(0, calc((var(--p) - 0.2) * 3), 1);
+  transform: translateY(clamp(0px, calc((0.55 - var(--p)) * 30px), 12px));
+}
+.chapter[data-side="left"] .chapter-label {
+  left: auto;
+  right: 54%;
+  text-align: right;
+}
+.chapter-kicker {
+  margin: 0 0 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.chapter-kicker span {
+  color: var(--ink);
+  font-weight: 700;
+}
+.chapter-line {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1.05;
+  color: var(--thread);
+}
+
+/* the next section's sheet hangs from the pin and is pulled straight */
+.chapter-sheet {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transform-origin: 50% 0;
+}
+.chapter[data-live]:not([data-settled]) .chapter-sheet {
+  transform: translateY(calc((1 - var(--p)) * 36px)) rotate(calc((1 - var(--p)) * -1.2deg));
+}
+
+@media (max-width: 720px) {
+  .chapter {
+    margin-top: -20px;
+  }
+}
+@media (max-width: 640px) {
+  .chapter-label {
+    left: 52%;
+    top: 22%;
+    max-width: 46%;
+  }
+  .chapter[data-side="left"] .chapter-label {
+    right: 52%;
+  }
+  .chapter-kicker {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+  }
+  .chapter-line {
+    font-size: 19px;
+  }
+  .chapter-cue {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+}
