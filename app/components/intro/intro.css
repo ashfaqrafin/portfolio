@@ -1,98 +1,243 @@
-/* ── Intro: pattern paper woven away by thread ──────────────────────────────
+/* ── Intro: a short story told by one thread ─────────────────────────────────
    Shown only while html[data-intro="play"] (INTRO_GATE in app/layout.tsx).
-   The paper is ROWS strips; each strip holds a full-screen copy of the paper,
-   offset so the strips line up into one sheet. Intro.tsx slides a strip one
-   way and its paper the other, so the strip reads as cut away along the row. */
+   Line k appears at --t = 0.3 s + k × --gap, and the thread draws loop k under
+   it; then the thread is pulled taut (3.95 s) and the paper lifts (4.15 s).
+   data-skip swaps in intro-lift-fast: a new animation name restarts it. */
 
 .intro {
   display: none;
 }
 html[data-intro="play"] .intro {
+  --gap: 0.95s;
   display: block;
   position: fixed;
   inset: 0;
   /* under the paper grain (z 60), over everything else */
   z-index: 55;
-  container-type: size;
   overflow: hidden;
+  background: #f6efe2;
+  color: var(--ink);
+  animation: intro-lift 0.55s cubic-bezier(0.6, 0, 0.25, 1) 4.15s forwards;
 }
-/* if the script never starts, don't hold the page hostage */
-html[data-intro="play"] .intro:not([data-live]) {
-  animation: intro-failsafe 0.5s ease 4s forwards;
+html[data-intro="play"] .intro[data-skip] {
+  animation: intro-lift-fast 0.4s cubic-bezier(0.6, 0, 0.25, 1) forwards;
 }
-@keyframes intro-failsafe {
+@keyframes intro-lift {
   to {
     opacity: 0;
+    transform: translateY(-4%);
+    visibility: hidden;
+  }
+}
+@keyframes intro-lift-fast {
+  to {
+    opacity: 0;
+    transform: translateY(-4%);
     visibility: hidden;
   }
 }
 
-.intro-strip {
+/* the four lines, one at a time, in the same place */
+.intro-story {
   position: absolute;
-  left: 0;
-  width: 100%;
-  top: calc(var(--i) * 100% / var(--rows));
-  /* a hair of overlap, so no sub-pixel seam shows the page through */
-  height: calc(100% / var(--rows) + 1px);
-  overflow: hidden;
-  will-change: transform;
+  left: 50%;
+  top: 43%;
+  width: min(92vw, 900px);
+  transform: translate(-50%, -50%);
+  display: grid;
 }
-.intro-paper {
-  position: absolute;
-  left: 0;
-  top: calc(var(--i) * -100cqh / var(--rows));
-  width: 100cqw;
-  height: 100cqh;
-  will-change: transform;
-  background-color: #f6efe2;
-  background-image:
-    linear-gradient(rgba(140, 47, 67, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140, 47, 67, 0.12) 1px, transparent 1px),
-    linear-gradient(rgba(140, 47, 67, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(140, 47, 67, 0.06) 1px, transparent 1px);
-  background-size:
-    120px 120px,
-    120px 120px,
-    24px 24px,
-    24px 24px;
-  background-position: calc(50cqw - 60px) calc(50cqh - 60px);
-}
-
-.intro-name,
-.intro-line {
-  position: absolute;
-  left: 0;
-  right: 0;
+.intro-say {
+  grid-area: 1 / 1;
   margin: 0;
   text-align: center;
   font-family: var(--font-hand), cursive;
-  line-height: 0.9;
+  font-size: clamp(34px, 5.2vw, 66px);
+  line-height: 1.05;
+  opacity: 0;
+  animation: intro-say var(--gap) ease both;
+  animation-delay: calc(0.3s + var(--k) * var(--gap));
 }
-.intro-name {
-  bottom: 50%;
-  font-size: clamp(80px, 16cqw, 190px);
-  color: var(--ink);
-  rotate: -3deg;
+.intro-say-term {
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(22px, 3.2vw, 40px);
+  letter-spacing: -0.01em;
+  align-self: center;
 }
-.intro-line {
-  top: calc(50% + 18px);
-  font-size: clamp(22px, 3cqw, 32px);
+.intro-say-last {
   color: var(--thread);
+  animation-name: intro-say-last;
+  animation-fill-mode: both;
+}
+.intro-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.95em;
+  margin-left: 0.12em;
+  vertical-align: -0.12em;
+  background: currentColor;
+  animation: intro-blink 0.5s steps(1, end) infinite;
+}
+@keyframes intro-say {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  18%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+@keyframes intro-say-last {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  25%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes intro-blink {
+  50% {
+    opacity: 0;
+  }
 }
 
-.intro-threads {
+/* the thread: one loop per line, labels like notes along a seam */
+.intro-seam {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 58%;
+  width: min(92vw, 900px);
+  aspect-ratio: 1000 / 120;
+  transform: translate(-50%, -50%);
+  animation: intro-taut 0.3s cubic-bezier(0.6, 0, 0.3, 1) 3.95s both;
+}
+.intro-thread {
+  display: block;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  overflow: visible;
+}
+.intro-thread path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  animation: intro-draw 0.7s cubic-bezier(0.5, 0.1, 0.3, 1) both;
+  animation-delay: calc(0.4s + var(--k) * var(--gap));
+}
+.intro-thread .intro-tail {
+  animation: intro-draw 0.3s ease-in 3.9s both;
+}
+@keyframes intro-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* pulled taut: the loops flatten into the line */
+@keyframes intro-taut {
+  to {
+    transform: translate(-50%, -50%) scaleY(0.12);
+    opacity: 0.6;
+  }
+}
+.intro-mark {
+  position: absolute;
+  top: 68%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted);
+  opacity: 0;
+  animation: intro-mark 0.4s ease both;
+  animation-delay: calc(0.9s + var(--k) * var(--gap));
+}
+@keyframes intro-mark {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+.intro-skip {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  padding: 9px 14px 8px;
+  border: 1.4px solid rgba(74, 12, 24, 0.5);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.intro-skip:hover,
+.intro-skip:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  outline: none;
+}
+
+/* the hero settles in as the paper lifts, finishing just before it (the end of
+   the lift flips data-intro, which removes these rules) */
+html[data-intro="play"] .intro ~ .hero {
+  animation: intro-hero 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 4.15s backwards;
+}
+html[data-intro="play"] .intro[data-skip] ~ .hero {
+  animation: intro-hero-fast 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+@keyframes intro-hero {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes intro-hero-fast {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
 }
 
 @media (max-width: 720px) {
-  .intro-name {
-    font-size: clamp(72px, 24cqw, 120px);
+  .intro-story {
+    top: 40%;
   }
-  .intro-line {
-    font-size: 22px;
+  .intro-say {
+    font-size: clamp(30px, 8.6vw, 40px);
+  }
+  .intro-say-term {
+    font-size: clamp(18px, 5.4vw, 24px);
+  }
+  .intro-thread path {
+    stroke-width: 6;
+  }
+  .intro-mark {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+  }
+  .intro-skip {
+    right: 14px;
+    bottom: 14px;
   }
 }
