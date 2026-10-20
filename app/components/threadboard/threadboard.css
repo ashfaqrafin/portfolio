@@ -1,0 +1,1140 @@
+/* ── The Thread Board ─────────────────────────────────────────────────────
+   Burgundy ink on paper, a faint drafting grid, stitched dashes. Pins wear the
+   hero's four note skins. Everything inside the world is sized in board units
+   (`--u` = one board pixel), so the server-rendered board already fits its
+   container before any script runs; zoom and pan are a transform on top. */
+
+.tb {
+  --tb-card: #f8f3ea;
+  --tb-note: #fffaf0;
+  --tb-shadow: rgba(74, 12, 24, 0.32);
+  position: relative;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.2vw, 16px);
+}
+
+/* header */
+.tb-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tb-kicker {
+  margin: 0 0 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-title {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 46px);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.tb-sub {
+  margin: 0;
+  max-width: 30ch;
+  text-align: right;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(19px, 1.8vw, 25px);
+  line-height: 1.05;
+  color: var(--thread);
+}
+
+/* ── stage ──────────────────────────────────────────────────────────────── */
+.tb-stage {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: var(--bw) / var(--bh);
+  max-height: calc(var(--bh) * 1px);
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+.tb-stage::before {
+  /* soft vignette so the edges read as the board's frame */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(140, 47, 67, 0.08));
+}
+.tb-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  border: 1.6px solid var(--ink);
+  filter: url(#tb-rough-s);
+}
+.tb[data-dragging] .tb-stage,
+.tb-stage:active {
+  cursor: grabbing;
+}
+
+.tb-world {
+  --u: min(1px, calc(100cqw / var(--bw)));
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: max(0px, calc((100cqw - var(--bw) * var(--u)) / 2));
+  width: calc(var(--bw) * var(--u));
+  height: calc(var(--bh) * var(--u));
+  transform-origin: 0 0;
+}
+
+/* paper: lanes and the tape measure */
+.tb-paper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tb-lane {
+  position: absolute;
+  left: calc(10 * var(--u));
+  right: calc(10 * var(--u));
+  top: calc(var(--ly) * var(--u));
+  height: calc(var(--lh) * var(--u));
+  border-top: 1px dashed rgba(140, 47, 67, 0.2);
+}
+.tb-lane:nth-child(odd) {
+  background: rgba(140, 47, 67, 0.035);
+}
+.tb-lane:first-child {
+  border-top-color: transparent;
+}
+.tb-lane-no,
+.tb-lane-name,
+.tb-lane-annot {
+  position: absolute;
+  left: calc(12 * var(--u));
+  white-space: nowrap;
+}
+.tb-lane-no {
+  top: calc(50% - 30 * var(--u));
+  font-family: var(--font-mono), monospace;
+  font-size: calc(8.5 * var(--u));
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-lane-name {
+  top: calc(50% - 18 * var(--u));
+  font-family: var(--font-display), Georgia, serif;
+  font-size: calc(19 * var(--u));
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.tb-lane-annot {
+  top: calc(50% + 4 * var(--u));
+  font-family: var(--font-hand), cursive;
+  font-size: calc(18 * var(--u));
+  line-height: 1;
+  color: var(--thread);
+}
+
+.tb-tape {
+  position: absolute;
+  left: calc(10 * var(--u));
+  right: calc(10 * var(--u));
+  top: calc(var(--ay) * var(--u));
+  height: calc(30 * var(--u));
+  border: calc(1.4 * var(--u)) solid var(--ink);
+  border-left-width: calc(9 * var(--u));
+  border-radius: calc(2 * var(--u));
+  background:
+    repeating-linear-gradient(90deg, var(--ink) 0 calc(1 * var(--u)), transparent calc(1 * var(--u)) calc(10 * var(--u))) 0 0 / 100% calc(6 * var(--u)) no-repeat,
+    repeating-linear-gradient(90deg, var(--ink) 0 calc(1.2 * var(--u)), transparent calc(1.2 * var(--u)) calc(50 * var(--u))) 0 0 / 100% calc(10 * var(--u)) no-repeat,
+    var(--tb-note);
+  box-shadow: calc(2 * var(--u)) calc(3 * var(--u)) 0 rgba(140, 47, 67, 0.12);
+}
+.tb-tick {
+  position: absolute;
+  bottom: calc(3 * var(--u));
+  left: calc(var(--tx) * var(--u) - 10 * var(--u) - 9 * var(--u));
+  padding-left: calc(4 * var(--u));
+  border-left: calc(1.6 * var(--u)) solid var(--thread);
+  font-family: var(--font-mono), monospace;
+  font-size: calc(9 * var(--u));
+  line-height: calc(14 * var(--u));
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.tb-tick[data-major] {
+  font-weight: 700;
+  border-left-color: var(--ink);
+}
+.tb-tape-end {
+  position: absolute;
+  top: calc(100% + 6 * var(--u));
+  font-family: var(--font-hand), cursive;
+  font-size: calc(17 * var(--u));
+  line-height: 1;
+  color: var(--thread);
+}
+.tb-tape-old {
+  left: 0;
+}
+.tb-tape-new {
+  right: 0;
+}
+
+/* ── threads ────────────────────────────────────────────────────────────── */
+.tb-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.tb-back {
+  z-index: 1;
+}
+.tb-front {
+  z-index: 3;
+}
+.tb-thread,
+.tb-cap,
+.tb-headg {
+  transition: opacity 0.22s ease;
+}
+.tb-t,
+.tb-t-hi,
+.tb-cap path,
+.tb-dangle path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tb-t,
+.tb-cap path {
+  stroke: var(--thread);
+  stroke-width: 1.9;
+}
+.tb-t-hi {
+  stroke: var(--thread-hi);
+  stroke-width: 0.7;
+  transform: translate(-0.6px, -0.8px);
+  opacity: 0.85;
+}
+[data-kind="series"] > .tb-t,
+.tb-cap[data-kind="series"] path {
+  stroke: var(--ink);
+  stroke-width: 2.8;
+}
+[data-kind="series"] > .tb-t-hi {
+  stroke-width: 0.9;
+}
+[data-kind="topic"] > .tb-t,
+.tb-cap[data-kind="topic"] path {
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+.tb-thread[data-state="hot"] .tb-t,
+.tb-cap[data-state="hot"] path {
+  stroke: var(--ink);
+}
+.tb-thread[data-state="dim"],
+.tb-cap[data-state="dim"] {
+  opacity: 0.16;
+}
+.tb-thread[data-state="off"],
+.tb-cap[data-state="off"] {
+  opacity: 0.06;
+}
+.tb-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  pointer-events: stroke;
+  cursor: help;
+}
+.tb[data-dragging] .tb-hit {
+  pointer-events: none;
+}
+
+.tb-dangle path {
+  stroke: var(--thread);
+  stroke-width: 1.4;
+}
+.tb-dangle .tb-fray {
+  stroke-width: 0.9;
+}
+.tb-head {
+  fill: var(--ink);
+  stroke: var(--tb-note);
+  stroke-width: 0.9;
+}
+.tb-headg[data-loose] .tb-head {
+  fill: var(--tb-note);
+  stroke: var(--ink);
+  stroke-width: 1.7;
+}
+.tb-head-hi {
+  fill: var(--thread-hi);
+  opacity: 0.9;
+}
+.tb-headg[data-state="dim"] {
+  opacity: 0.3;
+}
+.tb-headg[data-state="off"] {
+  opacity: 0.12;
+}
+
+/* the stitch-in: each thread draws from the newer pin to the older, staggered by date */
+.tb-draw {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 0;
+}
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .tb[data-stitch="wait"] .tb-draw {
+    stroke-dashoffset: 1;
+  }
+  .tb[data-stitch="wait"] .tb-cap,
+  .tb[data-stitch="wait"] .tb-dangle {
+    opacity: 0;
+  }
+  .tb[data-stitch="go"] .tb-draw {
+    animation: tb-stitch 0.9s cubic-bezier(0.55, 0, 0.25, 1) both;
+    animation-delay: calc(var(--i) * 70ms);
+  }
+  .tb[data-stitch="go"] .tb-cap {
+    animation: tb-fade 0.35s ease both;
+    animation-delay: calc(var(--i) * 70ms + 0.55s);
+  }
+  .tb[data-stitch="go"] .tb-dangle {
+    animation: tb-fade 0.6s ease both;
+    animation-delay: 0.4s;
+  }
+}
+@keyframes tb-stitch {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes tb-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ── pins ───────────────────────────────────────────────────────────────── */
+.tb-pin {
+  position: absolute;
+  z-index: 2;
+  left: calc(var(--x) * var(--u));
+  top: calc(var(--y) * var(--u));
+  width: calc(var(--w) * var(--u));
+  height: calc(var(--h) * var(--u));
+  transform-origin: 50% calc(8 * var(--u));
+  transform: rotate(var(--rot));
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 0.22s ease;
+}
+.tb-pin:hover,
+.tb-pin:focus-visible,
+.tb-pin[data-state="active"] {
+  z-index: 4;
+  transform: rotate(0deg) translateY(calc(-2 * var(--u)));
+}
+.tb[data-dragging] .tb-pin {
+  transition: opacity 0.22s ease;
+}
+.tb-pin:focus-visible {
+  outline: none;
+}
+.tb-pin:focus-visible .tb-card {
+  outline: 2px solid var(--ink);
+  outline-offset: calc(5 * var(--u));
+}
+.tb-pin[data-state="dim"] {
+  opacity: 0.3;
+}
+.tb-pin[data-state="off"] {
+  opacity: 0.12;
+}
+.tb-pin[data-open] .tb-card {
+  outline: 2px solid var(--thread);
+  outline-offset: calc(5 * var(--u));
+}
+
+.tb-card {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(21 * var(--u)) calc(14 * var(--u)) calc(10 * var(--u));
+  background: var(--tb-note);
+  box-shadow:
+    calc(2 * var(--u)) calc(3 * var(--u)) 0 rgba(140, 47, 67, 0.1),
+    0 calc(10 * var(--u)) calc(18 * var(--u)) calc(-12 * var(--u)) var(--tb-shadow);
+  transition: box-shadow 0.25s ease;
+}
+.tb-pin:hover .tb-card,
+.tb-pin[data-state="active"] .tb-card {
+  box-shadow:
+    calc(3 * var(--u)) calc(5 * var(--u)) 0 rgba(140, 47, 67, 0.12),
+    0 calc(16 * var(--u)) calc(26 * var(--u)) calc(-12 * var(--u)) var(--tb-shadow);
+}
+.tb-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tb-deco {
+  position: absolute;
+  pointer-events: none;
+}
+.tb-pin-kicker {
+  position: relative;
+  font-family: var(--font-mono), monospace;
+  font-size: calc(9 * var(--u));
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tb-pin-title {
+  position: relative;
+  margin-top: calc(5 * var(--u));
+  font-family: var(--font-display), Georgia, serif;
+  font-size: calc(15.5 * var(--u));
+  line-height: 1.12;
+  min-height: 0;
+  flex: 0 1 auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-wrap: pretty;
+}
+.tb-pin[data-featured] .tb-pin-title {
+  font-size: calc(17.5 * var(--u));
+}
+.tb-pin-date {
+  position: relative;
+  flex: none;
+  margin-top: auto;
+  padding-top: calc(3 * var(--u));
+  font-family: var(--font-mono), monospace;
+  font-size: calc(8 * var(--u));
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-new {
+  position: absolute;
+  top: calc(-7 * var(--u));
+  right: calc(10 * var(--u));
+  padding: calc(2 * var(--u)) calc(6 * var(--u));
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-mono), monospace;
+  font-size: calc(7.5 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transform: rotate(3deg);
+}
+
+/* skin: tailoring, pattern paper with a tape-measure ruler */
+.tb-pin[data-topic="tailoring"] .tb-card {
+  background:
+    repeating-linear-gradient(135deg, rgba(140, 47, 67, 0.065) 0 1px, transparent 1px calc(8 * var(--u))),
+    var(--tb-card);
+}
+.tb-pin[data-topic="tailoring"] .tb-card::before {
+  border: calc(1.7 * var(--u)) dashed var(--thread);
+}
+.tb-pin[data-topic="tailoring"] .tb-card::after {
+  content: "";
+  position: absolute;
+  inset: calc(-5 * var(--u));
+  border: 1px dashed rgba(140, 47, 67, 0.4);
+  pointer-events: none;
+}
+.tb-pin[data-topic="tailoring"] .tb-deco {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(9 * var(--u));
+  opacity: 0.7;
+  background:
+    repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px calc(6 * var(--u))) top / 100% calc(5 * var(--u)) no-repeat,
+    repeating-linear-gradient(90deg, var(--ink) 0 1px, transparent 1px calc(24 * var(--u))) top / 100% calc(9 * var(--u)) no-repeat;
+}
+
+/* skin: fashion, a hang-tag; the pin goes through the punched hole */
+.tb-pin[data-topic="fashion"] .tb-card {
+  padding-top: calc(22 * var(--u));
+  border-radius: calc(3 * var(--u)) calc(3 * var(--u)) calc(15 * var(--u)) calc(15 * var(--u));
+}
+.tb-pin[data-topic="fashion"] .tb-card::before {
+  border: calc(1.8 * var(--u)) solid var(--ink);
+  border-radius: inherit;
+}
+.tb-pin[data-topic="fashion"] .tb-deco {
+  left: 50%;
+  top: calc(1 * var(--u));
+  width: calc(14 * var(--u));
+  height: calc(14 * var(--u));
+  margin-left: calc(-7 * var(--u));
+  border: calc(1.8 * var(--u)) solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+}
+
+/* skin: linux, a terminal window */
+.tb-pin[data-topic="linux"] .tb-card {
+  padding-top: calc(24 * var(--u));
+  border-radius: calc(7 * var(--u));
+  background: var(--term-bg);
+  color: var(--term-text);
+}
+.tb-pin[data-topic="linux"] .tb-card::before {
+  border: calc(1.8 * var(--u)) solid var(--burgundy);
+  border-radius: inherit;
+}
+.tb-pin[data-topic="linux"] .tb-deco {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(17 * var(--u));
+  border-radius: calc(7 * var(--u)) calc(7 * var(--u)) 0 0;
+  background: #4a0c18;
+  border-bottom: 1px solid rgba(243, 227, 223, 0.18);
+}
+.tb-pin[data-topic="linux"] .tb-deco::before {
+  content: "";
+  position: absolute;
+  left: calc(9 * var(--u));
+  top: calc(6 * var(--u));
+  width: calc(5 * var(--u));
+  height: calc(5 * var(--u));
+  border-radius: 50%;
+  background: #e0645c;
+  box-shadow:
+    calc(9 * var(--u)) 0 0 #e6b450,
+    calc(18 * var(--u)) 0 0 #7fb069;
+}
+.tb-pin[data-topic="linux"] .tb-pin-kicker,
+.tb-pin[data-topic="linux"] .tb-pin-date {
+  color: rgba(245, 230, 224, 0.62);
+}
+.tb-pin[data-topic="linux"] .tb-pin-title {
+  font-family: var(--font-mono), monospace;
+  font-size: calc(12 * var(--u));
+  font-weight: 700;
+  line-height: 1.28;
+}
+.tb-pin[data-topic="linux"][data-featured] .tb-pin-title {
+  font-size: calc(13 * var(--u));
+}
+.tb-prompt {
+  color: var(--term-prompt);
+}
+.tb-pin[data-topic="linux"] .tb-new {
+  background: var(--term-prompt);
+  color: var(--term-bg);
+}
+
+/* skin: unified, a stitched card with braces */
+.tb-pin[data-topic="unified"] .tb-card::before {
+  border: calc(1.7 * var(--u)) dashed var(--thread);
+  box-shadow:
+    inset 0 0 0 calc(4 * var(--u)) var(--tb-note),
+    inset 0 0 0 calc(5 * var(--u)) rgba(74, 12, 24, 0.55);
+}
+.tb-pin[data-topic="unified"] .tb-deco {
+  inset: 0;
+}
+.tb-pin[data-topic="unified"] .tb-deco::before,
+.tb-pin[data-topic="unified"] .tb-deco::after {
+  position: absolute;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: calc(34 * var(--u));
+  line-height: 1;
+  color: var(--thread);
+  opacity: 0.45;
+}
+.tb-pin[data-topic="unified"] .tb-deco::before {
+  content: "{";
+  left: calc(-8 * var(--u));
+  top: calc(16 * var(--u));
+}
+.tb-pin[data-topic="unified"] .tb-deco::after {
+  content: "}";
+  right: calc(-7 * var(--u));
+  bottom: calc(-8 * var(--u));
+}
+
+/* ── overlays: controls, hint, preview, thread label ────────────────────── */
+.tb-ctrl {
+  position: absolute;
+  z-index: 9;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  gap: 6px;
+}
+.tb-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  isolation: isolate;
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color 0.2s ease;
+}
+.tb-btn-word {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.tb-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.7px solid var(--ink);
+  border-radius: inherit;
+  background: var(--tb-card);
+  filter: url(#tb-rough-s);
+  transition: background 0.2s ease;
+  z-index: -1;
+}
+.tb-btn:hover {
+  color: var(--cream);
+}
+.tb-btn:hover::before {
+  background: var(--burgundy);
+}
+.tb-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.tb-hint {
+  display: none;
+  position: absolute;
+  z-index: 9;
+  right: 12px;
+  bottom: 10px;
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--tb-card);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.tb-hint[data-hidden] {
+  opacity: 0;
+}
+
+.tb-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  color: var(--thread);
+}
+
+.tb-preview {
+  position: absolute;
+  z-index: 10;
+  width: 280px;
+  padding: 12px 14px 12px;
+  background: var(--tb-note);
+  color: var(--ink);
+  border: 1.6px solid var(--ink);
+  border-radius: 4px;
+  box-shadow:
+    4px 5px 0 rgba(140, 47, 67, 0.14),
+    0 18px 30px -16px var(--tb-shadow);
+  pointer-events: none;
+  animation: tb-pop 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.tb-preview[data-topic="linux"] {
+  background: var(--term-bg);
+  color: var(--term-text);
+  border-color: var(--burgundy);
+}
+@keyframes tb-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.tb-pv-kicker,
+.tb-pv-cta,
+.tb-pv-rels dt {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-preview[data-topic="linux"] .tb-pv-kicker,
+.tb-preview[data-topic="linux"] .tb-pv-rels dt,
+.tb-preview[data-topic="linux"] .tb-pv-cta {
+  color: rgba(245, 230, 224, 0.6);
+}
+.tb-pv-title {
+  margin: 5px 0 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 19px;
+  line-height: 1.15;
+}
+.tb-pv-excerpt {
+  margin: 7px 0 0;
+  font-family: var(--font-read), Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.tb-pv-rels {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1.5px dashed rgba(140, 47, 67, 0.4);
+  display: grid;
+  gap: 5px;
+}
+.tb-pv-rels div {
+  display: grid;
+  gap: 1px;
+}
+.tb-pv-rels dd {
+  margin: 0;
+  font-family: var(--font-read), Georgia, serif;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.tb-pv-loose {
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1.5px dashed rgba(140, 47, 67, 0.4);
+  font-family: var(--font-hand), cursive;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--thread);
+}
+.tb-preview[data-topic="linux"] .tb-pv-loose {
+  color: var(--term-prompt);
+}
+.tb-pv-cta {
+  margin-top: 10px;
+  text-align: right;
+  color: var(--thread);
+}
+
+.tb-tlabel {
+  position: absolute;
+  z-index: 10;
+  max-width: 280px;
+  display: grid;
+  gap: 2px;
+  padding: 7px 10px;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--cream);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  transform: translate(14px, 12px);
+  pointer-events: none;
+}
+.tb-tlabel em {
+  font-family: var(--font-hand), cursive;
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--thread-hi);
+}
+
+/* ── bar: filters, search, view toggle, legend ──────────────────────────── */
+.tb-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.tb-chips,
+.tb-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tb-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  isolation: isolate;
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: color 0.2s ease;
+}
+.tb-chip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1.6px solid var(--ink);
+  border-radius: inherit;
+  filter: url(#tb-rough-s);
+  transition: background 0.2s ease;
+}
+.tb-chip:hover::before {
+  background: rgba(140, 47, 67, 0.1);
+}
+.tb-chip[aria-pressed="true"] {
+  color: var(--cream);
+}
+.tb-chip[aria-pressed="true"]::before {
+  background: var(--burgundy);
+}
+.tb-chip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.tb-chip-n {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+.tb-chip[data-topic="loose"]::before {
+  border-style: dashed;
+}
+.tb-views {
+  padding-left: 14px;
+  border-left: 1.5px dashed rgba(140, 47, 67, 0.4);
+}
+
+.tb-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  margin-left: auto;
+  padding: 0 14px;
+  border: 1.6px dashed var(--thread);
+  border-radius: 999px;
+  color: var(--thread);
+  background: var(--tb-note);
+}
+.tb-search:focus-within {
+  border-style: solid;
+  border-color: var(--ink);
+}
+.tb-search input {
+  width: 190px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+}
+.tb-search input::placeholder {
+  color: var(--muted);
+}
+
+.tb-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tb-legend svg {
+  width: 34px;
+  height: 10px;
+  overflow: visible;
+  fill: none;
+  stroke-linecap: round;
+}
+.lg-series {
+  stroke: var(--ink);
+  stroke-width: 2.8;
+}
+.lg-builds {
+  stroke: var(--thread);
+  stroke-width: 1.9;
+}
+.lg-topic {
+  stroke: var(--thread);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+.lg-loose {
+  stroke: var(--thread);
+  stroke-width: 1.4;
+}
+
+.tb-note {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 19px;
+  color: var(--thread);
+}
+
+/* ── list view ──────────────────────────────────────────────────────────── */
+.tb-list {
+  display: none;
+}
+.tb[data-view="list"] .tb-stage {
+  display: none;
+}
+.tb[data-view="list"] .tb-list,
+.tb-list:target {
+  display: grid;
+  gap: 22px;
+  padding: 6px 2px 4px;
+}
+.tb-month-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 6px;
+  font-family: var(--font-hand), cursive;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--thread);
+}
+.tb-month-h::after {
+  content: "";
+  flex: 1;
+  border-top: 1.6px dashed rgba(140, 47, 67, 0.38);
+}
+.tb-month ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.tb-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px 12px 13px;
+  border-radius: 4px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 0.18s ease;
+}
+.tb-row:hover {
+  background: rgba(140, 47, 67, 0.07);
+}
+.tb-row:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.tb-row-swatch {
+  width: 22px;
+  height: 28px;
+  margin-top: 3px;
+  background: var(--tb-note);
+  border: 1.6px dashed var(--thread);
+}
+.tb-row[data-topic="fashion"] .tb-row-swatch {
+  border: 1.6px solid var(--ink);
+  border-radius: 2px 2px 8px 8px;
+  background: radial-gradient(circle at 50% 6px, var(--ink) 0 2px, transparent 2.5px), var(--tb-note);
+}
+.tb-row[data-topic="linux"] .tb-row-swatch {
+  border: 1.6px solid var(--burgundy);
+  border-radius: 3px;
+  background: linear-gradient(#4a0c18 0 6px, var(--term-bg) 6px);
+}
+.tb-row[data-topic="unified"] .tb-row-swatch {
+  box-shadow: inset 0 0 0 2px var(--tb-note), inset 0 0 0 3px var(--ink);
+}
+.tb-row-main {
+  display: grid;
+  gap: 3px;
+}
+.tb-row-kicker,
+.tb-row-rels {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tb-row-title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.12;
+}
+.tb-row:hover .tb-row-title {
+  text-decoration: underline dashed var(--thread) 1.5px;
+  text-underline-offset: 5px;
+}
+.tb-row-excerpt {
+  max-width: 70ch;
+  font-family: var(--font-read), Georgia, serif;
+  font-style: italic;
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+.tb-row-rels {
+  margin-top: 2px;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+.tb-empty-list {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  color: var(--thread);
+}
+
+/* ── touch and small screens ───────────────────────────────────────────── */
+@media (hover: none) {
+  .tb-hint {
+    display: block;
+  }
+  .tb-preview,
+  .tb-tlabel {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .tb-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .tb-sub {
+    text-align: left;
+    font-size: 20px;
+  }
+  .tb-stage {
+    aspect-ratio: auto;
+    max-height: none;
+    height: calc(var(--bh) * 0.6px);
+  }
+  /* a readable fixed scale, opened on the newest pins */
+  .tb-world {
+    --u: 0.6px;
+    left: calc(100cqw - var(--bw) * var(--u));
+  }
+  .tb-hint {
+    display: block;
+  }
+  .tb-search {
+    margin-left: 0;
+    width: 100%;
+  }
+  .tb-search input {
+    width: 100%;
+  }
+  .tb-views {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .tb-chip {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-pin,
+  .tb-card,
+  .tb-thread,
+  .tb-cap,
+  .tb-headg {
+    transition: none;
+  }
+  .tb-preview {
+    animation: none;
+  }
+}

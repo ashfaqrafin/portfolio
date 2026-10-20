@@ -1,0 +1,221 @@
+/* ── Article typography (full page and quick read) ─────────────────────── */
+
+.md {
+  font-family: var(--font-read), Georgia, serif;
+  font-size: clamp(17.5px, 1.25vw, 19.5px);
+  line-height: 1.68;
+  color: inherit;
+  overflow-wrap: break-word;
+  hanging-punctuation: first;
+  text-wrap: pretty;
+}
+.md > * {
+  margin: 0;
+}
+.md > * + * {
+  margin-top: 1.05em;
+}
+.md h2,
+.md h3,
+.md h4 {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.md h2 {
+  margin-top: 1.9em;
+  font-size: 1.62em;
+}
+.md h2::before {
+  content: "";
+  display: block;
+  width: 46px;
+  margin-bottom: 0.55em;
+  border-top: 2px dashed var(--thread);
+}
+.md h3 {
+  margin-top: 1.5em;
+  font-size: 1.28em;
+}
+.md h2 + *,
+.md h3 + * {
+  margin-top: 0.55em;
+}
+.md a {
+  color: inherit;
+  text-decoration: underline dashed var(--thread) 1.5px;
+  text-underline-offset: 4px;
+  transition: background 0.2s ease;
+}
+.md a:hover {
+  background: rgba(140, 47, 67, 0.1);
+  text-decoration-style: solid;
+}
+.md strong {
+  font-weight: 650;
+}
+.md em {
+  font-style: italic;
+}
+.md ul,
+.md ol {
+  padding-left: 1.35em;
+}
+.md li + li {
+  margin-top: 0.35em;
+}
+.md ul li::marker {
+  content: "\2014  ";
+  color: var(--thread);
+}
+.md ol li::marker {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8em;
+  color: var(--thread);
+}
+.md blockquote {
+  position: relative;
+  padding: 0.9em 1.1em 0.9em 1.3em;
+  background:
+    repeating-linear-gradient(135deg, rgba(140, 47, 67, 0.05) 0 1px, transparent 1px 8px),
+    rgba(255, 250, 240, 0.7);
+  border-left: 3px solid var(--ink);
+  font-style: italic;
+}
+.md blockquote::after {
+  content: "";
+  position: absolute;
+  inset: -1px -1px -1px 2px;
+  border: 1.5px dashed rgba(140, 47, 67, 0.4);
+  border-left: 0;
+  pointer-events: none;
+}
+.md blockquote > * {
+  margin: 0;
+}
+.md blockquote > * + * {
+  margin-top: 0.7em;
+}
+.md hr {
+  height: 18px;
+  margin: 2em 0;
+  border: 0;
+  background:
+    linear-gradient(var(--thread), var(--thread)) center / 100% 0 no-repeat,
+    repeating-linear-gradient(90deg, var(--thread) 0 8px, transparent 8px 14px) center / 100% 1.6px no-repeat;
+  position: relative;
+}
+.md hr::after {
+  content: "\2702";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -54%);
+  padding: 0 8px;
+  background: var(--md-bg, var(--paper));
+  color: var(--thread);
+  font-size: 18px;
+  line-height: 1;
+}
+.md :not(pre) > code {
+  padding: 0.08em 0.4em 0.12em;
+  border-radius: 3px;
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.8em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.md-code {
+  margin-left: 0;
+  margin-right: 0;
+  border-radius: 8px;
+  background: var(--term-bg);
+  color: var(--term-text);
+  box-shadow:
+    0 0 0 1.6px var(--burgundy),
+    4px 5px 0 rgba(140, 47, 67, 0.14);
+  overflow: hidden;
+}
+.md-code figcaption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 12px;
+  background: #4a0c18;
+  border-bottom: 1px solid rgba(243, 227, 223, 0.18);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: rgba(245, 230, 224, 0.62);
+}
+.md-dots {
+  width: 8px;
+  height: 8px;
+  margin-right: 26px;
+  border-radius: 50%;
+  background: #e0645c;
+  box-shadow:
+    13px 0 0 #e6b450,
+    26px 0 0 #7fb069;
+}
+.md-code pre {
+  margin: 0;
+  padding: 14px 16px 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono), monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+.md-code code {
+  font-family: inherit;
+}
+.md-table {
+  overflow-x: auto;
+}
+.md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88em;
+  line-height: 1.45;
+}
+.md th {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72em;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 2px solid var(--ink);
+}
+.md th,
+.md td {
+  padding: 0.5em 0.8em 0.5em 0;
+  vertical-align: top;
+}
+.md td {
+  border-bottom: 1.4px dashed rgba(140, 47, 67, 0.35);
+}
+.md img {
+  max-width: 100%;
+  height: auto;
+  border: 1.6px solid var(--ink);
+}
+
+/* the quick read inside a terminal popup */
+.tbr-sheet[data-topic="linux"] .md :not(pre) > code {
+  background: rgba(243, 227, 223, 0.12);
+}
+.tbr-sheet[data-topic="linux"] .md blockquote {
+  background: rgba(243, 227, 223, 0.06);
+  border-left-color: var(--term-prompt);
+}
+.tbr-sheet[data-topic="linux"] .md a {
+  text-decoration-color: var(--term-prompt);
+}

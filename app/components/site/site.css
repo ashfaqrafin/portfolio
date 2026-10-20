@@ -1,0 +1,170 @@
+/* ── Site chrome shared by the blog pages ─────────────────────────────── */
+
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 1.6vw, 18px);
+  padding: clamp(12px, 2vw, 26px) clamp(12px, 2.4vw, 32px) clamp(24px, 4vw, 56px);
+}
+
+.site-masthead {
+  position: relative;
+  z-index: 1;
+  width: min(1240px, 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+}
+.site-mark {
+  position: relative;
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1;
+  color: var(--burgundy);
+  text-decoration: none;
+}
+.site-mark svg {
+  position: absolute;
+  left: -2px;
+  bottom: -7px;
+  width: calc(100% + 6px);
+  height: 8px;
+  overflow: visible;
+}
+.site-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.site-annot {
+  font-family: var(--font-hand), cursive;
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--thread);
+}
+.site-nav {
+  display: flex;
+  gap: 14px;
+}
+.site-nav a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1.5px dashed transparent;
+}
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  border-bottom-color: var(--thread);
+}
+
+/* the paper card everything sits on: a doubled, wobbly outline like the hero's */
+.sheet {
+  position: relative;
+  width: min(1240px, 100%);
+  padding: clamp(14px, 1.8vw, 24px);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 rgba(255, 250, 240, 0.8) inset,
+    5px 7px 0 -1px rgba(140, 47, 67, 0.12),
+    0 14px 30px -12px rgba(74, 12, 24, 0.35);
+}
+.sheet::before,
+.sheet::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 6px;
+}
+.sheet::before {
+  inset: 0;
+  border: 2px solid var(--ink);
+  filter: url(#tb-rough-a);
+}
+.sheet::after {
+  inset: -5px -3px 4px 4px;
+  border: 1.2px solid var(--burgundy);
+  opacity: 0.6;
+  filter: url(#tb-rough-b);
+}
+
+/* home: the board follows the hero */
+.home-blog {
+  display: flex;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 24px) clamp(12px, 2.4vw, 32px) clamp(28px, 5vw, 72px);
+  scroll-margin-top: 16px;
+}
+.home-blog-lead {
+  margin: 0 0 4px;
+  font-family: var(--font-hand), cursive;
+  font-size: 22px;
+  color: var(--thread);
+}
+
+@media (max-width: 720px) {
+  .site-meta {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+  }
+  .site-annot {
+    display: none;
+  }
+  .sheet {
+    padding: 12px;
+  }
+}
+
+/* 404 */
+.nf {
+  width: min(720px, 100%);
+  padding: clamp(28px, 5vw, 56px);
+}
+.nf-kicker {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nf-title {
+  margin: 12px 0 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(32px, 5vw, 52px);
+  line-height: 1.04;
+}
+.nf-sub {
+  margin: 12px 0 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 25px;
+  line-height: 1.1;
+  color: var(--thread);
+}
+.nf-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 26px 0 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.nf-links a {
+  color: var(--ink);
+  text-decoration: underline dashed var(--thread) 1.5px;
+  text-underline-offset: 5px;
+}

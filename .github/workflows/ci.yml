@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # every server action must begin with `await requireOwner()`
+      - run: npm run check:guards
+      # the owner rule fails closed
+      - run: npm run test:rule
+      - run: npm run test:unit
+      - run: npm run lint
+      - run: npm run typecheck
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: checks
+    env:
+      # throwaway values for this run only; never the production secret
+      OWNER_GITHUB_ID: "1234567"
+      AUTH_TRUST_HOST: "true"
+      BASE_URL: http://localhost:3000
+      CHROMIUM_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: echo "AUTH_SECRET=$(openssl rand -base64 33)" >> "$GITHUB_ENV"
+      - run: npm run build
+      - run: |
+          npm start &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:3000/blog && break; sleep 1; done
+          npm run test:e2e
