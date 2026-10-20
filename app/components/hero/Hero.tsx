@@ -8,6 +8,22 @@ import "./hero.css";
 // start fetching the engine (three.js) as soon as this module runs, while React is
 // still hydrating, rather than after the first effect
 const loadEngine = typeof window === "undefined" ? null : import("./engine");
+/** Resolves once the home page's intro (app/components/intro) has finished, or
+   at once if it isn't playing. The engine's set-up is ~0.45 s of main-thread
+   work, which would stutter the intro's threads; the poster shows the same
+   first frame meanwhile. */
+function introDone(): Promise<void> {
+  const html = document.documentElement;
+  if (html.dataset.intro !== "play") return Promise.resolve();
+  return new Promise((resolve) => {
+    const mo = new MutationObserver(() => {
+      if (html.dataset.intro === "play") return;
+      mo.disconnect();
+      resolve();
+    });
+    mo.observe(html, { attributes: true, attributeFilter: ["data-intro"] });
+  });
+}
 const POSTER_ART = ["/hero/avatar-1.webp", "/hero/patterns.webp"];
 
 /** Quote → per-character spans, grouped in word wrappers so lines wrap between words only. */
@@ -72,8 +88,8 @@ export default function Hero() {
     if (!root) return;
     let cancelled = false;
     let dispose: (() => void) | null = null;
-    (loadEngine ?? import("./engine"))
-      .then(({ createEngine }) => createEngine(root, () => cancelled))
+    Promise.all([loadEngine ?? import("./engine"), introDone()])
+      .then(([{ createEngine }]) => createEngine(root, () => cancelled))
       .then((engine) => {
         if (cancelled) engine.dispose();
         else dispose = () => engine.dispose();

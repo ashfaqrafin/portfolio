@@ -658,9 +658,7 @@ export async function createEngine(
         setPlaying(resume);
       }
       dirty = true;
-    } else if (playing && document.documentElement.dataset.intro !== "play") {
-      // the clock waits while the home page's intro (app/components/intro) still
-      // covers the hero, so the first stage gets its full hold once revealed
+    } else if (playing) {
       t += dt;
       dirty = true;
     }
