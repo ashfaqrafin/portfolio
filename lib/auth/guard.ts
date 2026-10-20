@@ -1,4 +1,5 @@
 import "server-only";
+import { connection } from "next/server";
 import { auth } from "@/auth";
 
 /* Gates 2 and 3. Call `isOwner()` at the top of every studio page and
@@ -7,6 +8,9 @@ import { auth } from "@/auth";
    scripts/check-owner-guards.mjs fails CI when an action skips it. */
 
 export async function isOwner(): Promise<boolean> {
+  // request time only: Auth.js makes random values (a CSRF token) while reading the
+  // session, which Next refuses inside a prerender such as a per-session prefetch
+  await connection();
   try {
     const session = await auth();
     return session?.user?.isOwner === true;

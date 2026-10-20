@@ -604,3 +604,106 @@
     margin: 0 14px 0 0;
   }
 }
+
+/* import */
+.st-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.st-import {
+  display: grid;
+  gap: 22px;
+}
+.st-import-form {
+  display: grid;
+  gap: 16px;
+}
+.st-drop {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 20px;
+  border: 2px dashed var(--thread);
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(135deg, rgba(140, 47, 67, 0.05) 0 1px, transparent 1px 9px),
+    #fffaf0;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+.st-drop:hover,
+.st-drop[data-drag] {
+  border-color: var(--ink);
+  background-color: rgba(140, 47, 67, 0.08);
+}
+.st-drop:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.st-drop-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.st-drop-title {
+  font-family: var(--font-hand), cursive;
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--thread);
+}
+.st-drop-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+}
+.st-drop-list span {
+  color: var(--muted);
+}
+.st-file {
+  font-family: var(--font-mono), monospace;
+  font-size: 14px;
+}
+.st-badge[data-outcome="created"],
+.st-badge[data-outcome="updated"] {
+  background: var(--burgundy);
+  color: var(--cream);
+}
+.st-badge[data-outcome="skipped"] {
+  border: 1.5px dashed var(--thread);
+  color: var(--thread);
+}
+.st-badge[data-outcome="error"] {
+  border: 1.5px solid #a3202f;
+  color: #a3202f;
+}
+.st-result-msg {
+  margin-top: 4px;
+  max-width: 52ch;
+}
+.st-example summary {
+  cursor: pointer;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--thread);
+}
+.st-example pre {
+  margin: 10px 0 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  border-radius: 6px;
+  background: var(--term-bg);
+  color: var(--term-text);
+  font-family: var(--font-mono), monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+}

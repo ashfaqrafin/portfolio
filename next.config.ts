@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   // allow opening the dev server from other devices on the LAN (phone, other machine)
   allowedDevOrigins: ["192.168.1.2", "192.168.*.*", "*.local"],
+  // no Next.js badge on the page in development
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

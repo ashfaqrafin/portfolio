@@ -333,15 +333,79 @@ await check("replay", "control: the same replay with the owner session does writ
   assert((await studioSlugs()).includes(CONTROL), `the owner replay did not write (status ${res.status}), so the denials above prove nothing`);
 });
 
+// ── uploads ────────────────────────────────────────────────────────────────
+const IMPORT_SLUG = `e2e-import-${RUN}`;
+// Chromium doesn't expose request bodies that contain files, so record the upload
+// inside the page: wrap fetch and serialise the action's FormData exactly as sent.
+let importRequest = null;
+const recordUploads = () =>
+  op.evaluate(() => {
+    const orig = window.fetch;
+    window.fetch = async function (input, init) {
+      try {
+        const h = new Headers(init?.headers);
+        if (init?.method === "POST" && h.get("next-action") && init.body instanceof FormData) {
+          const r = new Response(init.body);
+          const bytes = new Uint8Array(await r.arrayBuffer());
+          let bin = "";
+          for (const x of bytes) bin += String.fromCharCode(x);
+          window.__upload = { headers: Object.fromEntries(h), type: r.headers.get("content-type"), body: btoa(bin) };
+        }
+      } catch {}
+      return orig.call(this, input, init);
+    };
+  });
+
+await check("owner", "uploading a .md file creates a draft that stays private", async () => {
+  await op.goto(BASE + "/studio/import", { waitUntil: "networkidle" });
+  await op.setInputFiles('input[type="file"][name="files"]', {
+    name: `${IMPORT_SLUG}.md`,
+    mimeType: "text/markdown",
+    buffer: Buffer.from(`---\ntopic: linux\ntags: [e2e]\n---\n# Imported ${RUN}\n\nFirst paragraph.\n\nSecond paragraph.\n`),
+  });
+  await recordUploads();
+  await op.click('button[type="submit"].st-primary');
+  await op.waitForSelector(`tr[data-slug="${IMPORT_SLUG}"][data-outcome="created"]`, { timeout: 15_000 });
+  importRequest = await op.evaluate(() => window.__upload ?? null);
+  assert((await studioSlugs()).includes(IMPORT_SLUG), "not in the store");
+  assert((await get(`/blog/${IMPORT_SLUG}`)).status === 404, "an imported draft is public");
+});
+
+const IMPORT_CONTROL = `e2e-import-replay-control-${RUN}`;
+for (const [who, token, control] of [
+  ["no cookie", null, false],
+  ["a stranger's session", tokens.stranger, false],
+  ["the owner session (control)", tokens.owner, true],
+]) {
+  await check("replay", control ? "control: the same upload replay with the owner session does write" : `the upload replayed with ${who} writes nothing`, async () => {
+    assert(importRequest, "the owner's upload request was not captured");
+    const slug = control ? IMPORT_CONTROL : `e2e-import-replay-${who.replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "")}-${RUN}`;
+    const headers = { ...importRequest.headers, "content-type": importRequest.type, origin: BASE };
+    const body = Buffer.from(importRequest.body, "base64").toString("latin1").split(IMPORT_SLUG).join(slug);
+    const res = await fetch(BASE + "/blog", {
+      method: "POST",
+      redirect: "manual",
+      headers: { ...headers, ...(token ? { cookie: `${COOKIE}=${token}` } : {}) },
+      body: Buffer.from(body, "latin1"),
+    });
+    await res.text();
+    const written = (await studioSlugs()).includes(slug);
+    if (control) assert(written, `the owner replay did not write (status ${res.status}), so the denials above prove nothing`);
+    else assert(!written, "the upload was written!");
+  });
+}
+
 await check("owner", "deleting removes the article and its pin", async () => {
-  for (const slug of [NEW_SLUG, CONTROL]) {
-    await op.goto(BASE + "/studio", { waitUntil: "networkidle" });
-    const btn = await op.$(`tr[data-slug="${slug}"] button.st-danger`);
+  for (const slug of [NEW_SLUG, CONTROL, IMPORT_SLUG, IMPORT_CONTROL]) {
+    // not "networkidle": after a write, Next keeps background prefetches of the
+    // regenerating pages open, which never lets the network go idle
+    await op.goto(BASE + "/studio", { waitUntil: "load" });
+    const btn = await op.waitForSelector(`tr[data-slug="${slug}"] button.st-danger`, { timeout: 10_000 }).catch(() => null);
     assert(btn, `no delete button for ${slug}`);
     await Promise.all([op.waitForURL(/\/studio\?deleted=1/, { timeout: 15_000 }), btn.click()]);
   }
   const slugs = await studioSlugs();
-  assert(!slugs.includes(NEW_SLUG) && !slugs.includes(CONTROL), "still in the store");
+  for (const s of [NEW_SLUG, CONTROL, IMPORT_SLUG, IMPORT_CONTROL]) assert(!slugs.includes(s), `${s} still in the store`);
   assert(!(await (await get("/blog")).text()).includes(`data-slug="${NEW_SLUG}"`), "pin still on the board");
   assert((await get(`/blog/${NEW_SLUG}`)).status === 404, "article page still served");
 });

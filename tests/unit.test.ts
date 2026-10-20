@@ -91,3 +91,37 @@ test("the schema rejects path tricks, bad dates and HTML-ish slugs", () => {
   assert.equal(articleSchema.safeParse({ ...base, extra: 1 }).success, false);
   assert.equal(articleSchema.safeParse({ ...base, tags: ["UPPER"] }).success, false);
 });
+
+test("import: frontmatter optional, title from the first heading, slug from the file name", async () => {
+  const { parseImport } = await import("../lib/blog/import.ts");
+  const d = { topic: "linux", status: "draft", today: "2026-10-20" } as const;
+  const r = parseImport("My First Post.md", "# Hello there\n\nFirst para.\n\nSecond para.", d);
+  assert.ok(r.ok, JSON.stringify(r));
+  if (!r.ok) return;
+  assert.equal(r.article.slug, "my-first-post");
+  assert.equal(r.article.title, "Hello there");
+  assert.equal(r.article.body.startsWith("First para."), true);
+  assert.deepEqual([r.article.topic, r.article.status, r.article.date, r.article.readMins], ["linux", "draft", "2026-10-20", 1]);
+
+  const f = parseImport("x.md", '---\ntitle: "T"\ntopic: fashion\nstatus: published\ntags: "A, b"\nconnectsTo: [other-piece]\nmood: sunny\n---\nBody', d);
+  assert.ok(f.ok);
+  if (!f.ok) return;
+  assert.deepEqual([f.article.topic, f.article.status, f.article.tags, f.article.connectsTo[0]], ["fashion", "published", ["a", "b"], { slug: "other-piece", kind: "builds-on" }]);
+  assert.deepEqual(f.ignored, ["mood"]);
+});
+
+test("import: invalid files are rejected with a reason", async () => {
+  const { parseImport } = await import("../lib/blog/import.ts");
+  const d = { topic: "linux", status: "draft", today: "2026-10-20" } as const;
+  for (const [name, text] of [
+    ["no-title.md", "just text"],
+    ["bad.md", "---\ntitle: T\ntopic: cooking\n---\nx"],
+    ["bad.md", "---\ntitle: T\ndate: 2026-02-30\n---\nx"],
+    ["bad.md", "---\n: : :\n---\nx"],
+    ["!!!.md", "# T\n\nx"],
+    ["evil.md", "---\ntitle: T\nslug: ../../etc/passwd\n---\nx"],
+  ]) {
+    const r = parseImport(name, text, d);
+    assert.equal(r.ok, false, `${name}: ${text}`);
+  }
+});

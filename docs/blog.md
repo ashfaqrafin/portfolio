@@ -9,7 +9,7 @@ Articles are pins on a thread board. Related pieces are tied together by threads
 | `/` (below the hero) and `/blog` | The board. It also has a list view, and it works without JavaScript because every pin is a real link |
 | `/blog/<slug>` | The full article. A direct visit, a refresh or a shared link always shows the full page |
 | `app/@modal/(.)blog/[slug]` | The quick-read popup. It only appears when you click a pin inside the app |
-| `/signin`, `/studio`, `/studio/new`, `/studio/<slug>` | Owner-only publishing. The public site never links here |
+| `/signin`, `/studio`, `/studio/new`, `/studio/import`, `/studio/<slug>` | Owner-only publishing. The public site never links here |
 | `lib/blog/` | Framework-agnostic rules: thread graph (`graph.ts`), deterministic layout (`layout.ts`), quick read, schema |
 | `app/components/threadboard/` | The board, the reader popup and Markdown rendering (plain CSS under `.tb` and `.tbr`) |
 | `lib/store/` | Storage behind one `ArticleStore` interface. `index.ts` picks Postgres when `DATABASE_URL` is set and the Markdown files in `content/articles/` otherwise |
@@ -27,6 +27,11 @@ The studio's **Thread preview** applies these same rules while you type.
 ## Writing
 
 - **In the studio** (works in production): sign in at `/studio`, write in Markdown, tick the explicit threads, choose Draft or Published, then save. Saving refreshes the board and the article page straight away.
+- **By upload** (works in production): `/studio/import` takes up to 10 `.md` files at once. Frontmatter is optional:
+  - The slug comes from the file name and the title from the first `# heading`.
+  - The topic and status you pick on the form fill in anything missing; the status defaults to Draft so you can review first.
+  - Existing slugs are skipped unless you tick "replace".
+  - Each file goes through the same validation as the editor, and the page reports what happened to each one.
 - **As files** (local development only): add `content/articles/<slug>.md` with frontmatter like the existing files. The dev server caches reads, so restart it after editing a file by hand.
 - **Quick read:** everything before a line containing only `<!--more-->`, or the first two paragraphs if there is no marker.
 - **No raw HTML:** it is ignored, and unsafe link schemes are stripped.
@@ -55,7 +60,7 @@ npm run test:rule        # the owner rule fails closed
 npm run test:unit        # graph, layout, quick read, schema
 npm run build
 npm start &              # a production build, in another shell:
-npm run test:e2e         # 29 checks: reading flow, drafts, access, owner flow, replay attacks
+npm run test:e2e         # 33 checks: reading flow, drafts, access, owner flow, uploads, replay attacks
 ```
 
 `test:e2e` reads `AUTH_SECRET` and `OWNER_GITHUB_ID` from `.env.local` (or the environment) and mints fresh session cookies through `scripts/mint-session.mjs`. Set `BASE_URL` if the server isn't on port 3000, and `DATABASE_URL` when the server runs on Postgres.

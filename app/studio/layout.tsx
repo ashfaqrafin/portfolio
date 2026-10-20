@@ -21,6 +21,7 @@ export default function StudioLayout({ children }: LayoutProps<"/studio">) {
         <nav className="st-nav" aria-label="Studio">
           <Link href="/studio">Articles</Link>
           <Link href="/studio/new">New article</Link>
+          <Link href="/studio/import">Import .md</Link>
           <Link href="/blog">View the board</Link>
           <form action={signOutAction}>
             <button type="submit" className="st-link">

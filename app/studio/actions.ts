@@ -6,7 +6,9 @@ import { z } from "zod";
 import { signOut } from "@/auth";
 import { requireOwner } from "@/lib/auth/guard";
 import { ARTICLES_TAG } from "@/lib/blog/data";
+import { IMPORT_MAX_BYTES, IMPORT_MAX_FILES, parseImport } from "@/lib/blog/import";
 import { articleSchema, slugSchema } from "@/lib/blog/schema";
+import { isTopic } from "@/lib/blog/topics";
 import type { Article } from "@/lib/blog/types";
 import { store } from "@/lib/store";
 
@@ -84,6 +86,77 @@ export async function saveArticle(_prev: SaveState, formData: FormData): Promise
   await store.upsert(article);
   refresh(article.slug);
   redirect(`/studio?saved=${article.slug}`);
+}
+
+export type ImportResult = {
+  file: string;
+  slug?: string;
+  outcome: "created" | "updated" | "skipped" | "error";
+  message?: string;
+  status?: Article["status"];
+};
+export type ImportState = { results: ImportResult[]; error?: string } | null;
+
+/** Upload one or more Markdown files. Each goes through the same schema and thread
+    checks as the editor; existing slugs are skipped unless "replace" is ticked. */
+export async function importArticles(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  await requireOwner();
+
+  const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) return { results: [], error: "Choose at least one Markdown file." };
+  if (files.length > IMPORT_MAX_FILES) return { results: [], error: `At most ${IMPORT_MAX_FILES} files at a time.` };
+  const topicRaw = formData.get("topic");
+  const defaults = {
+    topic: isTopic(topicRaw) ? topicRaw : "unified",
+    status: formData.get("status") === "published" ? "published" : "draft",
+    today: new Date().toISOString().slice(0, 10),
+  } as const;
+  const overwrite = formData.get("overwrite") === "on";
+
+  const results: ImportResult[] = [];
+  const ready: { file: string; article: Article; note?: string }[] = [];
+  const inBatch = new Set<string>();
+  for (const f of files) {
+    if (!/\.(md|markdown)$/i.test(f.name)) {
+      results.push({ file: f.name, outcome: "error", message: "Only .md or .markdown files." });
+      continue;
+    }
+    if (f.size > IMPORT_MAX_BYTES) {
+      results.push({ file: f.name, outcome: "error", message: "Larger than 200 KB." });
+      continue;
+    }
+    const parsed = parseImport(f.name, await f.text(), defaults);
+    if (!parsed.ok) {
+      results.push({ file: f.name, slug: parsed.slug, outcome: "error", message: parsed.error });
+      continue;
+    }
+    if (inBatch.has(parsed.article.slug)) {
+      results.push({ file: f.name, slug: parsed.article.slug, outcome: "error", message: "Another file in this upload has the same slug." });
+      continue;
+    }
+    inBatch.add(parsed.article.slug);
+    ready.push({ file: f.name, article: parsed.article, note: parsed.ignored.length ? `Ignored: ${parsed.ignored.join(", ")}` : undefined });
+  }
+
+  // threads may point at existing articles or at other files in this upload, never at themselves
+  const existing = new Set((await store.list({ includeDrafts: true })).map((a) => a.slug));
+  const known = new Set([...existing, ...inBatch]);
+  for (const { file, article, note } of ready) {
+    const bad = article.connectsTo.filter((c) => c.slug === article.slug || !known.has(c.slug)).map((c) => c.slug);
+    if (bad.length) {
+      results.push({ file, slug: article.slug, outcome: "error", message: `Unknown or self thread: ${bad.join(", ")}` });
+      continue;
+    }
+    const exists = existing.has(article.slug);
+    if (exists && !overwrite) {
+      results.push({ file, slug: article.slug, outcome: "skipped", message: "Already exists. Tick “replace” to overwrite it." });
+      continue;
+    }
+    await store.upsert(article);
+    refresh(article.slug);
+    results.push({ file, slug: article.slug, outcome: exists ? "updated" : "created", status: article.status, message: note });
+  }
+  return { results };
 }
 
 export async function deleteArticle(formData: FormData): Promise<void> {

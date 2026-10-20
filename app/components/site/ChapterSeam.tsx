@@ -12,9 +12,11 @@ import "./chapter.css";
    with reduced motion, it stays at 1: the thread is drawn and the sheet is straight.
    Reuse it for every chapter: <ChapterSeam part="III" title="Projects" side="left">. */
 
-// viewBox 0 0 640 240: out of the card at the top, one overhand loop, down to the pin
+// viewBox 0 0 640 480: out of the card at the top, a long drop into one overhand
+// loop beside the label, a sway, then down to the pin. Tall on purpose: the label
+// stays on screen for a full screen of scrolling, long enough to read.
 const PATH =
-  "M320 2C319 46 262 54 236 86C212 116 222 160 262 156C298 152 300 106 266 102C232 98 232 146 284 172C318 189 322 206 320 230";
+  "M320 2C318 74 266 104 252 158C238 206 226 258 264 268C302 278 306 216 270 212C234 208 236 266 292 300C334 326 366 354 348 400C336 430 320 442 320 470";
 
 type Props = {
   /** roman numeral, e.g. "II" */
@@ -50,10 +52,10 @@ export default function ChapterSeam({ part, title, line, side = "right", id, chi
       raf = 0;
       const vh = window.innerHeight;
       const r = seam.getBoundingClientRect();
-      // starts as the seam's top enters the bottom of the screen, done once it has
-      // risen to the upper half: about one screen of scrolling
+      // starts as the seam's top enters the bottom of the screen and finishes as the
+      // pin reaches the middle: a seam's height plus half a screen of scrolling
       const start = vh * 0.98;
-      const end = vh * 0.5 - r.height;
+      const end = vh * 0.52 - r.height;
       const p = Math.min(1, Math.max(0, (start - r.top) / (start - end)));
       if (Math.abs(p - last) < 0.0005) return;
       last = p;
@@ -85,17 +87,17 @@ export default function ChapterSeam({ part, title, line, side = "right", id, chi
   return (
     <section className="chapter" id={id} ref={rootRef} data-side={side} aria-labelledby={id ? `${id}-chapter` : undefined} style={{ "--p": 1 } as CSSProperties}>
       <div className="chapter-seam" ref={seamRef}>
-        <svg className="chapter-thread" viewBox="0 0 640 240" aria-hidden="true" focusable="false">
+        <svg className="chapter-thread" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
           <circle className="chapter-knot" cx="320" cy="3" r="3.4" />
           <path className="chapter-t" ref={pathRef} d={PATH} pathLength={1} />
           <path className="chapter-t-hi" d={PATH} pathLength={1} />
-          <g ref={needleRef} className="chapter-needle" transform="translate(320 230) rotate(90)">
+          <g ref={needleRef} className="chapter-needle" transform="translate(320 470) rotate(90)">
             <path d="M-26 0C-26-1.6-24.5-2.4-22-2.4L6-1C10-.6 12-.3 13 0 12 .3 10 .6 6 1L-22 2.4C-24.5 2.4-26 1.6-26 0Z" />
             <ellipse className="chapter-eye" cx="-20.5" cy="0" rx="3.6" ry="1" />
           </g>
           <g className="chapter-pin">
-            <circle cx="320" cy="230" r="7" />
-            <circle className="chapter-pin-hi" cx="317.6" cy="227.4" r="2" />
+            <circle cx="320" cy="470" r="7.5" />
+            <circle className="chapter-pin-hi" cx="317.4" cy="467.2" r="2.1" />
           </g>
         </svg>
 

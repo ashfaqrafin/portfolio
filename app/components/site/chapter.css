@@ -19,8 +19,8 @@
   position: relative;
   z-index: 2;
   width: min(640px, 100%);
-  aspect-ratio: 640 / 240;
-  /* the pin (y 230 of 240) lands on the sheet's top edge */
+  aspect-ratio: 640 / 480;
+  /* the pin (y 470 of 480) lands on the sheet's top edge */
   margin-bottom: calc(min(640px, 100%) * -10 / 640);
   pointer-events: none;
 }
@@ -100,22 +100,23 @@
 
 .chapter-label {
   position: absolute;
-  left: 54%;
-  top: 30%;
+  left: 55%;
+  top: 37%;
   width: max-content;
-  max-width: min(400px, 44vw);
-  opacity: clamp(0, calc((var(--p) - 0.2) * 3), 1);
-  transform: translateY(clamp(0px, calc((0.55 - var(--p)) * 30px), 12px));
+  max-width: min(440px, 44vw);
+  /* in early, then it stays while the rest of the thread draws */
+  opacity: clamp(0, calc((var(--p) - 0.12) * 4), 1);
+  transform: translateY(clamp(0px, calc((0.4 - var(--p)) * 40px), 12px));
 }
 .chapter[data-side="left"] .chapter-label {
   left: auto;
-  right: 54%;
+  right: 55%;
   text-align: right;
 }
 .chapter-kicker {
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--muted);
@@ -127,8 +128,8 @@
 .chapter-line {
   margin: 0;
   font-family: var(--font-hand), cursive;
-  font-size: clamp(22px, 2.4vw, 30px);
-  line-height: 1.05;
+  font-size: clamp(26px, 2.9vw, 38px);
+  line-height: 1.04;
   color: var(--thread);
 }
 
@@ -152,19 +153,19 @@
 }
 @media (max-width: 640px) {
   .chapter-label {
-    left: 52%;
-    top: 22%;
+    left: 53%;
+    top: 30%;
     max-width: 46%;
   }
   .chapter[data-side="left"] .chapter-label {
-    right: 52%;
+    right: 53%;
   }
   .chapter-kicker {
     font-size: 9.5px;
     letter-spacing: 0.16em;
   }
   .chapter-line {
-    font-size: 19px;
+    font-size: 22px;
   }
   .chapter-cue {
     font-size: 9px;

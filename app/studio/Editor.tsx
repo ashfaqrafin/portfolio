@@ -5,22 +5,13 @@ import { useActionState, useMemo, useState } from "react";
 import { formatDate } from "@/lib/blog/format";
 import { buildGraph, REL_LABEL, relationsOf } from "@/lib/blog/graph";
 import { quickRead, suggestReadMins, wordCount } from "@/lib/blog/quickread";
+import { slugify } from "@/lib/blog/slug";
 import { TOPIC_LABEL, TOPIC_SKIN, TOPICS } from "@/lib/blog/topics";
 import type { Article, ArticleMeta, ThreadKind, Topic } from "@/lib/blog/types";
 import Markdown from "../components/threadboard/Markdown";
 import { saveArticle, type SaveState } from "./actions";
 
 export type EditorArticle = Article;
-
-const slugify = (s: string) =>
-  s
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80)
-    .replace(/-+$/, "");
 
 function Field({ label, name, errors, hint, children }: { label: string; name: string; errors?: string[]; hint?: string; children: React.ReactNode }) {
   return (

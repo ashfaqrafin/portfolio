@@ -103,9 +103,14 @@ export default function StudioPage({ searchParams }: PageProps<"/studio">) {
             Articles
           </h1>
         </div>
-        <Link className="st-btn st-primary" href="/studio/new">
-          + New article
-        </Link>
+        <div className="st-head-actions">
+          <Link className="st-btn" href="/studio/import">
+            Import .md
+          </Link>
+          <Link className="st-btn st-primary" href="/studio/new">
+            + New article
+          </Link>
+        </div>
       </div>
       <Suspense fallback={<p className="st-loading">Opening the drawer&hellip;</p>}>
         <Articles searchParams={searchParams} />
