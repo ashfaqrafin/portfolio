@@ -1,0 +1,620 @@
+/* ── The pipeline scene ─────────────────────────────────────────────────────
+   Everything is placed in stage pixels (1200 × 420) and the stage is scaled by
+   --s. data-act on .pl runs the acts (see Pipeline.tsx); delays inside an act
+   count from the moment its act starts, because a selector that starts
+   matching starts its animation afresh. */
+
+.pl {
+  --ink-red: #6e0f22;
+  --ok: #7fb069;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1200 / 420;
+}
+.pl[data-phone] {
+  aspect-ratio: auto;
+  height: clamp(240px, 74vw, 320px);
+}
+.pl-stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  transform: translateX(var(--cam-x, 0px)) scale(var(--s, 1));
+  transition: transform 0.9s cubic-bezier(0.5, 0, 0.3, 1);
+}
+/* a phone, idle: drift slowly across the cast */
+.pl[data-phone][data-state="idle"] .pl-stage {
+  animation: pl-pan 24s ease-in-out infinite alternate;
+}
+@keyframes pl-pan {
+  from {
+    transform: translateX(0) scale(var(--s, 1));
+  }
+  to {
+    transform: translateX(var(--pan, 0px)) scale(var(--s, 1));
+  }
+}
+
+/* ── the route ──────────────────────────────────────────────────────────── */
+.pl-route {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.pl-ground {
+  stroke: rgba(140, 47, 67, 0.4);
+  stroke-width: 2.4;
+  stroke-dasharray: 9 7;
+}
+.pl-ground-done {
+  stroke: var(--thread);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.5, 0, 0.3, 1);
+}
+.pl[data-act="1"] .pl-ground-done {
+  stroke-dashoffset: 0.88;
+}
+.pl[data-act="2"] .pl-ground-done {
+  stroke-dashoffset: 0.6;
+}
+.pl[data-act="3"] .pl-ground-done {
+  stroke-dashoffset: 0.25;
+}
+.pl:is([data-act="4"], [data-act="5"]) .pl-ground-done {
+  stroke-dashoffset: 0;
+}
+.pl-trail {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  opacity: 0.6;
+}
+.pl[data-act="3"] .pl-trail,
+.pl[data-act="4"] .pl-trail {
+  animation: pl-draw 1.6s ease-in-out 0.4s forwards;
+}
+
+/* ── actors ─────────────────────────────────────────────────────────────── */
+.pl-actor {
+  position: absolute;
+  bottom: 40px;
+  transform-origin: 50% 100%;
+}
+.pl-actor img {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+.pl[data-state="run"] .pl-actor {
+  transition: opacity 0.4s ease;
+}
+/* the one at work is in ink; the rest wait in pencil */
+.pl[data-state="run"] .pl-actor {
+  opacity: 0.4;
+}
+.pl[data-act="1"] .pl-tailor,
+.pl[data-act="2"] .pl-coder,
+.pl:is([data-act="3"], [data-act="4"]) .pl-dakpion,
+.pl:is([data-act="4"], [data-act="5"]) .pl-box {
+  opacity: 1;
+}
+.pl[data-act="1"] .pl-tailor img {
+  animation: pl-sway 0.5s ease-in-out infinite alternate;
+}
+.pl[data-act="2"] .pl-coder img {
+  animation: pl-type 0.14s steps(2, end) infinite;
+}
+
+/* ── act 1: the note flies onto the table and is stitched into a packet ── */
+.pl-note {
+  position: absolute;
+  max-width: 190px;
+  padding: 7px 11px 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 3px;
+  background: #fffaf0;
+  box-shadow: 3px 4px 0 -1px rgba(140, 47, 67, 0.2);
+  font-family: var(--font-hand), cursive;
+  font-size: 19px;
+  line-height: 1.05;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  rotate: -4deg;
+}
+.pl[data-act="1"] .pl-note {
+  animation:
+    pl-fly-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both,
+    pl-fade-out 0.25s ease 1.25s forwards;
+}
+.pl-stitch {
+  position: absolute;
+  overflow: visible;
+  opacity: 0;
+}
+.pl-stitch path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+.pl[data-act="1"] .pl-stitch {
+  animation:
+    pl-fade-in 0.1s ease 0.55s both,
+    pl-fade-out 0.3s ease 1.3s forwards;
+}
+.pl[data-act="1"] .pl-stitch path {
+  animation: pl-draw 0.6s ease-in-out 0.55s forwards;
+}
+
+/* ── act 2: blocks slam down; each command's beam breaks one ─────────────── */
+.pl-cmd {
+  position: absolute;
+  padding: 6px 12px 5px;
+  border-radius: 6px;
+  background: var(--term-bg, #2b0b12);
+  color: #b9e19a;
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  white-space: nowrap;
+  box-shadow: 0 0 0 1.5px var(--ink);
+  opacity: 0;
+  scale: 0.7;
+  transform-origin: 0 50%;
+  transition:
+    opacity 0.2s ease,
+    scale 0.25s cubic-bezier(0.2, 0.8, 0.3, 1.4);
+}
+.pl-cmd[data-on] {
+  opacity: 1;
+  scale: 1;
+}
+.pl-beam {
+  stroke: var(--ok);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 6px rgba(127, 176, 105, 0.9));
+  opacity: 0;
+}
+.pl[data-act="2"] .pl-beam[data-fired] {
+  animation:
+    pl-draw 0.2s ease-out forwards,
+    pl-beam 0.55s ease forwards;
+}
+.pl-block {
+  position: absolute;
+  opacity: 0;
+}
+.pl-block b {
+  display: block;
+  padding: 7px 12px 6px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  background: var(--ink-red);
+  color: #f6dfe0;
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  box-shadow:
+    inset 0 -4px 0 rgba(0, 0, 0, 0.25),
+    4px 5px 0 -1px rgba(74, 12, 24, 0.25);
+  rotate: var(--r);
+}
+.pl-block i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px;
+  background: var(--ink-red);
+  border: 1.5px solid var(--ink);
+  opacity: 0;
+}
+.pl:is([data-act="2"], [data-act="3"], [data-act="4"], [data-act="5"]) .pl-block {
+  opacity: 1;
+}
+.pl[data-act="2"] .pl-block:not([data-broken]) {
+  animation: pl-slam 0.38s cubic-bezier(0.5, 0, 0.6, 1.4) both;
+  animation-delay: calc(var(--k) * 90ms);
+}
+.pl-block[data-broken] b {
+  animation: pl-break 0.32s ease-in forwards;
+}
+.pl-block[data-broken] i {
+  animation: pl-shard 0.75s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.pl-clear {
+  position: absolute;
+  padding: 6px 14px 5px;
+  border: 2px solid var(--ok);
+  border-radius: 999px;
+  background: #f3f8ec;
+  color: #3d6b2a;
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+.pl[data-act="2"][data-hits="4"] .pl-clear {
+  animation: pl-pop 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.4) 0.35s both;
+}
+.pl[data-act="3"] .pl-clear {
+  animation: pl-fade-out 0.4s ease both;
+}
+
+/* ── act 3: into the satchel, and run ────────────────────────────────────── */
+.pl-dakpion {
+  transition:
+    translate 1.7s cubic-bezier(0.45, 0, 0.35, 1) 0.45s,
+    opacity 0.4s ease;
+}
+.pl:is([data-act="3"], [data-act="4"], [data-act="5"]) .pl-dakpion {
+  translate: 130px 0;
+}
+.pl[data-act="3"] .pl-dakpion img {
+  animation: pl-run 0.28s ease-in-out 0.45s infinite alternate;
+}
+.pl-carried {
+  position: absolute;
+  left: 18%;
+  top: 46%;
+  width: 34px;
+  height: 25px;
+  border: 2px solid var(--ink);
+  border-radius: 2px;
+  background:
+    linear-gradient(var(--thread), var(--thread)) 50% 0 / 2px 100% no-repeat,
+    #fffaf0;
+  box-shadow: 0 0 14px rgba(240, 160, 176, 0.9);
+  opacity: 0;
+}
+.pl[data-act="3"] .pl-carried {
+  animation: pl-fade-in 0.15s ease 0.45s forwards;
+}
+.pl-dust {
+  position: absolute;
+  bottom: 2px;
+  left: 30%;
+  width: 26px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(140, 47, 67, 0.25);
+  opacity: 0;
+}
+.pl-dust:nth-of-type(2) {
+  left: 52%;
+}
+.pl-dust:nth-of-type(3) {
+  left: 12%;
+}
+.pl[data-act="3"] .pl-dust {
+  animation: pl-dust 0.6s ease-out 0.45s infinite;
+}
+.pl[data-act="3"] .pl-dust:nth-of-type(2) {
+  animation-delay: 0.65s;
+}
+.pl[data-act="3"] .pl-dust:nth-of-type(3) {
+  animation-delay: 0.85s;
+}
+
+/* ── the packet between hands ─────────────────────────────────────────────── */
+.pl-packet {
+  position: absolute;
+  left: 228px;
+  top: 216px;
+  width: 50px;
+  translate: -50% -50%;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    left 0.5s cubic-bezier(0.5, 0, 0.3, 1),
+    top 0.5s cubic-bezier(0.5, 0, 0.3, 1),
+    opacity 0.2s ease;
+}
+.pl-packet svg {
+  display: block;
+  width: 100%;
+  fill: #fffaf0;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 8px rgba(240, 160, 176, 0.95));
+}
+.pl-packet-string {
+  stroke: var(--thread);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 2;
+}
+/* sealed at the tailor's table */
+.pl[data-act="1"] .pl-packet {
+  opacity: 1;
+  animation: pl-pop 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.4) 1.3s both;
+}
+/* handed to the coder */
+.pl[data-act="2"] .pl-packet {
+  left: 470px;
+  top: 330px;
+  opacity: 1;
+}
+/* hopped into the satchel */
+.pl[data-act="3"] .pl-packet {
+  left: 764px;
+  top: 262px;
+  opacity: 0;
+  transition:
+    left 0.45s cubic-bezier(0.5, 0, 0.3, 1),
+    top 0.45s cubic-bezier(0.5, -0.8, 0.3, 1),
+    opacity 0.1s ease 0.42s;
+}
+/* out of the satchel, arcing into the slot */
+.pl[data-act="4"] .pl-packet {
+  left: 1133px;
+  top: 207px;
+  transition: none;
+  animation: pl-post 0.8s cubic-bezier(0.4, 0, 0.3, 1) forwards;
+}
+.pl[data-act="4"] .pl-box img {
+  animation: pl-gulp 0.45s ease 0.7s;
+}
+
+/* ── the end ──────────────────────────────────────────────────────────────── */
+.pl-received,
+.pl-reply,
+.pl-returned {
+  position: absolute;
+  margin: 0;
+  white-space: nowrap;
+  opacity: 0;
+}
+.pl-received {
+  padding: 8px 16px 7px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono), monospace;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.pl-reply {
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  color: var(--thread);
+}
+.pl-reply strong {
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.pl[data-act="5"] .pl-received {
+  animation: pl-pop 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) both;
+}
+.pl[data-act="5"] .pl-reply {
+  animation: pl-pop 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) 0.2s both;
+}
+.pl-returned {
+  padding: 10px 18px;
+  border: 4px double var(--ink);
+  border-radius: 6px;
+  color: var(--ink);
+  background: rgba(248, 243, 234, 0.92);
+  font-family: var(--font-mono), monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  rotate: -8deg;
+}
+.pl[data-state="failed"] :is(.pl-dakpion img, .pl-dust, .pl-carried) {
+  animation: none;
+}
+.pl[data-state="failed"] .pl-returned {
+  animation: pl-stamp 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+
+/* who does what, under the route */
+.pl-cap {
+  position: absolute;
+  margin: 0;
+  translate: -50% 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink);
+  transition: color 0.3s ease;
+}
+.pl-cap span {
+  color: var(--thread);
+}
+.pl[data-state="run"] .pl-cap {
+  color: rgba(74, 12, 24, 0.4);
+}
+.pl[data-state="run"] .pl-cap[data-on] {
+  color: var(--ink);
+}
+
+/* ── keyframes ──────────────────────────────────────────────────────────── */
+@keyframes pl-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes pl-fade-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pl-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes pl-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes pl-stamp {
+  from {
+    opacity: 0;
+    scale: 1.8;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes pl-fly-in {
+  from {
+    opacity: 0;
+    transform: translate(-360px, -60px) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pl-sway {
+  from {
+    rotate: -1.2deg;
+  }
+  to {
+    rotate: 1.2deg;
+  }
+}
+@keyframes pl-type {
+  to {
+    translate: 0 -2px;
+  }
+}
+@keyframes pl-run {
+  from {
+    translate: 0 0;
+    rotate: -1deg;
+  }
+  to {
+    translate: 0 -7px;
+    rotate: 1.5deg;
+  }
+}
+@keyframes pl-dust {
+  from {
+    opacity: 0.8;
+    transform: translate(0, 0) scale(0.5);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-46px, -10px) scale(1.6);
+  }
+}
+@keyframes pl-slam {
+  from {
+    opacity: 0;
+    transform: translateY(-140px) rotate(14deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pl-beam {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes pl-break {
+  30% {
+    scale: 1.15;
+    filter: brightness(1.6);
+  }
+  to {
+    scale: 0.2;
+    opacity: 0;
+  }
+}
+@keyframes pl-shard {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(var(--sr)) scale(0.6);
+  }
+}
+@keyframes pl-post {
+  0% {
+    transform: translate(-241px, 55px) scale(1);
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-110px, -70px) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translate(0, -6px) scale(0.7);
+    opacity: 1;
+  }
+  to {
+    transform: translate(0, 10px) scale(0.3);
+    opacity: 0;
+  }
+}
+@keyframes pl-gulp {
+  30% {
+    scale: 1.05 0.96;
+  }
+  60% {
+    scale: 0.97 1.03;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pl *,
+  .pl-stage {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .pl[data-phone][data-state="idle"] .pl-stage {
+    animation: none;
+  }
+}

@@ -1,6 +1,8 @@
 import "server-only";
 import type { Message } from "./types";
 
+const VIA_LABEL: Record<Message["via"], string> = { email: "email", whatsapp: "WhatsApp", social: "their profile", linkedin: "LinkedIn" };
+
 /* Optional: an email to the owner for each new message, through Resend's HTTP
    API. Off unless RESEND_API_KEY and CONTACT_NOTIFY_TO are both set (server-only
    variables; never NEXT_PUBLIC_). Plain text only, so nothing a visitor typed
@@ -19,7 +21,7 @@ export async function notifyOwner(m: Message): Promise<void> {
       m.message,
       "",
       `— ${m.name || "(no name)"}`,
-      `Reply via ${m.via === "email" ? "email" : "LinkedIn"}: ${m.reply}`,
+      `Reply via ${VIA_LABEL[m.via]}: ${m.reply}`,
       `Received ${m.createdAt}`,
     ].join("\n"),
     ...(m.via === "email" ? { reply_to: m.reply } : {}),

@@ -5,7 +5,8 @@ export type Message = {
   /** ISO timestamp */
   createdAt: string;
   name: string;
-  via: ReplyVia;
+  /** "linkedin" only on messages saved before WhatsApp and social links */
+  via: ReplyVia | "linkedin";
   reply: string;
   message: string;
 };

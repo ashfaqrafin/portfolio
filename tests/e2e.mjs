@@ -340,7 +340,8 @@ await check("contact", "a message is accepted; bad ones are refused with a reaso
   assert(good.status === 200 && (await good.json()).ok === true, `good message → ${good.status}`);
   const cases = [
     [contactBody({ message: "too short" }), {}, 400, "message"],
-    [contactBody({ via: "linkedin", reply: "https://evil.example/in/x" }), {}, 400, "reply"],
+    [contactBody({ via: "social", reply: "https://evil.example/in/x" }), {}, 400, "reply"],
+    [contactBody({ via: "whatsapp", reply: "not a number" }), {}, 400, "reply"],
     [contactBody({ isOwner: true }), {}, 400, null],
     [contactBody(), { origin: "https://evil.example" }, 403, null],
     ["x".repeat(9000), {}, 413, null],
@@ -381,8 +382,11 @@ await check("contact", "the form sends a message through the pipeline", async ()
   await p.locator(".ct-input").first().fill("e2e-ui@example.com");
   await p.waitForTimeout(2700); // a person takes longer than 2.5 s
   await p.locator(".ct-btn").click();
-  await p.waitForSelector(".ct-route[data-step='0']", { timeout: 2000 });
-  await p.waitForFunction(() => /received/i.test(document.querySelector(".ct-status")?.textContent ?? ""), null, { timeout: 10_000 });
+  // the tailor starts weaving at once, and the coder takes over
+  await p.waitForSelector(".pl[data-act='1']", { timeout: 2000 });
+  await p.waitForSelector(".pl[data-act='2'] .pl-block[data-broken]", { timeout: 5000 });
+  await p.waitForFunction(() => /received/i.test(document.querySelector(".ct-status")?.textContent ?? ""), null, { timeout: 15_000 });
+  assert(await p.locator(".pl[data-act='5'] .pl-received").isVisible(), "the scene didn't finish at the post box");
   assert(await p.locator(".ct-thanks").isVisible(), "no thank-you after sending");
   await p.close();
 });

@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import Pipeline from "./Pipeline";
 import "../site/site.css";
 import "./contact.css";
+import "./pipeline.css";
 
-/* Contact, as a transmission pipeline. Four stations stand on one thread: the
-   tailor stitches your words into a packet, the coder clears the path, the
-   dakpion (the postman) runs it over, and it drops into the post box. Sending
-   walks the packet along the route while the request is in flight; the last
-   stop only happens once the server has really accepted it, and a refusal
-   sends the packet back with the reason ("returned to sender").
+/* Contact, as a transmission pipeline (the scene is Pipeline.tsx). Sending plays
+   it act by act while the request is really in flight: the tailor stitches the
+   words into a packet, the coder breaks the errors blocking the route, the
+   dakpion runs it to the post box. He keeps running until the server answers;
+   the drop only happens once it has accepted the message, and a refusal stamps
+   it "returned to sender" with the reason.
 
    POSTs to app/api/contact (validated, rate-limited, honeypot) and lands in the
    owner's studio inbox. Without JavaScript the form can't send, so the direct
@@ -18,13 +20,6 @@ import "./contact.css";
 const MAX = 600;
 const MIN = 10;
 
-const STATIONS = [
-  { art: "/contact/tailor.webp", w: 366, h: 510, n: "01", title: "Stitched", note: "the tailor wraps your words" },
-  { art: "/contact/coder.webp", w: 528, h: 510, n: "02", title: "Path cleared", note: "the coder deploys the route" },
-  { art: "/contact/dakpion.webp", w: 506, h: 511, n: "03", title: "Delivery sprint", note: "the dakpion runs it over" },
-  { art: "/contact/postbox.webp", w: 191, h: 507, n: "04", title: "Dropped", note: "into my post box" },
-] as const;
-
 /** Other ways to reach me, shown under the form. Add an email or LinkedIn here. */
 const DIRECT: { label: string; href: string }[] = [
   { label: "GitHub", href: "https://github.com/ashfaqrafin" },
@@ -32,26 +27,47 @@ const DIRECT: { label: string; href: string }[] = [
   // { label: "LinkedIn", href: "https://www.linkedin.com/in/you" },
 ];
 
-type Via = "email" | "linkedin";
+type Via = "email" | "whatsapp" | "social";
 type Phase = "idle" | "sending" | "sent" | "returned";
 type Fields = Partial<Record<"message" | "reply" | "name", string>>;
+type Answer = { ok?: boolean; error?: string; fields?: Fields; receivedAt?: string };
 
-const STATUS = [
-  "Stitching your words into a packet…",
-  "Clearing the path…",
-  "The dakpion is on the run…",
+const VIA: Record<Via, { label: string; placeholder: string; field: string; type: string; mode: "email" | "tel" | "url"; auto: string }> = {
+  email: { label: "Mail", placeholder: "you@example.com", field: "Your email address", type: "email", mode: "email", auto: "email" },
+  whatsapp: { label: "WhatsApp", placeholder: "+880 1XXX-XXXXXX", field: "Your WhatsApp number, with the country code", type: "tel", mode: "tel", auto: "tel" },
+  social: { label: "Social link", placeholder: "linkedin.com/in/you, github.com/you…", field: "A link to your profile", type: "url", mode: "url", auto: "url" },
+};
+const ACT_STATUS = [
+  "",
+  "The tailor is stitching your words into a packet…",
+  "Errors on the route. The coder is clearing the path…",
+  "The dakpion is running it over…",
   "Dropping it in the box…",
 ];
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const year = new Date().getFullYear();
 
 function localCheck(message: string, via: Via, reply: string): Fields {
   const f: Fields = {};
+  const r = reply.trim();
   if (message.trim().length < MIN) f.message = "A few more words, please.";
-  if (!reply.trim()) f.reply = "Where should I reply?";
-  else if (via === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reply.trim())) f.reply = "That email doesn't look right.";
-  else if (via === "linkedin" && !/linkedin\.com\/(in|company)\/[^/\s]+/i.test(reply)) f.reply = "Use your profile link, like linkedin.com/in/you.";
+  if (!r) f.reply = "Where should I reply?";
+  else if (via === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r)) f.reply = "That email doesn't look right.";
+  else if (via === "whatsapp" && !/^\+?\d{8,15}$/.test(r.replace(/[\s().-]/g, ""))) f.reply = "Use the full number, with the country code.";
+  else if (via === "social" && !/^(https?:\/\/)?[\w.-]+\.[a-z]{2,}\/\S+/i.test(r)) f.reply = "Use the full profile link, like linkedin.com/in/you.";
   return f;
+}
+
+function Icon({ via }: { via: Via }) {
+  const d = {
+    email: "M3 6h18v12H3zM3 7l9 7 9-7",
+    whatsapp: "M5 19l1.3-3.6A7.5 7.5 0 1 1 9 18.6zM9.2 8.6c.3 2.6 2.6 5 5.2 5.4l1-1.1-1.6-.9-.7.7a4.5 4.5 0 0 1-2.1-2.1l.7-.7-.9-1.6z",
+    social: "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
+  }[via];
+  return (
+    <svg className="ct-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d={d} />
+    </svg>
+  );
 }
 
 export default function Contact() {
@@ -62,12 +78,13 @@ export default function Contact() {
   const [reply, setReply] = useState("");
   const [website, setWebsite] = useState(""); // honeypot
   const [phase, setPhase] = useState<Phase>("idle");
-  const [step, setStep] = useState(-1); // the station the packet is at; 4 = in the box
+  const [act, setAct] = useState(0);
+  const [hits, setHits] = useState(0);
   const [fields, setFields] = useState<Fields>({});
   const [error, setError] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
   const shownAt = useRef(0);
-  const routeRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
   const alive = useRef(true);
 
   useEffect(() => {
@@ -80,6 +97,7 @@ export default function Contact() {
 
   const busy = phase === "sending";
   const left = MAX - message.length;
+  const replyShown = reply.trim() ? (via === "whatsapp" ? `WhatsApp ${reply.trim()}` : reply.trim().replace(/^https?:\/\/(www\.)?/, "")) : "";
 
   async function send(e: FormEvent) {
     e.preventDefault();
@@ -92,64 +110,72 @@ export default function Contact() {
       return;
     }
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const beat = reduced ? 120 : 850;
-    // the route is the show: bring it into view if the form is far below it
-    const r = routeRef.current?.getBoundingClientRect();
-    if (r && (r.top < 0 || r.bottom > window.innerHeight)) routeRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+    const T = (ms: number) => (reduced ? Math.min(ms, 150) : ms);
+    const step = async (ms: number) => {
+      await wait(T(ms));
+      return alive.current;
+    };
+    // the scene is the show: bring it into view if the form is far below it
+    const r = sceneRef.current?.getBoundingClientRect();
+    if (r && (r.top < 0 || r.bottom > window.innerHeight)) sceneRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
 
     setPhase("sending");
-    setStep(0);
-    const request = fetch("/api/contact", {
+    setHits(0);
+    setAct(1);
+    const request: Promise<Answer> = fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, name, via, reply, website, elapsed: Date.now() - shownAt.current }),
     })
-      .then(async (res) => ({ status: res.status, body: (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; fields?: Fields; receivedAt?: string } }))
-      .catch(() => ({ status: 0, body: { ok: false, error: "No connection. Your words are still here; try again." } as { ok?: boolean; error?: string; fields?: Fields; receivedAt?: string } }));
+      .then(async (res) => (await res.json().catch(() => ({}))) as Answer)
+      .catch(() => ({ ok: false, error: "No connection. Your words are still here; try again." }));
 
-    await wait(beat);
+    // 1 · weave
+    if (!(await step(1650))) return;
+    // 2 · the blocks drop, then one command each breaks them
+    setAct(2);
+    if (!(await step(560))) return;
+    for (let k = 1; k <= 4; k++) {
+      setHits(k);
+      if (!(await step(430))) return;
+    }
+    if (!(await step(520))) return;
+    // 3 · the sprint: he keeps running until the server has answered
+    setAct(3);
+    const [res] = await Promise.all([request, wait(T(2200))]);
     if (!alive.current) return;
-    setStep(1);
-    await wait(beat);
-    if (!alive.current) return;
-    setStep(2);
-    // the dakpion keeps running until the server has answered
-    const [res] = await Promise.all([request, wait(beat)]);
-    if (!alive.current) return;
-    if (res.body.ok) {
-      setStep(3);
-      await wait(beat);
-      if (!alive.current) return;
-      setStep(4);
-      setReceivedAt(res.body.receivedAt ?? new Date().toISOString());
+    if (res.ok) {
+      setAct(4);
+      setReceivedAt(res.receivedAt ?? new Date().toISOString());
+      if (!(await step(1050))) return;
+      setAct(5);
       setPhase("sent");
     } else {
-      setStep(-1);
       setPhase("returned");
-      setError(res.body.error ?? "Something went wrong.");
-      setFields(res.body.fields ?? {});
+      setError(res.error ?? "Something went wrong.");
+      setFields(res.fields ?? {});
     }
   }
 
   function again() {
     setMessage("");
     setPhase("idle");
-    setStep(-1);
+    setAct(0);
+    setHits(0);
     setReceivedAt("");
     shownAt.current = Date.now();
   }
 
   const status =
     phase === "sent"
-      ? `Path clear ✓ · transmission received · ${year}`
+      ? "Path clear ✓ · transmission received"
       : phase === "returned"
         ? `Returned to sender · ${error}`
-        : phase === "sending" && step >= 0 && step < 4
-          ? STATUS[step]
-          : "The route is clear. Write below and send it through.";
-  const stateOf = (i: number) => (phase === "idle" || phase === "returned" ? "idle" : i < step || step === 4 ? "done" : i === step ? "active" : "todo");
-  const placeholder = via === "email" ? "you@example.com" : "linkedin.com/in/you";
+        : phase === "sending"
+          ? ACT_STATUS[act]
+          : "Four hands carry every message. Write below and watch them work.";
   const errId = (k: keyof Fields) => (fields[k] ? `${uid}-${k}-err` : undefined);
+  const snippet = message.trim().slice(0, 30) + (message.trim().length > 30 ? "…" : "");
 
   return (
     <section className="sheet ct" aria-labelledby={`${uid}-h`} data-phase={phase}>
@@ -165,35 +191,8 @@ export default function Contact() {
         </p>
       </header>
 
-      {/* the route: four stations on one thread, and the packet that travels it */}
-      <div className="ct-route" ref={routeRef} style={{ "--step": Math.max(0, Math.min(step, 3)) } as CSSProperties} data-step={step}>
-        <ol className="ct-stations">
-          {STATIONS.map((s, i) => (
-            <li key={s.n} className="ct-st" data-state={stateOf(i)} data-n={s.n}>
-              <div className="ct-art">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.art} width={s.w} height={s.h} alt="" loading="lazy" decoding="async" />
-              </div>
-              <p className="ct-st-title">
-                <span className="ct-st-n">{s.n}</span> {s.title}
-                <span className="ct-tick" aria-hidden="true">
-                  &#10003;
-                </span>
-              </p>
-              <p className="ct-st-note">{s.note}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="ct-thread" aria-hidden="true">
-          <span className="ct-thread-done" />
-        </div>
-        <span className="ct-packet" aria-hidden="true">
-          <svg viewBox="0 0 40 30" focusable="false">
-            <rect x="3" y="7" width="34" height="20" rx="2" />
-            <path d="M3 9L20 19L37 9" />
-            <path className="ct-packet-string" d="M20 7V27M3 17H37" />
-          </svg>
-        </span>
+      <div className="ct-scene" ref={sceneRef}>
+        <Pipeline act={act} hits={hits} snippet={snippet} replyTo={replyShown} failed={phase === "returned"} receivedAt={receivedAt} />
       </div>
 
       <div className="ct-body">
@@ -202,7 +201,8 @@ export default function Contact() {
             <p className="ct-thanks-k">Transmission received</p>
             <p className="ct-thanks-h">Thank you{name.trim() ? `, ${name.trim()}` : ""}.</p>
             <p className="ct-thanks-p">
-              Your packet is in my post box. I&rsquo;ll reply {via === "email" ? "by email" : "on LinkedIn"}, usually within a few days.
+              Your packet is in my post box. I&rsquo;ll reply {via === "email" ? "by email" : via === "whatsapp" ? "on WhatsApp" : "through your profile"}, usually within a few
+              days.
             </p>
             <button type="button" className="ct-btn ct-btn-ghost" onClick={again}>
               Write another
@@ -239,34 +239,38 @@ export default function Contact() {
 
             <fieldset className="ct-field" disabled={busy}>
               <legend className="ct-label-k">
-                <span>2.</span> How should I reply?
+                <span>2.</span> How should I contact you?
               </legend>
-              <div className="ct-via" role="radiogroup" aria-label="Reply by">
-                {(["email", "linkedin"] as const).map((v) => (
+              <div className="ct-via">
+                {(Object.keys(VIA) as Via[]).map((v) => (
                   <label key={v} className="ct-chip" data-on={via === v || undefined}>
-                    <input type="radio" name={`${uid}-via`} value={v} checked={via === v} onChange={() => setVia(v)} />
-                    {v === "email" ? "Email" : (
-                      <>
-                        <span className="ct-in" aria-hidden="true">
-                          in
-                        </span>
-                        LinkedIn
-                      </>
-                    )}
+                    <input
+                      type="radio"
+                      name={`${uid}-via`}
+                      value={v}
+                      checked={via === v}
+                      onChange={() => {
+                        setVia(v);
+                        setReply("");
+                        setFields((f) => ({ ...f, reply: undefined }));
+                      }}
+                    />
+                    <Icon via={v} />
+                    {VIA[v].label}
                   </label>
                 ))}
               </div>
               <label className="ct-sr" htmlFor={`${uid}-reply`}>
-                {via === "email" ? "Your email address" : "Your LinkedIn profile link"}
+                {VIA[via].field}
               </label>
               <input
                 id={`${uid}-reply`}
                 className="ct-input"
-                type={via === "email" ? "email" : "url"}
-                inputMode={via === "email" ? "email" : "url"}
-                autoComplete={via === "email" ? "email" : "url"}
+                type={VIA[via].type}
+                inputMode={VIA[via].mode}
+                autoComplete={VIA[via].auto}
                 value={reply}
-                placeholder={placeholder}
+                placeholder={VIA[via].placeholder}
                 onChange={(e) => setReply(e.target.value)}
                 aria-invalid={!!fields.reply || undefined}
                 aria-describedby={errId("reply")}
@@ -306,7 +310,7 @@ export default function Contact() {
             )}
             <button type="submit" className="ct-btn" disabled={busy}>
               {busy ? "In transit…" : phase === "returned" ? "Seal and send again" : "Seal and send"}
-              <span aria-hidden="true"> &rarr;</span>
+              <span aria-hidden="true">&nbsp;&rarr;</span>
             </button>
           </form>
         )}
@@ -328,7 +332,7 @@ export default function Contact() {
               <dt>From</dt>
               <dd className="ct-hand">{name.trim() || "you"}</dd>
               <dt>Reply by</dt>
-              <dd className="ct-mono">{reply.trim() || (via === "email" ? "email" : "LinkedIn")}</dd>
+              <dd className="ct-mono">{replyShown || VIA[via].label}</dd>
             </dl>
             <p className="ct-contents-k">Contents</p>
             <p className="ct-contents">

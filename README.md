@@ -7,7 +7,7 @@ A tailor's-sketchbook portfolio built with Next.js 16 (App Router, Cache Compone
 - **Thread Board blog** (`app/components/threadboard/`, `lib/blog/`): articles are pins tied together by threads. Clicking a pin opens a quick read; the full article lives at `/blog/<slug>`.
 - **Studio** (`/studio`): owner-only. Write, import `.md` files, draft, publish and delete. Only one GitHub account can sign in.
 - **Projects sketchbook** (`app/components/projects/`, `content/projects/`): a spiral-bound pad with one project per page; each logo draws itself in pencil, then the details are written in. See [docs/projects.md](docs/projects.md).
-- **Contact** (`app/components/contact/`, `app/api/contact/`): a transmission pipeline (tailor, coder, dakpion, post box) that walks the visitor's packet along the route while it really sends; messages land in an owner-only studio inbox. See [docs/contact.md](docs/contact.md).
+- **Contact** (`app/components/contact/`, `app/api/contact/`): a transmission pipeline scene where the tailor weaves the visitor's words into a packet, the coder breaks the errors blocking the route, and the dakpion runs it to the post box, all while it really sends; messages land in an owner-only studio inbox. See [docs/contact.md](docs/contact.md).
 - **Chapter seams** (`app/components/site/ChapterSeam.tsx`): the scroll-drawn thread that carries the reader from one home-page section to the next.
 
 ```bash

@@ -1,10 +1,9 @@
 /* ── Contact: the transmission pipeline ─────────────────────────────────────
-   One burgundy ink on paper. The route is four stations on a thread; the
-   packet's position is --step (0–3) on .ct-route, and data-step 4 means it has
-   gone into the post box. data-phase on .ct: idle · sending · sent · returned. */
+   The heading, the form, the airmail label and the direct links. The scene
+   above the form has its own file, pipeline.css. data-phase on .ct:
+   idle · sending · sent · returned. */
 
 .ct {
-  --art-h: clamp(120px, 16vw, 220px);
   color: var(--ink);
 }
 .ct-sr {
@@ -74,205 +73,16 @@
   border-style: solid;
 }
 
-/* ── the route ──────────────────────────────────────────────────────────── */
-.ct-route {
-  position: relative;
-  margin-top: clamp(22px, 3vw, 34px);
-  padding: 14px 0 6px;
+/* ── the scene (pipeline.css) ───────────────────────────────────────────── */
+.ct-scene {
+  margin-top: clamp(20px, 3vw, 32px);
   border-top: 1.5px dashed rgba(140, 47, 67, 0.25);
   border-bottom: 1.5px dashed rgba(140, 47, 67, 0.25);
-}
-.ct-stations {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.ct-st {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  transition: opacity 0.4s ease;
-}
-.ct-art {
-  height: var(--art-h);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-.ct-art img {
-  display: block;
-  height: 100%;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-  object-position: bottom;
-  transform-origin: 50% 100%;
-}
-.ct-st-title {
-  margin: 14px 0 0;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.ct-st-n {
-  color: var(--thread);
-}
-.ct-tick {
-  display: inline-block;
-  margin-left: 4px;
-  color: var(--thread);
-  opacity: 0;
-  scale: 0.4;
-  transition:
-    opacity 0.25s ease,
-    scale 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.4);
-}
-.ct-st[data-state="done"] .ct-tick {
-  opacity: 1;
-  scale: 1;
-}
-.ct-st-note {
-  margin: 2px 0 0;
-  font-family: var(--font-hand), cursive;
-  font-size: 19px;
-  line-height: 1.1;
-  color: var(--thread);
-}
-/* while sending, what's still ahead waits in pencil */
-.ct-st[data-state="todo"] {
-  opacity: 0.32;
-}
-.ct-st[data-state="active"] .ct-art img {
-  animation: ct-busy 0.36s ease-in-out infinite alternate;
-}
-.ct-st[data-n="02"][data-state="active"] .ct-art img {
-  animation: ct-type 0.16s steps(2, end) infinite;
-}
-.ct-st[data-n="03"][data-state="active"] .ct-art img {
-  animation: ct-run 0.3s ease-in-out infinite alternate;
-}
-.ct-route[data-step="4"] .ct-st[data-n="04"] .ct-art img {
-  animation: ct-gulp 0.5s ease 0.55s;
-}
-@keyframes ct-busy {
-  from {
-    rotate: -1deg;
-  }
-  to {
-    rotate: 1deg;
-  }
-}
-@keyframes ct-type {
-  to {
-    translate: 0 -2px;
-  }
-}
-@keyframes ct-run {
-  from {
-    translate: -6px 0;
-  }
-  to {
-    translate: 6px -4px;
-  }
-}
-@keyframes ct-gulp {
-  30% {
-    scale: 1.04 0.97;
-  }
-  60% {
-    scale: 0.98 1.02;
-  }
-}
-
-/* the thread the stations stand on, drawn solid as the packet travels */
-.ct-thread {
-  position: absolute;
-  left: 12.5%;
-  right: 12.5%;
-  top: calc(14px + var(--art-h) + 3px);
-  height: 0;
-  border-top: 2px dashed rgba(140, 47, 67, 0.35);
-}
-.ct-thread-done {
-  position: absolute;
-  left: 0;
-  top: -2px;
-  height: 2.6px;
-  width: calc(var(--step) / 3 * 100%);
-  border-radius: 2px;
-  background: var(--thread);
-  opacity: 0;
-  transition:
-    width 0.8s cubic-bezier(0.5, 0, 0.3, 1),
-    opacity 0.3s ease;
-}
-.ct[data-phase="sending"] .ct-thread-done,
-.ct[data-phase="sent"] .ct-thread-done {
-  opacity: 1;
-}
-
-/* the packet: rides the thread, hops station to station, then into the box */
-.ct-packet {
-  position: absolute;
-  left: calc(12.5% + var(--step) * 25%);
-  top: calc(14px + var(--art-h) + 2px);
-  width: 44px;
-  transform: translate(-50%, -100%);
-  opacity: 0;
-  transition:
-    left 0.8s cubic-bezier(0.5, 0, 0.3, 1),
-    opacity 0.3s ease,
-    transform 0.7s cubic-bezier(0.5, 0, 0.3, 1);
-  pointer-events: none;
-}
-.ct-packet svg {
-  display: block;
-  width: 100%;
-  fill: var(--paper);
-  stroke: var(--ink);
-  stroke-width: 2;
-  stroke-linejoin: round;
-}
-.ct-packet .ct-packet-string {
-  stroke: var(--thread);
-  stroke-width: 1.6;
-  stroke-dasharray: 3 2;
-}
-.ct[data-phase="sending"] .ct-packet,
-.ct-route[data-step="4"] .ct-packet {
-  opacity: 1;
-}
-/* a new name for each step restarts the hop */
-.ct-route[data-step="0"] .ct-packet,
-.ct-route[data-step="2"] .ct-packet {
-  animation: ct-hop-a 0.8s ease;
-}
-.ct-route[data-step="1"] .ct-packet,
-.ct-route[data-step="3"] .ct-packet {
-  animation: ct-hop-b 0.8s ease;
-}
-@keyframes ct-hop-a {
-  45% {
-    translate: 0 -26px;
-  }
-}
-@keyframes ct-hop-b {
-  45% {
-    translate: 0 -26px;
-  }
-}
-/* posted: up to the slot (about a third of the way down the box) and in */
-.ct-route[data-step="4"] .ct-packet {
-  transform: translate(-50%, calc(-100% - var(--art-h) * 0.62)) scale(0.3);
-  opacity: 0;
-  transition:
-    transform 0.6s cubic-bezier(0.5, 0, 0.3, 1),
-    opacity 0.25s ease 0.4s;
+  background-color: rgba(255, 252, 246, 0.5);
+  background-image:
+    linear-gradient(rgba(140, 47, 67, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140, 47, 67, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* ── the form and the packet label ─────────────────────────────────────── */
@@ -383,24 +193,14 @@
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
-.ct-in {
-  display: inline-grid;
-  place-items: center;
+.ct-ico {
   width: 17px;
   height: 17px;
-  border-radius: 3px;
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-read), Georgia, serif;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.ct-chip[data-on] .ct-in {
-  background: var(--paper);
-  color: var(--ink);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .ct-input {
   display: block;
@@ -695,9 +495,6 @@
 
 /* ── small screens ─────────────────────────────────────────────────────── */
 @media (max-width: 720px) {
-  .ct {
-    --art-h: 78px;
-  }
   .ct-head {
     flex-direction: column;
     align-items: flex-start;
@@ -705,24 +502,6 @@
   .ct-status {
     font-size: 9.5px;
     letter-spacing: 0.1em;
-  }
-  .ct-route {
-    padding-top: 12px;
-  }
-  .ct-thread {
-    top: calc(12px + var(--art-h) + 3px);
-  }
-  .ct-packet {
-    top: calc(12px + var(--art-h) + 2px);
-    width: 26px;
-  }
-  .ct-st-title {
-    margin-top: 10px;
-    font-size: 8.5px;
-    letter-spacing: 0.06em;
-  }
-  .ct-st-note {
-    display: none;
   }
   .ct-body {
     grid-template-columns: minmax(0, 1fr);
@@ -736,13 +515,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ct-st .ct-art img,
-  .ct-packet,
   .ct-postmark {
-    animation: none !important;
+    animation: none;
   }
-  .ct-packet,
-  .ct-thread-done,
   .ct-label {
     transition: none;
   }

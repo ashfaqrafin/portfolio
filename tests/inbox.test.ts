@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { allow } from "../lib/inbox/rate-limit.ts";
-import { inquirySchema, normaliseLinkedIn } from "../lib/inbox/schema.ts";
+import { inquirySchema, normaliseSocial, normaliseWhatsApp } from "../lib/inbox/schema.ts";
 
 const ok = { message: "Hello there, a real message.", name: "Ana", via: "email", reply: "ana@example.com", elapsed: 9000 };
 
@@ -20,17 +20,34 @@ test("inquiry: bounds, reply checks and unknown fields are refused", () => {
   assert.ok(bad({ via: "carrier pigeon" }));
   assert.ok(bad({ name: "n".repeat(61) }));
   assert.ok(bad({ isOwner: true }));
-  assert.ok(bad({ via: "linkedin", reply: "https://evil.example/in/me" }));
+  assert.ok(bad({ via: "social", reply: "https://evil.example/in/me" }));
+  assert.ok(bad({ via: "linkedin", reply: "https://www.linkedin.com/in/me" }));
+  assert.ok(bad({ via: "whatsapp", reply: "call me maybe" }));
 });
 
-test("inquiry: LinkedIn links are normalised to one safe form", () => {
-  for (const v of ["linkedin.com/in/ana", "https://www.linkedin.com/in/ana/", "http://bd.linkedin.com/in/ana"]) {
-    assert.equal(normaliseLinkedIn(v), "https://www.linkedin.com/in/ana", v);
+test("inquiry: social links are limited to profile sites and normalised", () => {
+  for (const [v, want] of [
+    ["linkedin.com/in/ana", "https://www.linkedin.com/in/ana"],
+    ["https://www.linkedin.com/in/ana/", "https://www.linkedin.com/in/ana"],
+    ["http://bd.linkedin.com/in/ana", "https://www.linkedin.com/in/ana"],
+    ["github.com/ana", "https://github.com/ana"],
+    ["https://www.instagram.com/ana.makes/", "https://instagram.com/ana.makes"],
+  ]) {
+    assert.equal(normaliseSocial(v), want, v);
   }
-  for (const v of ["javascript:alert(1)", "https://linkedin.com.evil.dev/in/ana", "https://www.linkedin.com/feed/", "linkedin.com/in/"]) {
-    assert.equal(normaliseLinkedIn(v), null, v);
+  for (const v of ["javascript:alert(1)", "https://linkedin.com.evil.dev/in/ana", "https://evil.dev/github.com/ana", "linkedin.com", "https://user:pw@github.com/ana"]) {
+    assert.equal(normaliseSocial(v), null, v);
   }
-  assert.equal(inquirySchema.parse({ ...ok, via: "linkedin", reply: "linkedin.com/in/ana" }).reply, "https://www.linkedin.com/in/ana");
+  // queries and fragments are dropped, never kept
+  assert.equal(normaliseSocial("https://github.com/ana?x=<script>#y"), "https://github.com/ana");
+  assert.equal(inquirySchema.parse({ ...ok, via: "social", reply: "linkedin.com/in/ana" }).reply, "https://www.linkedin.com/in/ana");
+});
+
+test("inquiry: WhatsApp numbers keep their digits and country code", () => {
+  assert.equal(normaliseWhatsApp("+880 1712-345678"), "+8801712345678");
+  assert.equal(normaliseWhatsApp("(017) 1234 5678"), "01712345678");
+  for (const v of ["12345", "+1 (555) call-me", "1234567890123456"]) assert.equal(normaliseWhatsApp(v), null, v);
+  assert.equal(inquirySchema.parse({ ...ok, via: "whatsapp", reply: "+880 1712 345678" }).reply, "+8801712345678");
 });
 
 test("rate limit: five per ten minutes per key, then the window slides", () => {

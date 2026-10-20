@@ -1,12 +1,28 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { isOwner } from "@/lib/auth/guard";
-import { inbox } from "@/lib/inbox";
+import { inbox, type Message } from "@/lib/inbox";
 import { deleteMessage } from "../actions";
 import DeleteButton from "../DeleteButton";
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(iso)) + " UTC";
+
+/** the reply value was normalised by the schema before it was stored */
+function ReplyLink({ via, reply }: Pick<Message, "via" | "reply">) {
+  if (via === "email") return <a href={`mailto:${reply}`}>Reply by email: {reply}</a>;
+  if (via === "whatsapp")
+    return (
+      <a href={`https://wa.me/${reply.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+        Reply on WhatsApp: {reply}
+      </a>
+    );
+  return (
+    <a href={reply} target="_blank" rel="noopener noreferrer">
+      Reply via {reply.replace(/^https:\/\/(www\.)?/, "")}
+    </a>
+  );
+}
 
 async function Messages({ searchParams }: { searchParams: PageProps<"/studio/inbox">["searchParams"] }) {
   if (!(await isOwner())) redirect("/signin?callbackUrl=/studio/inbox"); // gate 2
@@ -34,13 +50,7 @@ async function Messages({ searchParams }: { searchParams: PageProps<"/studio/inb
               </header>
               <p className="st-msg-body">{m.message}</p>
               <footer className="st-msg-foot">
-                {m.via === "email" ? (
-                  <a href={`mailto:${m.reply}`}>Reply by email: {m.reply}</a>
-                ) : (
-                  <a href={m.reply} target="_blank" rel="noopener noreferrer">
-                    Reply on LinkedIn: {m.reply.replace("https://www.", "")}
-                  </a>
-                )}
+                <ReplyLink via={m.via} reply={m.reply} />
                 <form action={deleteMessage}>
                   <input type="hidden" name="id" value={m.id} />
                   <DeleteButton title={`the message from ${m.name || "this sender"}`} />

@@ -27,7 +27,7 @@ export const articles = pgTable(
 
 export type ArticleRow = typeof articles.$inferSelect;
 
-/* Mirrors db/migrations/0002_messages.sql. */
+/* Mirrors db/migrations/0002_messages.sql and 0003_message_reply_via.sql. */
 export const messages = pgTable(
   "messages",
   {
@@ -38,5 +38,5 @@ export const messages = pgTable(
     reply: text("reply").notNull(),
     message: text("message").notNull(),
   },
-  (t) => [index("messages_created_idx").on(t.createdAt), check("messages_via_check", sql`${t.via} in ('email','linkedin')`)],
+  (t) => [index("messages_created_idx").on(t.createdAt), check("messages_via_check", sql`${t.via} in ('email','whatsapp','social','linkedin')`)],
 );
