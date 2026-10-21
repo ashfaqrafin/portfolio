@@ -30,7 +30,9 @@ Then open a pull request into `master` and merge it. Vercel deploys `master` to 
 
    Add `?sslmode=require` to the end of both. The site already sets `prepare: false`, which the transaction pooler needs.
 
-You don't need Supabase's API keys, Auth or Row Level Security for this. The site talks to the database directly from the server, and the URL is a server-only secret.
+You don't need Supabase's project URL, its API keys (`NEXT_PUBLIC_SUPABASE_URL`, the publishable/anon key) or Supabase Auth. The site talks to the database directly from the server, and the connection URL is a server-only secret.
+
+Supabase also publishes every table through its web Data API, which anyone holding the public key can call. Migration `0004_lock_data_api.sql` (applied by `npm run db:migrate`) turns on row-level security with no policies, so drafts and contact messages can't be read or written that way, while the site's own connection is unaffected. To close the API entirely, turn it off under **Project Settings → Data API**.
 
 ## 3. Create the tables and copy in your articles
 
@@ -38,7 +40,7 @@ From the project folder on your laptop, using the **session pooler** URL:
 
 ```bash
 export DATABASE_URL='postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
-npm run db:migrate   # creates the articles and messages tables
+npm run db:migrate   # creates the articles and messages tables, and locks the Data API
 npm run db:seed      # copies content/articles/*.md into the database
 unset DATABASE_URL
 ```
