@@ -81,7 +81,6 @@ interface Built {
   rowsA: Float32Array;
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
 const FLAT = new Float32Array(THREADS.rows);
 
 export class CancelledError extends Error {}
@@ -102,7 +101,6 @@ export async function createEngine(
   const stage = q("stage")!;
   const mount = q("canvas")!;
   const caption = q("caption");
-  const stageNo = q("stage-no");
   const titleEl = q("title");
   const subEl = q("sub");
   const prevBtn = q<HTMLButtonElement>("prev");
@@ -538,7 +536,6 @@ export async function createEngine(
     const cap = u >= 0.45 ? nxt : k;
     if (cap !== lastHdr) {
       lastHdr = cap;
-      if (stageNo) stageNo.textContent = `STAGE ${pad(cap + 1)} / ${pad(STAGE_COUNT)}`;
       if (titleEl) titleEl.textContent = STAGES[cap].title;
       if (subEl) subEl.textContent = STAGES[cap].sub;
       if (caption) {

@@ -8,11 +8,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  /* config options here */
   // allow opening the dev server from other devices on the LAN (phone, other machine)
   allowedDevOrigins: ["192.168.1.2", "192.168.*.*", "*.local"],
   // no Next.js badge on the page in development
   devIndicators: false,
+  // don't write an AGENTS.md (instructions for AI coding tools) into the project
+  agentRules: false,
   cacheComponents: true,
   // project pages and logos are read from content/ at run time; on Vercel a
   // function only has the files traced into it, so name them here

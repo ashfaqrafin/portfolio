@@ -5,7 +5,7 @@
  * Four stages, four transitions, one loop.
  */
 
-// ── Timeline (reference values from the brief) ─────────────────────────────
+// ── Timeline ───────────────────────────────────────────────────────────────
 export const H = 3.0; // hold per stage
 export const T = 4.2; // transition
 export const P = H + T; // period
@@ -134,7 +134,6 @@ export const MOTION = {
 /** The hero's heading (the page's h1): name, then the line and its hand-written aside. */
 export const INTRO = {
   name: "Ashfaq Khan Rafin",
-  year: "MMXXVI",
   headline: "Pick a lane.",
   aside: "or don\u2019t.",
 };
@@ -148,7 +147,6 @@ export interface StageCopy {
   title: string;
   sub: string;
   quote: QuoteSeg[];
-  tag: string;
   alt: string;
 }
 
@@ -161,7 +159,6 @@ export const STAGES: StageCopy[] = [
         text: "Wait, should I just become a bespoke tailor? Hand-stitching lapels looks therapeutic...",
       },
     ],
-    tag: "DRAFT No.01 · 1:1",
     alt: "Ashfaq as a tailor, chin on hand, pattern pieces drawn behind him",
   },
   {
@@ -172,7 +169,6 @@ export const STAGES: StageCopy[] = [
         text: "No, wait... maybe high-end streetwear and silhouette design is my true calling.",
       },
     ],
-    tag: "No.02 · DRAPE",
     alt: "Ashfaq holding a tablet, studying a finished suit that hangs beside him",
   },
   {
@@ -183,7 +179,6 @@ export const STAGES: StageCopy[] = [
         text: "Ehh, nah\u2014let's be real, I live in the terminal. Time to rice my dotfiles and automate everything.",
       },
     ],
-    tag: "zsh \u2014 tty1",
     alt: "Ashfaq gesturing at floating code windows and circuit lines",
   },
   {
@@ -196,7 +191,6 @@ export const STAGES: StageCopy[] = [
       { text: "tailoring the architecture by night", kind: "stitch" },
       { text: "." },
     ],
-    tag: "{ both }",
     alt: "Ashfaq wearing the tailored suit and working on a laptop",
   },
 ];

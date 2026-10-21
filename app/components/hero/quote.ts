@@ -16,7 +16,6 @@ interface Ch {
  */
 export class QuoteController {
   private readonly frame: HTMLElement;
-  private readonly tagEl: HTMLElement | null;
   private readonly live: HTMLElement | null;
   private readonly blocks: HTMLElement[] = [];
   private readonly chars: Ch[][] = [];
@@ -27,7 +26,6 @@ export class QuoteController {
 
   constructor(root: HTMLElement) {
     this.frame = root.querySelector<HTMLElement>("[data-hero=qbox]")!;
-    this.tagEl = root.querySelector<HTMLElement>("[data-hero=qtag]");
     this.live = root.querySelector<HTMLElement>("[data-hero=live]");
     const rng = mulberry32(7);
     root.querySelectorAll<HTMLElement>("[data-qstage]").forEach((block) => {
@@ -70,7 +68,6 @@ export class QuoteController {
       this.blocks.forEach((b, i) => {
         b.dataset.active = i === show ? "true" : "false";
       });
-      if (this.tagEl) this.tagEl.textContent = STAGES[show].tag;
       if (this.live) this.live.textContent = STAGES[show].quote.map((s) => s.text).join("");
       this.clearCaret();
     }

@@ -135,7 +135,7 @@ export default function SketchBook({ projects }: { projects: ProjectData[] }) {
                   if (role === "leaf" && e.target === e.currentTarget) finish();
                 }}
               >
-                <Page p={p} i={i} n={n} />
+                <Page p={p} />
                 <div className="pj-back" aria-hidden="true" />
               </article>
             );
@@ -168,16 +168,10 @@ export default function SketchBook({ projects }: { projects: ProjectData[] }) {
   );
 }
 
-function Page({ p, i, n }: { p: ProjectData; i: number; n: number }) {
+function Page({ p }: { p: ProjectData }) {
   return (
     <div className="pj-front">
       <header className="pj-form">
-        <span className="pj-field">
-          <span className="pj-lbl">No.</span>
-          <span className="pj-val pj-w" style={at(0.1)}>
-            {pad2(i + 1)} / {pad2(n)}
-          </span>
-        </span>
         <span className="pj-field">
           <span className="pj-lbl">Date</span>
           <span className="pj-val pj-w" style={at(0.25)}>
@@ -200,9 +194,6 @@ function Page({ p, i, n }: { p: ProjectData; i: number; n: number }) {
               {STATUS_LABEL[p.status]}
             </span>
           </div>
-          <figcaption className="pj-cap pj-w" style={at(2.1)}>
-            fig. {i + 1}: {p.title.toLowerCase()}
-          </figcaption>
         </figure>
 
         <div className="pj-text">

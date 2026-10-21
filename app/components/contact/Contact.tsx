@@ -183,7 +183,7 @@ export default function Contact() {
         ? `Returned to sender · ${error}`
         : phase === "sending"
           ? ACT_STATUS[act]
-          : "Four pairs of hands carry every message. Send one and watch.";
+          : "";
   const stage = phase === "sending" || phase === "sent" || bounced;
   const errId = (k: keyof Fields) => (fields[k] ? `${uid}-${k}-err` : undefined);
   const snippet = message.trim().slice(0, 30) + (message.trim().length > 30 ? "…" : "");
@@ -192,7 +192,6 @@ export default function Contact() {
     <section className="sheet ct" aria-labelledby={`${uid}-h`} data-phase={phase}>
       <header className="ct-head">
         <div>
-          <p className="ct-kicker">Contact &middot; transmission pipeline</p>
           <h2 className="ct-h2" id={`${uid}-h`}>
             Say hello. <span className="ct-h2-hand">tell me about your project.</span>
           </h2>
@@ -338,7 +337,6 @@ export default function Contact() {
                   <path d="M9 31L29 9M27 8C30 5 34 6 33 9C32 12 29 11 30 9" />
                   <path d="M30 10C38 18 20 24 24 32C26 36 31 35 32 33" />
                 </svg>
-                <span>MMXXVI</span>
               </span>
               <dl className="ct-addr">
                 <dt>To</dt>

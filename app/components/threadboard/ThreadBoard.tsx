@@ -17,7 +17,7 @@ import type { BoardData, RelatedRef, SheetData } from "@/lib/blog/data";
 import { formatDate, formatMonth } from "@/lib/blog/format";
 import { REL_LABEL } from "@/lib/blog/graph";
 import { danglingGeom, headOf, LANE_GAP, offboardGeom, threadGeom, threadJitter, type Pt } from "@/lib/blog/layout";
-import { TOPIC_ANNOT, TOPIC_LABEL, TOPICS } from "@/lib/blog/topics";
+import { TOPIC_LABEL, TOPICS } from "@/lib/blog/topics";
 import type { Edge, Topic } from "@/lib/blog/types";
 import "./threadboard.css";
 
@@ -587,15 +587,9 @@ export default function ThreadBoard({
       data-dragging={dragging ? "" : undefined}
     >
       <header className="tb-head">
-        <div>
-          <p className="tb-kicker">
-            The archive &middot; {board.total} pins &middot; {board.threadCount} threads &middot; {board.loose.length} loose
-          </p>
-          <Heading className="tb-title" id={`${uid}-title`}>
-            The Thread Board
-          </Heading>
-        </div>
-        <p className="tb-sub">every idea pulls on another</p>
+        <Heading className="tb-title" id={`${uid}-title`}>
+          The Thread Board
+        </Heading>
       </header>
 
       {sheets.length > 1 && (
@@ -658,9 +652,7 @@ export default function ThreadBoard({
                 data-topic={l.topic}
                 style={{ "--ly": l.top, "--lh": LANE_GAP, "--i": i } as CSSProperties}
               >
-                <span className="tb-lane-no">lane 0{i + 1}</span>
                 <span className="tb-lane-name">{TOPIC_LABEL[l.topic]}</span>
-                <span className="tb-lane-annot">{TOPIC_ANNOT[l.topic]}</span>
               </div>
             ))}
             <div className="tb-tape" style={{ "--ay": layout.axisY } as CSSProperties}>

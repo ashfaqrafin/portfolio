@@ -26,14 +26,6 @@
   gap: 16px 28px;
   flex-wrap: wrap;
 }
-.ct-kicker {
-  margin: 0 0 10px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
 .ct-h2 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
@@ -62,6 +54,9 @@
   transition:
     background 0.3s ease,
     color 0.3s ease;
+}
+.ct-status:empty {
+  display: none;
 }
 .ct-status[data-phase="sent"] {
   border-style: solid;

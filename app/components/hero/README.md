@@ -30,7 +30,7 @@ Note: the figure layer is rendered with Three.js (WebGL, shader-driven shards, r
 | `MESH` | 6×5 desktop mesh, jitter 3.5% / 3%, spacing `W/55`, jag 2.6, fringe 45%, bridges 55%, bridge max 0.17·W | Tear mesh and fringe |
 | `THREADS` | 64 rows, 56 loose desktop / 34 mobile, 18 trail samples | Thread system |
 | `MOTION` | figure float 3px, suit float 4px, strain 1.8px at 70Hz, tween 3.2 scene-s per real s | Polish |
-| `TRANSITIONS[i]` | `fab`, `tear`, `assemble`, `relax`, `tech` windows | Per-transition phases, as in the brief's table |
+| `TRANSITIONS[i]` | `fab`, `tear`, `assemble`, `relax`, `tech` windows | Per-transition phases |
 | `WINDOWS` | patternUnweave, suitWeave, suitOut, suitIn, finalWeave, patternWeave, storm | Special windows (progress `u`) |
 | `SUIT` | yaw .78, 40 slices, outYaw 2.4, outScale .38, outTilt .5, inScale .45 | Suit projection and flight |
 | `PALETTE` | ink, burgundy, cream, paper | One ink plus tints |

@@ -213,13 +213,6 @@
   gap: 4px;
   text-align: right;
 }
-.hero-stageno {
-  margin: 0;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: var(--muted);
-}
 .hero-title {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
@@ -236,7 +229,6 @@
   line-height: 1.05;
   color: var(--thread);
 }
-.hero-caption.flip .hero-stageno,
 .hero-caption.flip .hero-title,
 .hero-caption.flip .hero-sub {
   animation: cap-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -308,21 +300,6 @@
   fill: var(--paper);
   stroke: var(--thread);
   stroke-width: 1.7;
-}
-.hero-loading {
-  position: absolute;
-  left: 16px;
-  bottom: 12px;
-  z-index: 2;
-  margin: 0;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.hero[data-ready] .hero-loading {
-  display: none;
 }
 /* the first stage as plain images, placed where stage-layout.ts puts the art
    (LAYOUT in config.ts): seen as soon as they download, and without JS or WebGL.
@@ -426,17 +403,6 @@
   position: absolute;
   pointer-events: none;
 }
-.q-tag {
-  position: absolute;
-  z-index: 2;
-  font-family: var(--font-mono), monospace;
-  font-style: normal;
-  font-size: 9.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--muted);
-}
 
 /* skin 0: tailor, pattern paper with a tape-measure ruler */
 .qbox[data-skin="0"] {
@@ -461,12 +427,6 @@
   background:
     repeating-linear-gradient(90deg, var(--burgundy) 0 1px, transparent 1px 6px) top / 100% 5px no-repeat,
     repeating-linear-gradient(90deg, var(--burgundy) 0 1px, transparent 1px 24px) top / 100% 9px no-repeat;
-}
-.qbox[data-skin="0"] .q-tag {
-  right: 8px;
-  bottom: -8px;
-  padding: 0 5px;
-  background: var(--qbg);
 }
 
 /* skin 1: fashion, a hang-tag */
@@ -500,12 +460,6 @@
   border: 1.8px solid var(--thread);
   border-radius: 50%;
   clip-path: inset(0 0 48% 0);
-}
-.qbox[data-skin="1"] .q-tag {
-  left: 12px;
-  bottom: -8px;
-  padding: 0 5px;
-  background: var(--qbg);
 }
 
 /* skin 2: Linux, a terminal */
@@ -542,14 +496,6 @@
   box-shadow:
     13px 0 0 #e6b450,
     26px 0 0 #7fb069;
-}
-.qbox[data-skin="2"] .q-tag {
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(245, 230, 224, 0.7);
-  letter-spacing: 0.08em;
-  text-transform: none;
 }
 .qbox[data-skin="2"] .c.caret::after {
   width: 0.55em;
@@ -594,12 +540,6 @@
 }
 .qbox[data-skin="3"] .q-deco-b::before {
   content: "}";
-}
-.qbox[data-skin="3"] .q-tag {
-  right: 14px;
-  bottom: -8px;
-  padding: 0 5px;
-  background: var(--qbg);
 }
 .seg-chip {
   padding: 1px 6px 2px;
@@ -806,9 +746,6 @@
     padding-top: 12px;
     border-top: 1.5px dashed rgba(140, 47, 67, 0.32);
   }
-  .hero-stageno {
-    font-size: 10px;
-  }
   .hero-title {
     font-size: 23px;
   }
@@ -904,7 +841,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-caption.flip .hero-stageno,
   .hero-caption.flip .hero-title,
   .hero-caption.flip .hero-sub {
     animation: none;

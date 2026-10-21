@@ -143,7 +143,7 @@ export default function Hero() {
       <div className="hero-card">
         <header className="hero-head">
           <h1 className="hero-h1">
-            <span className="hero-kicker">{INTRO.name} &middot; Portfolio {INTRO.year}</span>
+            <span className="hero-kicker">{INTRO.name}</span>
             <span className="hero-h1-main">{INTRO.headline}</span>{" "}
             <span className="hero-h1-hand">
               {INTRO.aside}
@@ -152,11 +152,8 @@ export default function Hero() {
               </svg>
             </span>
           </h1>
-          {/* the stage readout: the engine rewrites it as the animation moves on */}
+          {/* the stage's name: the engine rewrites it as the animation moves on */}
           <div className="hero-caption flip" data-hero="caption">
-            <p className="hero-stageno" data-hero="stage-no">
-              STAGE 01 / 04
-            </p>
             <p className="hero-title" data-hero="title">
               {STAGES[0].title}
             </p>
@@ -171,9 +168,6 @@ export default function Hero() {
             <div className="qbox" data-hero="qbox" data-skin="0">
               <span className="q-deco q-deco-a" aria-hidden="true" />
               <span className="q-deco q-deco-b" aria-hidden="true" />
-              <span className="q-tag" data-hero="qtag" aria-hidden="true">
-                {STAGES[0].tag}
-              </span>
               {STAGES.map((s, i) => (
                 <p className="qtext" data-qstage={i} data-active={i === 0 ? "true" : "false"} key={i}>
                   {i === 2 && (
@@ -196,9 +190,6 @@ export default function Hero() {
               <path data-hero="thread-path" fill="none" />
               <circle data-hero="thread-dot" r="4.5" />
             </svg>
-            <p className="hero-loading" aria-hidden="true">
-              threading the needle&hellip;
-            </p>
             <div className="hero-poster" aria-hidden="true">
               <svg width="0" height="0" focusable="false">
                 {/* multiplies by --paper (#f8f3ea), as BG_FRAG's PAPER does */}

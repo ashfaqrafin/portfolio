@@ -10,13 +10,13 @@ export default function Home() {
     <main className="flex flex-1 flex-col">
       <Intro />
       <Hero />
-      <ChapterSeam id="blog" part="II" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">
+      <ChapterSeam id="blog" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">
         <BlogSection />
       </ChapterSeam>
-      <ChapterSeam id="projects" part="III" title="Projects" side="left" line="Pull a thread long enough and it becomes a thing.">
+      <ChapterSeam id="projects" title="Projects" side="left" line="Pull a thread long enough and it becomes a thing.">
         <ProjectsSection />
       </ChapterSeam>
-      <ChapterSeam id="contact" part="IV" title="Contact" line="Every thread ends at someone’s door. This one’s mine.">
+      <ChapterSeam id="contact" title="Contact" line="Every thread ends at someone’s door. This one’s mine.">
         <Contact />
       </ChapterSeam>
     </main>

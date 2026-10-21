@@ -1,6 +1,6 @@
 import type { ArticleMeta, Edge, Graph } from "./types";
 
-/* Thread rules (see the build brief, "How threads are decided"):
+/* Thread rules (docs/blog.md, "How threads are decided"):
    - explicit `connectsTo` series   → weight 1.0
    - explicit `connectsTo` builds-on → weight 0.8
    - otherwise ≥ 2 shared tags or tag Jaccard ≥ 0.30 → automatic topic thread,

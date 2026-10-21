@@ -22,14 +22,6 @@
   justify-content: space-between;
   gap: 16px;
 }
-.tb-kicker {
-  margin: 0 0 6px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
 .tb-title {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
@@ -37,15 +29,6 @@
   font-size: clamp(26px, 3.4vw, 46px);
   line-height: 1;
   letter-spacing: -0.01em;
-}
-.tb-sub {
-  margin: 0;
-  max-width: 30ch;
-  text-align: right;
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(19px, 1.8vw, 25px);
-  line-height: 1.05;
-  color: var(--thread);
 }
 
 /* ── stage ──────────────────────────────────────────────────────────────── */
@@ -129,20 +112,10 @@
 .tb-lane:first-child {
   border-top-color: transparent;
 }
-.tb-lane-no,
-.tb-lane-name,
-.tb-lane-annot {
+.tb-lane-name {
   position: absolute;
   left: calc(12 * var(--u));
   white-space: nowrap;
-}
-.tb-lane-no {
-  top: calc(50% - 30 * var(--u));
-  font-family: var(--font-mono), monospace;
-  font-size: calc(8.5 * var(--u));
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--muted);
 }
 .tb-lane-name {
   top: calc(50% - 18 * var(--u));
@@ -152,13 +125,6 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink);
-}
-.tb-lane-annot {
-  top: calc(50% + 4 * var(--u));
-  font-family: var(--font-hand), cursive;
-  font-size: calc(18 * var(--u));
-  line-height: 1;
-  color: var(--thread);
 }
 
 .tb-tape {
@@ -1249,10 +1215,6 @@
     align-items: flex-start;
     gap: 6px;
   }
-  .tb-sub {
-    text-align: left;
-    font-size: 20px;
-  }
   .tb-stage {
     aspect-ratio: auto;
     max-height: none;
@@ -1263,12 +1225,8 @@
     --u: 0.6px;
     left: calc(100cqw - var(--bw) * var(--u));
   }
-  /* the lane labels sit in the board's left margin, off screen here: keep just
-     the name, as a tag that sticks to the stage's left edge */
-  .tb-lane-no,
-  .tb-lane-annot {
-    display: none;
-  }
+  /* the lane labels sit in the board's left margin, off screen here: the name
+     becomes a tag that sticks to the stage's left edge */
   .tb-lane-name {
     position: sticky;
     left: 6px;

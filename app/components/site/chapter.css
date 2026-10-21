@@ -87,21 +87,6 @@
   fill: var(--thread-hi);
 }
 
-/* the cue that peeks below the hero, gone as soon as the thread starts */
-.chapter-cue {
-  position: absolute;
-  left: calc(50% + 14px);
-  top: 3px;
-  margin: 0;
-  font-family: var(--font-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--muted);
-  opacity: clamp(0, calc(1 - var(--p) * 8), 1);
-}
-
 .chapter-label {
   position: absolute;
   left: 55%;
@@ -121,13 +106,10 @@
   margin: 0 0 8px;
   font-family: var(--font-mono), monospace;
   font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--muted);
-}
-.chapter-kicker span {
   color: var(--ink);
-  font-weight: 700;
 }
 .chapter-line {
   margin: 0;
@@ -175,12 +157,6 @@
   }
   .chapter-line {
     font-size: 22px;
-  }
-  .chapter-cue {
-    right: 12px;
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    white-space: normal;
   }
 }
 
