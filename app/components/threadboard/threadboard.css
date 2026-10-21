@@ -215,7 +215,7 @@
   border: 0;
   border-bottom: calc(1.4 * var(--u)) dashed var(--thread);
   background: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   white-space: nowrap;
 }
 .tb-tape-btn:hover,
@@ -405,7 +405,7 @@
   transform: rotate(var(--rot));
   color: var(--ink);
   text-decoration: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   -webkit-user-drag: none;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -675,7 +675,7 @@
   font-size: 15px;
   font-weight: 700;
   line-height: 1;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: color 0.2s ease;
@@ -902,7 +902,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: color 0.2s ease;
@@ -1031,7 +1031,7 @@
   background: none;
   font: inherit;
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .tb-note-link:hover,
 .tb-note-link:focus-visible {
@@ -1073,7 +1073,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   white-space: nowrap;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   transition:
     background 0.2s ease,
     color 0.2s ease;
@@ -1112,11 +1112,11 @@
   background: var(--paper);
   color: var(--ink);
   font-size: 15px;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .tb-sheet-step:disabled {
   opacity: 0.3;
-  cursor: default;
+  cursor: var(--cursor-default, default);
 }
 
 /* ── list view ──────────────────────────────────────────────────────────── */

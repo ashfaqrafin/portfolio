@@ -133,3 +133,37 @@ body::before {
     display: none;
   }
 }
+
+/* ── cursor: a sewing needle ──────────────────────────────────────────────
+   An ink needle outlined in paper, so it reads on every background; over
+   anything clickable it turns to paper with an ink outline and is threaded.
+   The point is the hotspot in both, so it aims like an arrow. Mouse and
+   trackpad only; text fields keep the text cursor and the thread board keeps
+   its grab hand. Components use var(--cursor-pointer) where they'd say
+   `cursor: pointer`. */
+@media (pointer: fine) {
+  :root {
+    --cursor-default: url("/cursors/needle.svg") 2 2, auto;
+    --cursor-pointer: url("/cursors/needle-threaded.svg") 2 2, pointer;
+  }
+  html {
+    cursor: var(--cursor-default);
+  }
+  a[href],
+  button,
+  summary,
+  select,
+  label:has(> input[type="radio"], > input[type="checkbox"]),
+  [role="button"],
+  input:is([type="checkbox"], [type="radio"], [type="submit"], [type="button"], [type="range"]) {
+    cursor: var(--cursor-pointer);
+  }
+  input:not([type="checkbox"], [type="radio"], [type="submit"], [type="button"], [type="range"], [type="file"]),
+  textarea,
+  [contenteditable="true"] {
+    cursor: text;
+  }
+  :disabled {
+    cursor: var(--cursor-default);
+  }
+}

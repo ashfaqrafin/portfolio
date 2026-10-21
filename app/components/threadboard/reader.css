@@ -68,7 +68,7 @@
   border-radius: 50%;
   background: transparent;
   color: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   isolation: isolate;
   transition: color 0.2s ease;
 }
@@ -225,7 +225,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   isolation: isolate;
   transition: color 0.2s ease;
 }

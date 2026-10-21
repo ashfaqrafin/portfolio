@@ -189,7 +189,7 @@ html[data-intro="play"] .intro[data-skip] {
   font-size: 10.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .intro-skip:hover,
 .intro-skip:focus-visible {

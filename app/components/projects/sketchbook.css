@@ -456,7 +456,7 @@
   border: 0;
   background: var(--paper);
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   isolation: isolate;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -485,7 +485,7 @@
 }
 .pj-btn:disabled {
   opacity: 0.35;
-  cursor: default;
+  cursor: var(--cursor-default, default);
 }
 .pj-tabs {
   display: flex;

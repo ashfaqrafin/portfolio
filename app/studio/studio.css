@@ -45,7 +45,7 @@
   text-transform: inherit;
   text-decoration: underline dashed var(--thread) 1.5px;
   text-underline-offset: 5px;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .st-link:hover,
 .st-nav a:hover {
@@ -134,7 +134,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-decoration: none;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   isolation: isolate;
 }
 .st-btn::before {
@@ -433,7 +433,7 @@
   font-size: 10.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .st-tabs button[aria-selected="true"] {
   background: var(--burgundy);
@@ -540,7 +540,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 1px 10px;
   align-items: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .st-connect input[type="checkbox"] {
   grid-row: span 2;
@@ -631,7 +631,7 @@
     repeating-linear-gradient(135deg, rgba(140, 47, 67, 0.05) 0 1px, transparent 1px 9px),
     #fffaf0;
   text-align: center;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   transition:
     background 0.2s ease,
     border-color 0.2s ease;
@@ -649,7 +649,7 @@
   position: absolute;
   inset: 0;
   opacity: 0;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 .st-drop-title {
   font-family: var(--font-hand), cursive;
@@ -689,7 +689,7 @@
   max-width: 52ch;
 }
 .st-example summary {
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   font-family: var(--font-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.16em;

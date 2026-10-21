@@ -642,7 +642,7 @@
   border-radius: 50%;
   background: transparent;
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   transition: color 0.2s ease;
 }
 .hbtn::before {
@@ -713,7 +713,7 @@
   border: 0;
   background: none;
   color: var(--ink);
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
   transform: translateX(-50%);
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;

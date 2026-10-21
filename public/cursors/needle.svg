@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- a sewing needle in the site's ink, outlined in paper with a soft shadow so it
+       reads on paper, on the pencil hatching and on the dark cards. Hotspot: the
+       point (2,2). -->
+  <g transform="rotate(45 2 2)">
+    <path d="M2 2 L13 0.2 L33.5 0.05 Q38.6 0 38.6 2 Q38.6 4 33.5 3.95 L13 3.8 Z" transform="translate(1.6 0.5)" fill="#2a0810" opacity="0.3" stroke="#2a0810" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M2 2 L13 0.2 L33.5 0.05 Q38.6 0 38.6 2 Q38.6 4 33.5 3.95 L13 3.8 Z" fill="#4a0c18" stroke="#f8f3ea" stroke-width="2" stroke-linejoin="round" paint-order="stroke"/>
+    <ellipse cx="34.6" cy="2" rx="2.4" ry="0.7" fill="#f8f3ea"/>
+    <path d="M10 1.4 L29 1.1" stroke="#c4707e" stroke-width="0.7" stroke-linecap="round"/>
+  </g>
+</svg>
