@@ -119,6 +119,47 @@ await check("visitor", "the draft appears nowhere in public HTML or payloads", a
   assert(!rsc.includes(DRAFT_SENTINEL) && !rsc.includes(draft.slug), "the RSC payload leaks the draft");
 });
 
+await check("visitor", "every board sheet serves published data only; the list covers every sheet", async () => {
+  let sheets = 0;
+  for (; sheets < 500; sheets++) {
+    const r = await get(`/api/board/${sheets}`);
+    if (r.status === 404) break;
+    assert(r.status === 200, `sheet ${sheets} → ${r.status}`);
+    const text = await r.text();
+    assert(!text.includes(DRAFT_SENTINEL) && !text.includes(draft.slug), `sheet ${sheets} leaks the draft`);
+  }
+  assert(sheets >= 1, "no sheets");
+  for (const bad of ["-1", "abc", "1e3", "99999"]) assert((await get(`/api/board/${bad}`)).status === 404, `/api/board/${bad} is served`);
+  const rows = await page.$$eval(".tb-row", (as) => as.length);
+  if (published) assert(rows === published.length, `${rows} list rows, expected ${published.length}`);
+  const tabs = await page.$$eval(".tb-sheet-tab", (ts) => ts.length);
+  assert(tabs === (sheets > 1 ? sheets : 0), `${tabs} sheet tabs for ${sheets} sheets`);
+  if (sheets > 1) {
+    const before = await page.$$eval("a.tb-pin", (as) => as.map((a) => a.dataset.slug).join());
+    await page.click(".tb-sheet-tab >> nth=0");
+    await page.waitForFunction((b) => [...document.querySelectorAll("a.tb-pin")].map((a) => a.dataset.slug).join() !== b, before, { timeout: 5000 });
+    await page.click(".tb-sheet-tab >> nth=-1");
+    await page.waitForFunction((b) => [...document.querySelectorAll("a.tb-pin")].map((a) => a.dataset.slug).join() === b, before, { timeout: 5000 });
+  }
+});
+
+await check("visitor", "visitors get no owner shortcuts, and don't even ask for a session", async () => {
+  const p = await ctx.newPage();
+  const asked = [];
+  p.on("request", (r) => r.url().includes("/api/auth/session") && asked.push(r.url()));
+  await p.goto(BASE + "/blog", { waitUntil: "load" });
+  await p.waitForTimeout(1500);
+  assert(asked.length === 0, "a visitor's page asked for the session");
+  assert((await p.locator(".owner-bar").count()) === 0, "owner shortcuts shown to a visitor");
+  // a stale hint in a visitor's browser is checked once and forgotten
+  await p.evaluate(() => localStorage.setItem("owner-hint", String(Date.now() + 3600e3)));
+  await p.reload({ waitUntil: "load" });
+  await p.waitForFunction(() => localStorage.getItem("owner-hint") === null, null, { timeout: 5000 }).catch(() => {});
+  assert((await p.locator(".owner-bar").count()) === 0, "a forged hint showed the shortcuts");
+  assert((await p.evaluate(() => localStorage.getItem("owner-hint"))) === null, "the stale hint was kept");
+  await p.close();
+});
+
 await check("visitor", "a pin click opens the popup and changes the URL", async () => {
   await page.click('a.tb-pin[data-slug="drafting-a-block-pattern-from-scratch"]');
   await page.waitForSelector('.tbr-sheet[role="dialog"]', { timeout: 10_000 });
@@ -420,6 +461,16 @@ await check("contact", "the owner reads messages in the studio inbox, and delete
       .waitForFunction((l) => !document.body.innerText.includes(l), line, { timeout: 10_000 })
       .catch(() => assert(false, `${line} is still in the inbox`));
   }
+});
+
+await check("owner", "after the studio, the public pages offer Write, and Edit on an article", async () => {
+  await op.goto(BASE + "/studio", { waitUntil: "load" });
+  await op.goto(BASE + "/blog", { waitUntil: "load" });
+  await op.waitForSelector(".owner-bar", { timeout: 5000 });
+  assert((await op.getAttribute(".owner-bar-main", "href")) === "/studio/new", "Write doesn't lead to a new article");
+  const slug = published?.[0]?.slug ?? "drafting-a-block-pattern-from-scratch";
+  await op.goto(`${BASE}/blog/${slug}`, { waitUntil: "load" });
+  await op.waitForSelector(`.owner-bar a[href="/studio/${slug}"]`, { timeout: 5000 });
 });
 
 await check("owner", "the owner sees the studio, drafts included", async () => {

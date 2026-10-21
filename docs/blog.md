@@ -24,6 +24,19 @@ Articles are pins on a thread board. Related pieces are tied together by threads
 
 The studio's **Thread preview** applies these same rules while you type.
 
+## A big archive: sheets
+
+The board stays readable however many articles there are:
+- **Up to 20 articles** share one board.
+- **Beyond that**, the archive is split into **sheets** of about 16 each (newest first, sizes balanced to within one), and folder tabs above the board flip between them, oldest on the left like the board's own time axis. `SHEET_MAX` and `SHEET_TARGET` are in `lib/blog/sheets.ts`.
+- **Threads are still worked out across the whole archive.** A thread whose other end is on another sheet runs off the pin with an arrowhead, and the date tape's ends become links ("← continues on Mar – Oct 2025").
+- **Search, the topic filters, the counts and the list view always cover every article.** When a search matches articles on other sheets, a line under the board says how many and where; clicking it flips to that sheet, pans to the first match and focuses it.
+- **Pins never shrink past a readable size.** A sheet wider than the screen opens on its newest end and is dragged sideways ("← drag for older pins").
+- **Layout:** a crowded lane makes its sheet longer instead of stacking pins, so pins never overlap or leave their lane.
+- **What loads when:** the page carries the newest sheet plus a light index of every article (about 250 bytes per article, gzipped). Other sheets come from `GET /api/board/<n>` on demand, prefetched when a tab is hovered or focused, and cached under the same `articles` tag, so publishing refreshes them.
+
+Tested with 107 articles (seven sheets): the end-to-end suite passes on that archive too.
+
 ## Writing
 
 - **In the studio** (works in production): sign in at `/studio`, write in Markdown, tick the explicit threads, choose Draft or Published, then save. Saving refreshes the board and the article page straight away.
@@ -60,7 +73,7 @@ npm run test:rule        # the owner rule fails closed
 npm run test:unit        # graph, layout, quick read, schema
 npm run build
 npm start &              # a production build, in another shell:
-npm run test:e2e         # 45 checks: reading flow, drafts, access, owner flow, uploads, replay attacks, the intro, the projects sketchbook, the contact form and inbox
+npm run test:e2e         # 46 checks: reading flow, board sheets, drafts, access, owner flow, uploads, replay attacks, the intro, the projects sketchbook, the contact form and inbox
 ```
 
 `test:e2e` reads `AUTH_SECRET` and `OWNER_GITHUB_ID` from `.env.local` (or the environment) and mints fresh session cookies through `scripts/mint-session.mjs`. Set `BASE_URL` if the server isn't on port 3000, and `DATABASE_URL` when the server runs on Postgres.

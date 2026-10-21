@@ -88,3 +88,48 @@ body::before {
   background: var(--burgundy);
   color: var(--cream);
 }
+
+/* the owner's writing shortcuts (OwnerBar.tsx): only ever shown to the owner */
+.owner-bar {
+  position: fixed;
+  z-index: 50;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 10px 24px -12px rgba(74, 12, 24, 0.5);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.owner-bar a {
+  padding: 10px 14px 9px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.owner-bar a + a {
+  border-left: 1px solid rgba(74, 12, 24, 0.3);
+}
+.owner-bar a:hover,
+.owner-bar a:focus-visible {
+  background: rgba(140, 47, 67, 0.1);
+  outline: none;
+}
+.owner-bar .owner-bar-main {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 700;
+}
+.owner-bar .owner-bar-main:hover,
+.owner-bar .owner-bar-main:focus-visible {
+  background: var(--thread);
+}
+@media print {
+  .owner-bar {
+    display: none;
+  }
+}

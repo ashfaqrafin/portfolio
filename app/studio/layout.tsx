@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { StudioMark } from "../components/site/OwnerBar";
 import { signOutAction } from "./actions";
 import "../components/site/site.css";
 import "./studio.css";
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 export default function StudioLayout({ children }: LayoutProps<"/studio">) {
   return (
     <main className="page st">
+      <StudioMark />
       <header className="st-bar">
         <Link className="st-mark" href="/studio">
           Ashfaq <span>studio</span>

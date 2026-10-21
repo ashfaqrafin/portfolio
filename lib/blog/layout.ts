@@ -68,7 +68,12 @@ export function pinTilt(slug: string) {
 export function layoutBoard(articles: readonly ArticleMeta[], edges: readonly Edge[]): BoardLayout {
   const chrono = [...articles].sort((a, b) => (a.date === b.date ? (a.slug < b.slug ? -1 : 1) : a.date < b.date ? -1 : 1));
   const n = chrono.length;
-  const span = clamp(n * 70, 900, 2000);
+  // wide enough for the busiest lane to sit in one row: a crowded lane makes the
+  // board longer, never stacks pins on top of each other or out of their lane
+  const perLane = new Map<Topic, number>();
+  for (const a of chrono) perLane.set(a.topic, (perLane.get(a.topic) ?? 0) + 1);
+  const busiest = Math.max(0, ...perLane.values());
+  const span = Math.max(900, n * 70, busiest * (PIN.w + COLLIDE_PAD + 18));
   const days = chrono.map((a) => dayOf(a.date));
   const d0 = n ? days[0] : 0;
   const d1 = n ? days[n - 1] : 0;
@@ -282,6 +287,18 @@ export function threadGeom(a: Pt, b: Pt, jitter: number): ThreadGeom {
 }
 
 /** A loose article's short dangling thread with a frayed end. */
+/** A thread leaving the board for another sheet: up out of the pin head and off
+   sideways (older to the left, newer to the right), ending in an arrowhead. */
+export function offboardGeom(head: Pt, dir: "older" | "newer") {
+  const s = dir === "older" ? -1 : 1;
+  const e = { x: head.x + s * 128, y: head.y - 24 };
+  const d =
+    `M${pt(head)}` +
+    `C${pt({ x: head.x + s * 14, y: head.y - 34 })} ${pt({ x: head.x + s * 70, y: head.y - 42 })} ${pt(e)}`;
+  const arrow = `M${pt({ x: e.x - s * 8, y: e.y - 6 })}L${pt(e)}L${pt({ x: e.x - s * 8, y: e.y + 6 })}`;
+  return { d, arrow, end: e };
+}
+
 export function danglingGeom(head: Pt, slug: string) {
   const dir = hash(slug) % 2 ? 1 : -1;
   const s = (v: number) => v * dir;

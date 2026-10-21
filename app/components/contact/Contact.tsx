@@ -25,8 +25,9 @@ const MIN = 10;
 
 /** Other ways to reach me, shown under the form. Add an email or LinkedIn here. */
 const DIRECT: { label: string; href: string }[] = [
+  // the address itself is the label, so it can be read or copied as well as clicked
+  { label: "ashfaqkhanrafin@gmail.com", href: "mailto:ashfaqkhanrafin@gmail.com" },
   { label: "GitHub", href: "https://github.com/ashfaqrafin" },
-  // { label: "Email", href: "mailto:you@example.com" },
   // { label: "LinkedIn", href: "https://www.linkedin.com/in/you" },
 ];
 
@@ -370,7 +371,7 @@ export default function Contact() {
         {DIRECT.map((d) => (
           <a key={d.href} className="ct-pill" href={d.href} target={d.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
             {d.label}
-            <span aria-hidden="true">&nbsp;&#8599;</span>
+            {d.href.startsWith("http") && <span aria-hidden="true">&nbsp;&#8599;</span>}
           </a>
         ))}
       </p>

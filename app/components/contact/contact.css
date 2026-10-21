@@ -491,6 +491,11 @@
   font-size: 21px;
   color: var(--thread);
 }
+/* an email address reads better as written: no capitals, no wide spacing */
+.ct-pill[href^="mailto:"] {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
 .ct-pill {
   display: inline-flex;
   align-items: center;

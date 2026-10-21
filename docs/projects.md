@@ -40,6 +40,13 @@ with "- " becomes a list.
 - **What's ignored:** text, images, CSS classes and styles. Convert text to outlines in your editor first.
 - **No logo?** The page draws a blank sheet with a folded corner.
 
+**Traced line art works as-is.** Image tracers (Inkscape's Trace Bitmap, potrace, online converters) save a line drawing as ONE filled path, with every pencil line stored as a small filled outline. The reader splits that path back into its lines and keeps each hole (inside glasses, inside an outline) with its outline. The lines then draw in order from the top down with a fine pencil, at a pace set by their length, and each is inked in solid as soon as it's drawn. The tracer must use absolute coordinates, and the drawing must hold at most 240 separate lines.
+
+**Detailed illustrations work too.** A traced drawing, like the hero avatars, is made of a few huge filled paths, and drawn stroke by stroke it would just come out as a scribble. So it's shaded in instead: a faint underdrawing appears, then back-and-forth pencil strokes sweep down the frame and reveal it in full ink.
+- **Detected automatically:** any path or shape too big for line art (over 20,000 characters of path data, or more than 240 shapes) makes the file an illustration.
+- **Rendered on the server:** `/api/projects/<slug>/art` renders a small WebP (about 75 KB for an avatar) from a clean copy of the SVG rebuilt from its safe shapes and colours only. The raw file is never rendered.
+- **Cached:** each image URL carries a hash of the file, so a new drawing gets a new URL, and the image is otherwise cached forever.
+
 The files are read at build time, so redeploy after editing. In development, restart `npm run dev` to pick up changes.
 
 `npm run test:unit` checks that every project file is valid and every logo has something to draw. It fails on a bad link, an unknown field or a broken SVG.
@@ -53,5 +60,6 @@ The logo reader keeps only geometry. Scripts, event handlers, styles, links, ima
 | Path | What it is |
 | --- | --- |
 | `content/projects/` | The pages: `.md` details and `.svg` logos |
-| `lib/projects/` | Schema (`schema.ts`), file parsing (`file.ts`), the safe SVG reader (`logo.ts`), cached loading (`data.ts`) |
+| `lib/projects/` | Schema (`schema.ts`), file parsing (`file.ts`), the safe SVG reader and line-art/illustration detection (`logo.ts`), cached loading (`data.ts`) |
+| `app/api/projects/[slug]/art` | Renders an illustration logo to WebP |
 | `app/components/projects/` | `SketchBook.tsx` (pages, turning, drawing state), `LogoDrawing.tsx`, `sketchbook.css` |

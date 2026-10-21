@@ -54,6 +54,8 @@
   container-type: inline-size;
   aspect-ratio: var(--bw) / var(--bh);
   max-height: calc(var(--bh) * 1px);
+  /* never shorter than the board at its smallest readable scale (--u-min) */
+  min-height: calc(var(--bh) * 0.62px);
   overflow: hidden;
   isolation: isolate;
   background-color: var(--paper);
@@ -92,12 +94,16 @@
   cursor: grabbing;
 }
 
+/* the board fits the stage, but never below a readable scale: a wider sheet
+   keeps readable pins, opens on its newest (right-hand) end and pans */
 .tb-world {
-  --u: min(1px, calc(100cqw / var(--bw)));
+  --u-min: 0.62px;
+  --u: max(var(--u-min), min(1px, calc(100cqw / var(--bw))));
   position: absolute;
   z-index: 1;
   top: 0;
-  left: max(0px, calc((100cqw - var(--bw) * var(--u)) / 2));
+  /* centred when it fits; right-aligned when it doesn't */
+  left: min(calc((100cqw - var(--bw) * var(--u)) / 2), calc(100cqw - var(--bw) * var(--u)));
   width: calc(var(--bw) * var(--u));
   height: calc(var(--bh) * var(--u));
   transform-origin: 0 0;
@@ -201,6 +207,23 @@
 .tb-tape-new {
   right: 0;
 }
+/* the tape's ends flip to the next sheet when there is one */
+.tb-tape-btn {
+  /* the paper layer it sits in lets clicks through to the board */
+  pointer-events: auto;
+  padding: calc(2 * var(--u)) calc(6 * var(--u));
+  border: 0;
+  border-bottom: calc(1.4 * var(--u)) dashed var(--thread);
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tb-tape-btn:hover,
+.tb-tape-btn:focus-visible {
+  color: var(--ink);
+  border-bottom-style: solid;
+  outline: none;
+}
 
 /* ── threads ────────────────────────────────────────────────────────────── */
 .tb-svg {
@@ -283,6 +306,24 @@
 }
 .tb-dangle .tb-fray {
   stroke-width: 0.9;
+}
+/* a thread to a pin on another sheet, running off the edge */
+.tb-off path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tb-off[data-kind="topic"] path:first-child {
+  stroke-dasharray: 5 4;
+}
+.tb-off .tb-off-arrow {
+  stroke-width: 1.8;
+}
+.tb-off[data-state="dim"],
+.tb-off[data-state="off"] {
+  opacity: 0.25;
 }
 .tb-head {
   fill: var(--ink);
@@ -685,6 +726,26 @@
 .tb-hint[data-hidden] {
   opacity: 0;
 }
+.tb-stage[data-overflow] .tb-hint {
+  display: block;
+}
+/* fetching another sheet */
+.tb-stage[data-loading] .tb-world {
+  opacity: 0.55;
+  transition: opacity 0.2s ease 0.15s;
+}
+/* a pin arrived at from another sheet */
+.tb-pin[data-flash] .tb-card {
+  animation: tb-flash 1.5s ease;
+}
+@keyframes tb-flash {
+  0%,
+  60% {
+    box-shadow:
+      0 0 0 calc(3 * var(--u)) var(--thread),
+      0 calc(10 * var(--u)) calc(22 * var(--u)) rgba(74, 12, 24, 0.35);
+  }
+}
 
 .tb-empty {
   position: absolute;
@@ -962,6 +1023,100 @@
   font-family: var(--font-hand), cursive;
   font-size: 19px;
   color: var(--thread);
+}
+.tb-note-link {
+  padding: 0;
+  border: 0;
+  border-bottom: 1.5px dashed currentColor;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.tb-note-link:hover,
+.tb-note-link:focus-visible {
+  border-bottom-style: solid;
+  outline: none;
+}
+
+/* ── sheets: a big archive pinned across several boards ─────────────────── */
+.tb-sheets {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: -4px;
+}
+.tb-sheet-tabs {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 2px 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+/* folder tabs standing on the stage's top edge */
+.tb-sheet-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 12px 8px;
+  border: 1.4px solid rgba(74, 12, 24, 0.55);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: rgba(140, 47, 67, 0.06);
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.tb-sheet-tab:hover {
+  color: var(--ink);
+  background: rgba(140, 47, 67, 0.12);
+}
+.tb-sheet-tab[aria-current="page"] {
+  position: relative;
+  z-index: 1;
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--ink);
+  translate: 0 1px;
+}
+.tb-sheet-tab[data-loading] {
+  cursor: progress;
+}
+.tb-sheet-tab:focus-visible,
+.tb-sheet-step:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.tb-sheet-n {
+  font-weight: 700;
+  color: var(--thread);
+}
+.tb-sheet-step {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border: 1.4px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  cursor: pointer;
+}
+.tb-sheet-step:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 /* ── list view ──────────────────────────────────────────────────────────── */

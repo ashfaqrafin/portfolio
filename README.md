@@ -15,4 +15,4 @@ cp .env.example .env.local   # fill in AUTH_SECRET, GitHub OAuth, OWNER_GITHUB_I
 npm run dev
 ```
 
-For setup, storage (Markdown files locally, Postgres in production), tests and deployment, see [docs/blog.md](docs/blog.md).
+To deploy (Vercel + Supabase) and write on the live site, see [docs/deploy.md](docs/deploy.md). For setup, storage (Markdown files locally, Postgres in production), tests and deployment, see [docs/blog.md](docs/blog.md).

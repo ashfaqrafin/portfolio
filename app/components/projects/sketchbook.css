@@ -568,6 +568,71 @@
   animation: pj-stamp 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
   animation-delay: var(--d);
 }
+/* a traced drawing: each line is inked in right after its outline is drawn,
+   and it brings its own hand wobble, so no turbulence filter */
+.pj-logo[data-traced] .pj-ink {
+  filter: none;
+}
+.pj-f.pj-solid {
+  opacity: 1;
+}
+.pj-page[data-draw="go"] .pj-logo[data-traced] .pj-s {
+  animation-duration: var(--dur);
+  animation-delay: var(--t0);
+  animation-timing-function: cubic-bezier(0.4, 0.1, 0.6, 0.9);
+}
+.pj-page[data-draw="go"] .pj-f.pj-solid {
+  animation: pj-fade 0.4s ease both;
+  animation-delay: calc(var(--t0) + var(--dur));
+}
+
+/* an illustration is shaded in: a faint underdrawing, then a pencil sweep
+   (a mask) reveals it in full ink, with the pencil's own trace on top */
+.pj-art-ghost {
+  opacity: 0.14;
+}
+.pj-sweep-line {
+  stroke: var(--thread);
+  opacity: 0;
+}
+.pj-page[data-draw="ready"] :is(.pj-sweep, .pj-sweep-line) {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+.pj-page[data-draw="ready"] .pj-art-ghost {
+  opacity: 0;
+}
+.pj-page[data-draw="go"] .pj-art-ghost {
+  animation: pj-ghost 0.5s ease both;
+}
+.pj-page[data-draw="go"] .pj-sweep {
+  stroke-dasharray: 1 2;
+  animation: pj-draw 2.1s cubic-bezier(0.45, 0.1, 0.35, 1) 0.35s both;
+}
+.pj-page[data-draw="go"] .pj-sweep-line {
+  stroke-dasharray: 1 2;
+  animation:
+    pj-draw 2.1s cubic-bezier(0.45, 0.1, 0.35, 1) 0.35s both,
+    pj-trace 2.6s ease 0.35s both;
+}
+@keyframes pj-ghost {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.14;
+  }
+}
+/* the pencil's trace shows while it moves, then fades */
+@keyframes pj-trace {
+  0%,
+  70% {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 0;
+  }
+}
 @keyframes pj-draw {
   from {
     stroke-dashoffset: 1;

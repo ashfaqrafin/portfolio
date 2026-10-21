@@ -13,16 +13,22 @@ import {
   type MouseEvent as RMouseEvent,
   type PointerEvent as RPointerEvent,
 } from "react";
-import type { BoardData, PinData, RelatedRef } from "@/lib/blog/data";
+import type { BoardData, RelatedRef, SheetData } from "@/lib/blog/data";
 import { formatDate, formatMonth } from "@/lib/blog/format";
 import { REL_LABEL } from "@/lib/blog/graph";
-import { danglingGeom, headOf, LANE_GAP, threadGeom, threadJitter, type Pt } from "@/lib/blog/layout";
+import { danglingGeom, headOf, LANE_GAP, offboardGeom, threadGeom, threadJitter, type Pt } from "@/lib/blog/layout";
 import { TOPIC_ANNOT, TOPIC_LABEL, TOPICS } from "@/lib/blog/topics";
 import type { Edge, Topic } from "@/lib/blog/types";
 import "./threadboard.css";
 
 /* The Thread Board. Framework-agnostic: it knows nothing about routing.
-   `onOpen` decides what a pin click does; without it, pins are plain links. */
+   `onOpen` decides what a pin click does; without it, pins are plain links.
+
+   A big archive comes in sheets (lib/blog/sheets.ts). `board` is the newest
+   sheet plus a light index of every article: search, filters, counts and the
+   list view always cover the whole archive. Other sheets are fetched from
+   `sheetUrl` when flipped to (and prefetched on hover). Threads to another
+   sheet run off the board's edge; the tape's ends flip to the next sheet. */
 
 type Filter = "all" | Topic | "loose";
 type View = { z: number; px: number; py: number };
@@ -42,6 +48,8 @@ export type ThreadBoardProps = {
   /** the article currently open in the reader, highlighted on the board */
   openSlug?: string | null;
   hrefFor?: (slug: string) => string;
+  /** where one sheet's data is fetched from */
+  sheetUrl?: (sheet: number) => string;
   /** heading level for the section title */
   headingLevel?: 1 | 2;
 };
@@ -64,9 +72,46 @@ function threadLabel(e: Edge, title: (s: string) => string) {
   return { head: `${title(e.from)} ${what} ${title(e.to)}`, why };
 }
 
-export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, hrefFor = (s) => `/blog/${s}`, headingLevel = 2 }: ThreadBoardProps) {
+export default function ThreadBoard({
+  board,
+  onOpen,
+  onIntent,
+  openSlug = null,
+  hrefFor = (s) => `/blog/${s}`,
+  sheetUrl = (n) => `/api/board/${n}`,
+  headingLevel = 2,
+}: ThreadBoardProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const { pins, edges, layout } = board;
+
+  // ── sheets: the one on the board, and the ones fetched so far ─────────────
+  const [sheetState, setSheetState] = useState<{ base: BoardData; data: SheetData; loading: number | null }>({ base: board, data: board, loading: null });
+  if (sheetState.base !== board) setSheetState({ base: board, data: board, loading: null });
+  const cur = sheetState.data;
+  const sheets = board.sheets;
+  // fetched sheets, forgotten whenever fresh board data arrives (after a publish)
+  const fetched = useRef(new Map<number, Promise<SheetData | null>>());
+  useEffect(() => {
+    fetched.current = new Map();
+  }, [board]);
+  const loadSheet = useCallback(
+    (n: number): Promise<SheetData | null> => {
+      if (n === board.sheet) return Promise.resolve(board);
+      let p = fetched.current.get(n);
+      if (!p) {
+        p = fetch(sheetUrl(n))
+          .then((r) => (r.ok ? (r.json() as Promise<SheetData>) : null))
+          .catch(() => null);
+        p.then((d) => {
+          if (!d) fetched.current.delete(n); // let a failed sheet be tried again
+        });
+        fetched.current.set(n, p);
+      }
+      return p;
+    },
+    [board, sheetUrl],
+  );
+
+  const { pins, edges, layout } = cur;
   const W = layout.width;
   const H = layout.height;
   const Heading = headingLevel === 1 ? "h1" : "h2";
@@ -74,6 +119,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
   const bySlug = useMemo(() => new Map(pins.map((p) => [p.slug, p])), [pins]);
   const order = useMemo(() => new Map(pins.map((p, i) => [p.slug, i])), [pins]);
   const looseSet = useMemo(() => new Set(board.loose), [board.loose]);
+  const titleOf = useMemo(() => new Map(board.index.map((a) => [a.slug, a.title])), [board.index]);
   const neighbours = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const e of edges) {
@@ -119,8 +165,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
 
   const q = query.trim().toLowerCase();
   const matches = useMemo(() => {
-    const all = board.list ?? pins;
-    const ok = all.filter((p) => {
+    const ok = board.index.filter((p) => {
       if (filter === "loose" ? !looseSet.has(p.slug) : filter !== "all" && p.topic !== filter) return false;
       if (!q) return true;
       return (
@@ -131,7 +176,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
       );
     });
     return new Set(ok.map((p) => p.slug));
-  }, [board.list, pins, filter, q, looseSet]);
+  }, [board.index, filter, q, looseSet]);
   const filtering = filter !== "all" || q !== "";
 
   // ── geometry from current positions ───────────────────────────────────────
@@ -150,9 +195,24 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
         .map((e) => ({ e, g: threadGeom(head(e.from), head(e.to), threadJitter(e.from, e.to)), i: order.get(e.from) ?? 0 })),
     [edges, bySlug, head, order],
   );
-  const title = useCallback((s: string) => bySlug.get(s)?.title ?? s, [bySlug]);
+  const title = useCallback((s: string) => titleOf.get(s) ?? s, [titleOf]);
+  const offboard = useMemo(
+    () =>
+      cur.offboard
+        .filter((o) => bySlug.has(o.from))
+        .map((o) => ({ o, g: offboardGeom(head(o.from), o.dir) })),
+    [cur.offboard, bySlug, head],
+  );
 
-  // ── stitch-in on first view ───────────────────────────────────────────────
+  // ── stitch-in on first view (and again on each new sheet) ─────────────────
+  const stitchTimer = useRef(0);
+  const restitch = useCallback((n: number) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    window.clearTimeout(stitchTimer.current);
+    setStitch("go");
+    stitchTimer.current = window.setTimeout(() => setStitch("done"), 900 + n * 70 + 200);
+  }, []);
+  useEffect(() => () => window.clearTimeout(stitchTimer.current), []);
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -213,6 +273,69 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
     setView(HOME);
   };
 
+  // ── flipping sheets ───────────────────────────────────────────────────────
+  // a pin to bring into view once its sheet is on the board
+  const [spot, setSpot] = useState<string | null>(null);
+  const goSheet = useCallback(
+    async (n: number, focus?: string) => {
+      if (n < 0 || n >= sheets.length) return;
+      if (n === cur.sheet) {
+        if (focus) setSpot(focus);
+        return;
+      }
+      setSheetState((st) => ({ ...st, loading: n }));
+      const data = await loadSheet(n);
+      setSheetState((st) => (st.loading === n ? { ...st, data: data ?? st.data, loading: null } : st));
+      if (!data) return;
+      setView(HOME);
+      setHover(null);
+      restitch(data.pins.length);
+      if (focus) setSpot(focus);
+    },
+    [sheets.length, cur.sheet, loadSheet, restitch],
+  );
+  // bring the spotted pin into view (the board may be wider than the stage) and focus it
+  useLayoutEffect(() => {
+    if (!spot) return;
+    const el = pinRefs.current.get(spot);
+    const stage = stageRef.current;
+    const world = worldRef.current;
+    const p = bySlug.get(spot);
+    if (!el || !stage || !world || !p) return;
+    const u = world.offsetWidth / W;
+    const at = pos[spot] ?? p.box;
+    const cx = world.offsetLeft + (at.x + p.box.w / 2) * u;
+    if (cx < 40 || cx > stage.clientWidth - 40) {
+      setView({ z: 1, px: clamp(stage.clientWidth / 2 - cx, -world.offsetLeft, stage.clientWidth - world.offsetLeft - world.offsetWidth), py: 0 });
+    }
+    el.focus({ preventScroll: true });
+    el.setAttribute("data-flash", "");
+    const t = window.setTimeout(() => el.removeAttribute("data-flash"), 1600);
+    setSpot(null);
+    return () => window.clearTimeout(t);
+  }, [spot, bySlug, pos, W]);
+
+  // keep the current sheet's tab in view when there are many
+  const tabsRef = useRef<HTMLOListElement>(null);
+  useLayoutEffect(() => {
+    const el = tabsRef.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    const list = tabsRef.current;
+    if (el && list && list.scrollWidth > list.clientWidth) list.scrollLeft = el.offsetLeft - list.clientWidth / 2 + el.offsetWidth / 2;
+  }, [cur.sheet]);
+
+  // wider than the stage at a readable scale: the board pans instead of shrinking
+  const [overflow, setOverflow] = useState(false);
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    const world = worldRef.current;
+    if (!stage || !world) return;
+    const check = () => setOverflow(world.offsetWidth > stage.clientWidth + 2);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, [W]);
+
   // ctrl / cmd + wheel zooms; the plain wheel keeps scrolling the page
   useEffect(() => {
     const stage = stageRef.current;
@@ -251,7 +374,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
 
   const onStageDown = (e: RPointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
-    if (target.closest(".tb-ctrl, .tb-preview")) return;
+    if (target.closest(".tb-ctrl, .tb-preview, .tb-tape-btn")) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (e.pointerType === "touch") setTouched(true);
     if (pointers.current.size === 2) {
@@ -416,16 +539,15 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
   };
 
   const counts = useMemo(() => {
-    const all = board.list ?? pins;
+    const all = board.index;
     const c: Record<string, number> = { all: all.length, loose: board.loose.length };
     for (const t of TOPICS) c[t] = all.filter((p) => p.topic === t).length;
     return c;
-  }, [board.list, board.loose.length, pins]);
+  }, [board.index, board.loose.length]);
 
   const listItems = useMemo(() => {
-    const all = board.list ?? [...pins].reverse();
-    const months: { key: string; label: string; items: PinData[] }[] = [];
-    for (const p of all) {
+    const months: { key: string; label: string; items: BoardData["index"] }[] = [];
+    for (const p of board.index) {
       if (!matches.has(p.slug)) continue;
       const key = p.date.slice(0, 7);
       const last = months[months.length - 1];
@@ -433,7 +555,16 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
       else months.push({ key, label: formatMonth(p.date), items: [p] });
     }
     return months;
-  }, [board.list, pins, matches]);
+  }, [board.index, matches]);
+
+  // what a search or filter finds on the sheets that aren't on the board
+  const elsewhere = useMemo(() => {
+    if (!filtering || sheets.length < 2) return [];
+    const by = new Map<number, number>();
+    for (const a of board.index) if (a.sheet !== cur.sheet && matches.has(a.slug)) by.set(a.sheet, (by.get(a.sheet) ?? 0) + 1);
+    return [...by.entries()].sort((a, b) => a[0] - b[0]);
+  }, [filtering, sheets.length, board.index, cur.sheet, matches]);
+  const firstMatchOn = (n: number) => board.index.find((a) => a.sheet === n && matches.has(a.slug))?.slug;
 
   const preview = previewSlug ? bySlug.get(previewSlug) : null;
   const worldStyle = {
@@ -441,7 +572,9 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
     "--bh": H,
     transform: view === HOME ? undefined : `translate(${view.px}px, ${view.py}px) scale(${view.z})`,
   } as CSSProperties;
-  const truncated = board.list !== null;
+  const older = cur.sheet + 1 < sheets.length ? cur.sheet + 1 : null;
+  const newer = cur.sheet > 0 ? cur.sheet - 1 : null;
+  const offCount = (dir: "older" | "newer") => cur.offboard.filter((o) => o.dir === dir).reduce((n, o) => n + o.targets.length, 0);
 
   return (
     <section
@@ -456,7 +589,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
       <header className="tb-head">
         <div>
           <p className="tb-kicker">
-            The archive &middot; {board.total} pins &middot; {edges.length} threads &middot; {board.loose.length} loose
+            The archive &middot; {board.total} pins &middot; {board.threadCount} threads &middot; {board.loose.length} loose
           </p>
           <Heading className="tb-title" id={`${uid}-title`}>
             The Thread Board
@@ -465,10 +598,48 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
         <p className="tb-sub">every idea pulls on another</p>
       </header>
 
+      {sheets.length > 1 && (
+        <nav className="tb-sheets" aria-label="Board sheets">
+          <button type="button" className="tb-sheet-step" onClick={() => older !== null && goSheet(older)} disabled={older === null} aria-label="Older sheet">
+            &larr;
+          </button>
+          {/* oldest on the left, like the board's own time axis */}
+          <ol className="tb-sheet-tabs" ref={tabsRef}>
+            {sheets
+              .map((sh, n) => ({ sh, n }))
+              .reverse()
+              .map(({ sh, n }) => (
+                <li key={n}>
+                  <button
+                    type="button"
+                    className="tb-sheet-tab"
+                    aria-current={n === cur.sheet ? "page" : undefined}
+                    data-loading={sheetState.loading === n || undefined}
+                    onClick={() => goSheet(n)}
+                    onPointerEnter={() => loadSheet(n)}
+                    onFocus={() => loadSheet(n)}
+                  >
+                    <span className="tb-sheet-label">{sh.label}</span>
+                    <span className="tb-sheet-n">{sh.count}</span>
+                  </button>
+                </li>
+              ))}
+          </ol>
+          <button type="button" className="tb-sheet-step" onClick={() => newer !== null && goSheet(newer)} disabled={newer === null} aria-label="Newer sheet">
+            &rarr;
+          </button>
+          <p className="sr-only" aria-live="polite">
+            Showing {sheets[cur.sheet]?.label}, sheet {sheets.length - cur.sheet} of {sheets.length}, {pins.length} pins
+          </p>
+        </nav>
+      )}
+
       <div
         className="tb-stage"
         id={`${uid}-board`}
         ref={stageRef}
+        data-overflow={overflow || undefined}
+        data-loading={sheetState.loading !== null || undefined}
         style={{ "--bw": W, "--bh": H } as CSSProperties}
         onPointerDown={onStageDown}
         onPointerMove={onStageMove}
@@ -498,8 +669,32 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
                   {t.label}
                 </span>
               ))}
-              <span className="tb-tape-end tb-tape-old">&larr; older</span>
-              <span className="tb-tape-end tb-tape-new">newer &rarr;</span>
+              {older !== null ? (
+                <button
+                  type="button"
+                  className="tb-tape-end tb-tape-old tb-tape-btn"
+                  onClick={() => goSheet(older)}
+                  onPointerEnter={() => loadSheet(older)}
+                  title={offCount("older") ? `${offCount("older")} threads lead to older sheets` : undefined}
+                >
+                  &larr; {offCount("older") ? "continues on" : "older:"} {sheets[older].label}
+                </button>
+              ) : (
+                <span className="tb-tape-end tb-tape-old">&larr; older</span>
+              )}
+              {newer !== null ? (
+                <button
+                  type="button"
+                  className="tb-tape-end tb-tape-new tb-tape-btn"
+                  onClick={() => goSheet(newer)}
+                  onPointerEnter={() => loadSheet(newer)}
+                  title={offCount("newer") ? `${offCount("newer")} threads lead to newer sheets` : undefined}
+                >
+                  {offCount("newer") ? "continues on" : "newer:"} {sheets[newer].label} &rarr;
+                </button>
+              ) : (
+                <span className="tb-tape-end tb-tape-new">newer &rarr;</span>
+              )}
             </div>
           </div>
 
@@ -589,6 +784,13 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
 
           {/* thread ends and pin heads, in front of the cards */}
           <svg className="tb-svg tb-front" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" focusable="false">
+            {/* threads to pins on other sheets, running off the edge */}
+            {offboard.map(({ o, g }) => (
+              <g key={`${o.from}-${o.dir}`} className="tb-off" data-kind={o.targets[0].kind} data-state={pinState(o.from)}>
+                <path d={g.d} />
+                <path className="tb-off-arrow" d={g.arrow} />
+              </g>
+            ))}
             {threads.map((t, i) => (
               <g key={i} className="tb-cap" data-kind={t.e.kind} data-state={threadState(t.e)} style={{ "--i": t.i } as CSSProperties}>
                 <path d={t.g.capA} />
@@ -633,7 +835,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
         </div>
 
         <p className="tb-hint" data-hidden={touched || view !== HOME ? "" : undefined} aria-hidden="true">
-          drag to explore &middot; pinch to zoom
+          {overflow ? <>&larr; drag for older pins</> : <>drag to explore &middot; pinch to zoom</>}
         </p>
 
         {tlabel && !preview && (
@@ -741,9 +943,17 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
         </p>
       </div>
 
-      {truncated && (
+      {elsewhere.length > 0 && mode === "board" && (
         <p className="tb-note">
-          The board shows the newest {pins.length} of {board.total} pieces. The list has every one.
+          Also on other sheets:{" "}
+          {elsewhere.map(([n, k], i) => (
+            <span key={n}>
+              {i > 0 && ", "}
+              <button type="button" className="tb-note-link" onClick={() => goSheet(n, firstMatchOn(n))}>
+                {k} on {sheets[n].label}
+              </button>
+            </span>
+          ))}
         </p>
       )}
 
@@ -764,13 +974,7 @@ export default function ThreadBoard({ board, onOpen, onIntent, openSlug = null, 
                       </span>
                       <span className="tb-row-title">{p.title}</span>
                       {p.excerpt && <span className="tb-row-excerpt">{p.excerpt}</span>}
-                      {p.relations.length > 0 && (
-                        <span className="tb-row-rels">
-                          {relLines(p.relations)
-                            .map(([k, v]) => `${k} ${v.join(", ")}`)
-                            .join(" · ")}
-                        </span>
-                      )}
+                      {p.rels.length > 0 && <span className="tb-row-rels">{p.rels.map(([k, v]) => `${k} ${v.join(", ")}`).join(" · ")}</span>}
                     </span>
                   </a>
                 </li>

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { test } from "node:test";
 import { parseProjectFile, toBlocks } from "../lib/projects/file.ts";
-import { parseLogoSvg } from "../lib/projects/logo.ts";
+import { ART_LIMITS, classifyLogo, parseLogoSvg, serializeSvg, splitTraced } from "../lib/projects/logo.ts";
 
 const DIR = path.join(import.meta.dirname, "..", "content", "projects");
 
@@ -84,7 +84,51 @@ test("project: every file in content/projects parses, and every logo draws", () 
   for (const md of mds) {
     const slug = md.slice(0, -3);
     assert.equal(parseProjectFile(slug, readFileSync(path.join(DIR, md), "utf8")).slug, slug);
-    // a logo is optional (the page draws a blank sheet), but one that's there must parse
-    if (files.includes(`${slug}.svg`)) assert.ok(parseLogoSvg(readFileSync(path.join(DIR, `${slug}.svg`), "utf8")).shapes.length > 0);
+    // a logo is optional (the page draws a blank sheet), but one that's there must draw, as line art or as an illustration
+    if (files.includes(`${slug}.svg`)) assert.ok(classifyLogo(readFileSync(path.join(DIR, `${slug}.svg`), "utf8")), `${slug}.svg draws nothing`);
   }
+});
+
+test("logo: a traced illustration is shaded in from an image, line art is drawn", () => {
+  const blob = `M0 0L1 1${"L2 2".repeat(6000)}Z`; // over the line-art limit
+  const art = classifyLogo(`<svg viewBox="0 0 10 10"><path d="${blob}" fill="#4f0b16"/><path d="M0 0L5 5" fill="#fff"/></svg>`);
+  assert.equal(art?.kind, "art");
+  assert.deepEqual(art?.kind === "art" && art.art.shapes.map((s) => s.color), ["#4f0b16", "#fff"]);
+  assert.equal(classifyLogo(`<svg viewBox="0 0 10 10"><path d="M0 0L5 5" fill="none"/></svg>`)?.kind, "lines");
+  assert.equal(classifyLogo(`<svg viewBox="0 0 10 10"><text>hi</text></svg>`), null);
+});
+
+test("logo: the image is rendered from a rebuilt SVG that holds only shapes and safe colours", () => {
+  const logo = parseLogoSvg(
+    `<svg viewBox="0 0 10 10" onload="alert(1)">
+      <image href="file:///etc/passwd"/><script>alert(1)</script><style>*{}</style>
+      <path d="M0 0L5 5" fill="url(#x)" onclick="alert(1)"/>
+      <circle cx="5" cy="5" r="2" fill="#4f0b16"/>
+      <rect x="0" y="0" width="1" height="1" fill="red&quot; onload=&quot;alert(1)"/>
+    </svg>`,
+    ART_LIMITS,
+  );
+  const out = serializeSvg(logo);
+  assert.ok(!/script|onload|onclick|image|style|url\(|passwd|&quot;/i.test(out), out);
+  assert.ok(out.includes(`fill="#4f0b16"`));
+});
+
+test("logo: traced line art (one filled path) is split back into lines, holes kept with their outline", () => {
+  // two outlines (clockwise) and a hole (anticlockwise) inside the first, listed after the second
+  const outerA = "M0 0L100 0L100 100L0 100Z";
+  const outerB = "M200 300L260 300L260 360L200 360Z";
+  const hole = "M10 10L10 90L90 90L90 10Z";
+  const pieces = splitTraced(outerB + outerA + hole);
+  assert.deepEqual(pieces?.map((p) => p.d), [outerA + hole, outerB]); // top first, the hole with its outline
+  assert.ok(pieces!.every((p) => p.len > 0));
+  // relative commands aren't measured: left as one path
+  assert.equal(splitTraced("M0 0l10 0l0 10zM20 20l5 0l0 5z"), null);
+
+  // 150 lines of ~40 points each: far over the 20,000-character limit as one path, under 240 pieces
+  const line = (i: number) => `M${i * 6} 500` + Array.from({ length: 40 }, (_, k) => `L${i * 6 + (k % 2) * 3} ${500 + k * 2}`).join("") + "Z";
+  const big = outerA + hole + Array.from({ length: 150 }, (_, i) => line(i)).join("");
+  assert.ok(big.length > 20_000);
+  const traced = classifyLogo(`<svg viewBox="0 0 1000 600"><path fill="#4a0f17" fill-rule="evenodd" d="${big}"/></svg>`);
+  assert.equal(traced?.kind, "lines");
+  assert.ok(traced?.kind === "lines" && traced.logo.shapes.every((s) => s.solid && s.attrs["fill-rule"] === "evenodd"));
 });

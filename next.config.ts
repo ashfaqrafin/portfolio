@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   // no Next.js badge on the page in development
   devIndicators: false,
   cacheComponents: true,
+  // project pages and logos are read from content/ at run time; on Vercel a
+  // function only has the files traced into it, so name them here
+  outputFileTracingIncludes: {
+    "/": ["./content/projects/**/*"],
+    "/api/projects/[slug]/art": ["./content/projects/**/*"],
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {
