@@ -44,7 +44,7 @@ The endpoint is a route handler on purpose, not a server action: every server ac
 
 ## The art
 
-The four drawings come from `public/contact/contact1–4.svg`. `npm run contact:art` strips their baked-in backgrounds and renders small transparent WebPs (247 KB for all four, instead of 6.8 MB), which the scene uses. Re-run it after editing the SVGs.
+The four drawings come from `design/contact/contact1–4.svg` (kept out of `public/`, so they aren't deployed). `npm run contact:art` strips their baked-in backgrounds and renders small transparent WebPs (247 KB for all four, instead of 6.8 MB), which the scene uses. Re-run it after editing the SVGs.
 
 ## Testing
 

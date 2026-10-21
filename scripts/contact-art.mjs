@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Pre-renders the contact section's illustrations (public/contact/contact*.svg)
+/* Pre-renders the contact section's illustrations (design/contact/contact*.svg)
    to small transparent WebPs. The sources are 0.7–3.9 MB each and carry a
    baked-in background (a flat rectangle, or a grey "transparency" checkerboard),
    which is dropped here so the paper shows through. Re-run after editing them:
@@ -13,6 +13,8 @@ import path from "node:path";
 import { chromium } from "playwright-core";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+// sources live outside public/ so they aren't deployed; only the WebPs are
+const SRC = path.join(ROOT, "design/contact");
 const DIR = path.join(ROOT, "public/contact");
 const HEIGHT = 520; // drawn at most ~230px tall, so this covers 2× screens
 // source → output, and which <path>s (by order) are background, not drawing
@@ -29,7 +31,7 @@ try {
   const page = await browser.newPage();
   for (const { src, out, drop } of ART) {
     let i = -1;
-    const svg = readFileSync(path.join(DIR, src), "utf8").replace(/<path\b[^>]*?\/?>/gs, (m) => (drop.includes(++i) ? "" : m));
+    const svg = readFileSync(path.join(SRC, src), "utf8").replace(/<path\b[^>]*?\/?>/gs, (m) => (drop.includes(++i) ? "" : m));
     const vb = /viewBox="\s*[\d.-]+\s+[\d.-]+\s+([\d.]+)\s+([\d.]+)\s*"/.exec(svg);
     if (!vb) throw new Error(`${src} has no viewBox`);
     const h = HEIGHT;
@@ -44,7 +46,7 @@ try {
     const dest = path.join(DIR, out);
     execFileSync("magick", [png, "-trim", "+repage", "-quality", "84", "-define", "webp:method=6", "-define", "webp:alpha-quality=90", dest]);
     const dims = execFileSync("magick", ["identify", "-format", "%wx%h", dest], { encoding: "utf8" });
-    console.log(`  ${out}  ${dims}  ${Math.round(statSync(dest).size / 1024)} KB  (svg ${Math.round(statSync(path.join(DIR, src)).size / 1024)} KB)`);
+    console.log(`  ${out}  ${dims}  ${Math.round(statSync(dest).size / 1024)} KB  (svg ${Math.round(statSync(path.join(SRC, src)).size / 1024)} KB)`);
   }
 } finally {
   await browser.close();

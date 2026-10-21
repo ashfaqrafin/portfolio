@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local contact-form inbox (file store)
 /.data/
+
+# local screenshots and scratch output
+/.preview/
