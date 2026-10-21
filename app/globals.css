@@ -134,17 +134,17 @@ body::before {
   }
 }
 
-/* ── cursor: a sewing needle ──────────────────────────────────────────────
-   An ink needle outlined in paper, so it reads on every background; over
-   anything clickable it turns to paper with an ink outline and is threaded.
-   The point is the hotspot in both, so it aims like an arrow. Mouse and
-   trackpad only; text fields keep the text cursor and the thread board keeps
-   its grab hand. Components use var(--cursor-pointer) where they'd say
-   `cursor: pointer`. */
+/* ── cursor: tailor's scissors ────────────────────────────────────────────
+   Small closed scissors in ink, outlined in paper so they read on every
+   background; over anything clickable they open, ready to cut, and turn to
+   paper with an ink outline. The blade tips are the hotspot in both, so they
+   aim like an arrow. Mouse and trackpad only; text fields keep the text cursor
+   and the thread board keeps its grab hand. Components use
+   var(--cursor-pointer) where they'd say `cursor: pointer`. */
 @media (pointer: fine) {
   :root {
-    --cursor-default: url("/cursors/needle.svg") 2 2, auto;
-    --cursor-pointer: url("/cursors/needle-threaded.svg") 2 2, pointer;
+    --cursor-default: url("/cursors/scissors.svg") 2 2, auto;
+    --cursor-pointer: url("/cursors/scissors-open.svg") 2 2, pointer;
   }
   html {
     cursor: var(--cursor-default);
