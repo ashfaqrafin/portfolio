@@ -311,7 +311,8 @@ await check("projects", "links are plain web links that open safely in a new tab
   watch(p, "projects");
   await p.goto(BASE + "/", { waitUntil: "load" });
   const links = await p.$$eval(".pj-link", (as) => as.map((a) => [a.getAttribute("href"), a.target, a.rel]));
-  assert(links.length > 0, "no project links");
+  const declared = projectFiles.some((f) => /^links:/m.test(readFileSync(path.join(ROOT, "content/projects", f), "utf8")));
+  assert(!declared || links.length > 0, "project links are missing from the page");
   for (const [href, target, rel] of links) {
     assert(/^https?:\/\//.test(href), `unsafe href ${href}`);
     assert(target === "_blank" && /noopener/.test(rel) && /noreferrer/.test(rel), `${href} opens without noopener`);

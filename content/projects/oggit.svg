@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="56" cy="50" r="14" />
+  <path d="M56 64 L56 136" />
+  <circle cx="56" cy="150" r="14" />
+  <circle cx="136" cy="50" r="14" />
+  <path d="M136 64 C136 100 60 92 56 118" />
+  <circle cx="56" cy="50" r="5" fill="currentColor" />
+  <path d="M158 36 C166 44 166 56 158 64 M168 28 C180 40 180 60 168 72" />
+  <path d="M34 136 C26 144 26 156 34 164 M24 128 C12 140 12 160 24 172" />
+  <circle cx="122" cy="150" r="11" />
+  <circle cx="122" cy="150" r="3.5" />
+  <path d="M133 150 L178 150 M166 150 L166 161 M174 150 L174 158" />
+</svg>

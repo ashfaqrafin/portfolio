@@ -20,7 +20,8 @@ export const projectSchema = z.strictObject({
   year: z.string().trim().regex(YEAR_RE, "a year, or a range like 2024 – 2025"),
   /** what kind of work it is: "University project", "Personal tool" … */
   kind: z.string().trim().min(1).max(40),
-  status: z.enum(STATUSES),
+  /** the stamp on the drawing; leave it out for no stamp */
+  status: z.enum(STATUSES).optional(),
   role: z.string().trim().max(60).optional(),
   stack: z
     .array(z.string().trim().min(1).max(30))

@@ -190,9 +190,11 @@ function Page({ p }: { p: ProjectData }) {
         <figure className="pj-fig">
           <div className="pj-frame">
             <LogoDrawing logo={p.logo} art={p.art} />
-            <span className="pj-stamp" data-status={p.status} style={at(2.5)}>
-              {STATUS_LABEL[p.status]}
-            </span>
+            {p.status && (
+              <span className="pj-stamp" data-status={p.status} style={at(2.5)}>
+                {STATUS_LABEL[p.status]}
+              </span>
+            )}
           </div>
         </figure>
 

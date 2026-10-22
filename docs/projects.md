@@ -16,7 +16,7 @@ title: Community Courier
 tagline: Parcels across the city, from one doorstep to the next.
 year: "2026"                # or 2024 – 2025, or 2025 – now
 kind: University project    # shown as the page's "Subject"
-status: shipped             # shipped | in-progress | archived (the stamp)
+status: shipped             # optional stamp: shipped | in-progress | archived
 role: Full-stack developer  # optional
 stack: [Next.js 16, Prisma 7, PostgreSQL]   # up to 10 "materials"
 links:                      # up to 4, http(s) only

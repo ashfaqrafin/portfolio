@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <circle cx="100" cy="100" r="26" />
+  <path d="M88 101 L97 110 L114 90" />
+  <path d="M100 40 L100 74 M157.1 81.5 L124.7 92 M135.3 148.5 L115.3 121 M64.7 148.5 L84.7 121 M42.9 81.5 L75.3 92" />
+  <circle cx="100" cy="30" r="10" />
+  <circle cx="166.6" cy="78.4" r="10" />
+  <circle cx="141.1" cy="156.6" r="10" />
+  <circle cx="58.9" cy="156.6" r="10" />
+  <circle cx="33.4" cy="78.4" r="10" />
+  <path d="M110 30.7 A70 70 0 0 1 162.8 69.1 M169 88.1 A70 70 0 0 1 148.8 150.2 M132.7 161.9 A70 70 0 0 1 67.3 161.9 M51.2 150.2 A70 70 0 0 1 31 88.1 M37.2 69.1 A70 70 0 0 1 90 30.7" />
+  <circle cx="100" cy="30" r="3.5" fill="currentColor" />
+  <circle cx="166.6" cy="78.4" r="3.5" fill="currentColor" />
+  <circle cx="141.1" cy="156.6" r="3.5" fill="currentColor" />
+  <circle cx="58.9" cy="156.6" r="3.5" fill="currentColor" />
+  <circle cx="33.4" cy="78.4" r="3.5" fill="currentColor" />
+</svg>
