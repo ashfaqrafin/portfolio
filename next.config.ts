@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
     "/api/projects/[slug]/art": ["./content/projects/**/*"],
   },
   partialPrefetching: true,
+  experimental: {
+    // nudge coding agents when an installed Next.js version has a security advisory
+    agentUpgrade: "security",
+  },
   turbopack: {
     rules: {
       "*.css": {
