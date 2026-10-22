@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Caveat, DM_Serif_Display, Newsreader, Space_Mono } from "next/font/google";
+import CutTrail from "./components/site/CutTrail";
 import OwnerBar from "./components/site/OwnerBar";
 import RoughDefs from "./components/site/RoughDefs";
 import "./globals.css";
@@ -62,6 +63,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <OwnerBar />
         </Suspense>
+        <CutTrail />
       </body>
     </html>
   );

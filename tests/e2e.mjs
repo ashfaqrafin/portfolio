@@ -337,6 +337,54 @@ await check("projects", "turning a page lands on the next one and draws it", asy
   await p.close();
 });
 
+// ── the scissors' cutting trail ────────────────────────────────────────────
+// a quick mouse stroke across what `sel` matches; the trail canvas stays 0×0
+// until the first cut, so its width says whether anything was cut
+const cutAcross = async (p, sel) => {
+  await p.locator(sel).first().scrollIntoViewIfNeeded();
+  await p.waitForTimeout(200);
+  return p.$eval(sel, (el) => {
+    const r = el.getBoundingClientRect();
+    const y = Math.min(Math.max(r.top, 0) + 60, innerHeight - 20);
+    for (let i = 0; i <= 40; i++) {
+      const x = r.left + 10 + ((r.width - 20) * i) / 40;
+      (document.elementFromPoint(x, y) ?? document.body).dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: x, clientY: y, pointerType: "mouse" }));
+    }
+    return document.querySelector(".cut-trail").width;
+  });
+};
+
+await check("cut trail", "the scissors cut as they move over the page", async () => {
+  const p = await ctx.newPage();
+  watch(p, "cut trail");
+  await p.goto(BASE + "/no-such-page", { waitUntil: "load" });
+  assert((await cutAcross(p, "body")) > 0, "a stroke over the page cut nothing");
+  await p.close();
+});
+
+await check("cut trail", "never over reading or writing: notes, forms, the board, an article", async () => {
+  for (const [url, sel] of [["/#projects", ".pj-text"], ["/#projects", ".ct-form"], ["/#projects", ".tb"], [`/blog/${published?.[0]?.slug ?? "drafting-a-block-pattern-from-scratch"}`, ".art"]]) {
+    const p = await ctx.newPage();
+    await p.goto(BASE + url, { waitUntil: "load" });
+    assert((await cutAcross(p, sel)) === 0, `cut over ${sel} on ${url}`);
+    await p.close();
+  }
+});
+
+await check("cut trail", "off for touch and reduced motion", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+  const p = await c.newPage();
+  await p.goto(BASE + "/no-such-page", { waitUntil: "load" });
+  assert((await cutAcross(p, "body")) === 0, "cut with reduced motion");
+  await c.close();
+  const t = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const q = await t.newPage();
+  await q.goto(BASE + "/no-such-page", { waitUntil: "load" });
+  await q.touchscreen.tap(195, 400);
+  assert((await q.$eval(".cut-trail", (cv) => cv.width)) === 0, "cut on a phone");
+  await t.close();
+});
+
 await check("hygiene", "security headers are set", async () => {
   const h = (await get("/blog")).headers;
   assert(h.get("x-content-type-options") === "nosniff", "nosniff");

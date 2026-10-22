@@ -14,7 +14,7 @@ export const metadata: Metadata = {
    proxy.ts, again by each page, and again inside every server action. */
 export default function StudioLayout({ children }: LayoutProps<"/studio">) {
   return (
-    <main className="page st">
+    <main className="page st" data-no-cut>
       <StudioMark />
       <header className="st-bar">
         <Link className="st-mark" href="/studio">

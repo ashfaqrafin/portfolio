@@ -581,6 +581,8 @@ export default function ThreadBoard({
       ref={rootRef}
       className="tb"
       aria-labelledby={`${uid}-title`}
+      // browsing and reading the pins: the scissors don't cut here (CutTrail.tsx)
+      data-no-cut
       data-view={mode}
       data-stitch={stitch}
       data-active={active ? "" : undefined}

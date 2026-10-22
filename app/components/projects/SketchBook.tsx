@@ -198,7 +198,7 @@ function Page({ p }: { p: ProjectData }) {
           </div>
         </figure>
 
-        <div className="pj-text">
+        <div className="pj-text" data-no-cut>
           <h3 className="pj-title" id={`pj-${p.slug}-title`}>
             <span className="pj-w" style={at(0.45)}>
               {p.title}

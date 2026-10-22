@@ -15,7 +15,7 @@ export default function ArticleView({ data }: { data: ArticlePageData }) {
   return (
     <>
       <ReadingProgress target=".art" />
-      <article className="sheet art" data-topic={a.topic}>
+      <article className="sheet art" data-topic={a.topic} data-no-cut>
         <Link className="art-back" href="/blog">
           <span aria-hidden="true">&larr;</span> back to the board
         </Link>

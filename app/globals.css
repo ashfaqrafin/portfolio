@@ -167,3 +167,18 @@ body::before {
     cursor: var(--cursor-default);
   }
 }
+
+/* the scissors' cutting trail (CutTrail.tsx): over the page, under the paper tooth */
+.cut-trail {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+@media print {
+  .cut-trail {
+    display: none;
+  }
+}
