@@ -27,6 +27,7 @@ import { computeLayout, type Layout } from "./stage-layout";
 import { QuoteController } from "./quote";
 import { loadArt, randomOpaque, rasterize, type ArtSource, type Raster } from "./raster";
 import { RibbonBatch } from "./ribbons";
+import { scratchShading } from "./scratch";
 import { BG_FRAG, BG_VERT } from "./shaders";
 import { buildShardMesh, poseShards, POSE_STRIDE, type ShardMesh } from "./shards";
 import {
@@ -79,6 +80,8 @@ interface Built {
   rowsP: Float32Array;
   rowsS: Float32Array;
   rowsA: Float32Array;
+  /** stops painting the pencil shading, if it isn't finished */
+  stopScratch: () => void;
 }
 
 const FLAT = new Float32Array(THREADS.rows);
@@ -188,6 +191,7 @@ export async function createEngine(
   };
 
   function disposeBuilt(b: Built) {
+    b.stopScratch();
     b.scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.geometry) m.geometry.dispose();
@@ -227,13 +231,15 @@ export async function createEngine(
     const patTex = makeTexture(patR);
     textures.push(...avTex, suitTex, patTex);
 
-    // background: paper, grain, wobbly grid
+    // background: paper, grain, wobbly grid, and pencil shading round its edges
     const bgGeo = planeGeometry(w, h);
     const bgMat = new THREE.ShaderMaterial({
       vertexShader: BG_VERT,
       fragmentShader: BG_FRAG,
       uniforms: {
         uSize: { value: new THREE.Vector2(w, h) },
+        uScratch: { value: null as THREE.Texture | null },
+        uOver: { value: 0 },
         uHot: { value: 0 },
         uHotC: { value: new THREE.Vector2(L.figCx, L.figCy) },
         uHotR: { value: h * 0.85 },
@@ -247,6 +253,26 @@ export async function createEngine(
     bg.frustumCulled = false;
     bg.renderOrder = 0;
     scene.add(bg);
+    // the grid printed on that paper, multiplied over the art (it shares the
+    // paper's uniforms, so it glows with it); under the threads in front
+    const grid = new THREE.Mesh(
+      bgGeo,
+      new THREE.ShaderMaterial({
+        vertexShader: BG_VERT,
+        fragmentShader: BG_FRAG,
+        uniforms: { ...bgMat.uniforms, uOver: { value: 1 } },
+        transparent: true,
+        blending: THREE.CustomBlending,
+        blendSrc: THREE.DstColorFactor,
+        blendDst: THREE.ZeroFactor,
+        depthTest: false,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    grid.frustumCulled = false;
+    grid.renderOrder = 45;
+    scene.add(grid);
 
     const all: ArtObj[] = [];
     const add = (a: ArtObj) => {
@@ -353,11 +379,59 @@ export async function createEngine(
       rowsP: new Float32Array(THREADS.rows),
       rowsS: new Float32Array(THREADS.rows),
       rowsA: new Float32Array(THREADS.rows),
+      stopScratch: shadePage(w, h, bgMat, textures),
     };
 
     if (threadSvg) threadSvg.setAttribute("viewBox", `0 0 ${w} ${h}`);
     lastShow = -1;
     dirty = true;
+  }
+
+  /* The pencil shading round the page: ~20,000 strokes, painted a slice at a
+     time while the browser is idle, so the hero never waits for it; the paper
+     takes it up in one go once it's done. */
+  function shadePage(w: number, h: number, bgMat: THREE.ShaderMaterial, textures: THREE.Texture[]) {
+    const scratch = scratchShading(w, h, L.dpr);
+    const idle =
+      "requestIdleCallback" in window
+        ? (step: (more: () => boolean) => void) => {
+            // never more than ~10 ms at a go, so a click is never kept waiting; and
+            // if the page is never idle (a slow phone, busy animating), a slice
+            // runs anyway after 200 ms
+            const id = window.requestIdleCallback(
+              (d) => {
+                const end = performance.now() + 10;
+                step(() => (d.didTimeout || d.timeRemaining() > 2) && performance.now() < end);
+              },
+              { timeout: 200 },
+            );
+            return () => window.cancelIdleCallback(id);
+          }
+        : (step: (more: () => boolean) => void) => {
+            const id = window.setTimeout(() => {
+              const end = performance.now() + 8;
+              step(() => performance.now() < end);
+            }, 16);
+            return () => window.clearTimeout(id);
+          };
+    let cancel = () => {};
+    const step = (more: () => boolean) => {
+      if (!scratch.paint(more)) {
+        cancel = idle(step);
+        return;
+      }
+      const t = new THREE.CanvasTexture(scratch.canvas);
+      t.flipY = false;
+      t.colorSpace = THREE.NoColorSpace;
+      t.generateMipmaps = false;
+      t.minFilter = THREE.LinearFilter;
+      textures.push(t);
+      // the grid pass shares these uniforms, so both take it up
+      bgMat.uniforms.uScratch.value = t;
+      dirty = true;
+    };
+    cancel = idle(step);
+    return () => cancel();
   }
 
   // ── per-frame state: a pure function of time ────────────────────────────

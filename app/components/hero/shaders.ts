@@ -152,9 +152,14 @@ void main() {
 }
 `;
 
-/** Paper, grain, and a wobbly hand-ruled blueprint grid that lights up. */
+/** Paper, grain, and a wobbly hand-ruled blueprint grid that lights up. Drawn
+    twice: under everything as the bare paper (uOver 0), then over the drawings
+    as the grid alone (uOver 1), so the figure looks drawn on the grid paper
+    rather than pasted onto it. */
 export const BG_FRAG = /* glsl */ `
 uniform vec2 uSize;
+uniform sampler2D uScratch;
+uniform float uOver;
 uniform float uHot;
 uniform vec2 uHotC;
 uniform float uHotR;
@@ -193,12 +198,16 @@ void main() {
   float g = max(ruled(q.x, vPx.y, 22.0, 1.0, uSeed), ruled(q.y, vPx.x, 22.0, 1.0, uSeed + 40.0));
 
   float hot = smoothstep(uHotR, uHotR * 0.2, distance(vPx, uHotC)) * uHot;
-  col = mix(col, BURG, g * mix(0.085, 0.30, hot));
+  float k = g * mix(0.085, 0.30, hot);
+  if (uOver > 0.5) {
+    // the second pass: the grid alone, multiplied over everything drawn on the
+    // paper, so it shows through the drawings as print shows through pencil
+    gl_FragColor = vec4(mix(vec3(1.0), BURG / PAPER, k), 1.0);
+    return;
+  }
 
-  // soft pencil vignette toward the page edge
-  vec2 e = min(vPx, uSize - vPx) / min(uSize.x, uSize.y);
-  float v = smoothstep(0.0, 0.16, min(e.x, e.y));
-  col = mix(col * 0.985, col, v);
+  // pencil shading round the page's edges: random scratches, painted once (scratch.ts)
+  col = mix(col, BURG, texture2D(uScratch, vPx / uSize).a);
 
   gl_FragColor = vec4(col, 1.0);
 }

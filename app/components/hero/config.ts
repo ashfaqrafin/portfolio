@@ -16,14 +16,17 @@ export const LEN = STAGE_COUNT * P; // full loop
 export const ART_W = 894; // shared viewBox of avatars + suit
 export const ART_H = 1342;
 export const ART_ASPECT = ART_W / ART_H;
-/* The artwork ships twice: the source SVGs, and WebPs pre-rendered from them at
-   HERO_ART_PX tall by `npm run hero:art`. The WebPs decode off the main thread and
-   are ~5× smaller; rasterising the SVGs cost ~0.8 s of main-thread work on load.
-   Only a stage that would draw the figure taller than the WebP (portrait tablets
-   at 2×) gets the SVGs. Decided once, when the engine loads the art. */
+/* The artwork is drawn from the source SVGs by `npm run hero:art`: rendered,
+   redrawn in coloured pencil (scripts/pencil.mjs) and saved as WebPs
+   HERO_ART_PX tall, plus .xl.webp copies HERO_ART_XL_PX tall. The WebPs decode
+   off the main thread and are ~5× smaller than the SVGs; rasterising those cost
+   ~0.8 s of main-thread work on load. Only a stage that would draw the figure
+   taller than the WebP (portrait tablets at 2×) gets the XL copies. Decided
+   once, when the engine loads the art. */
 export const HERO_ART_PX = 1300;
+export const HERO_ART_XL_PX = 1800;
 
-function artExt(): "webp" | "svg" {
+function artExt(): "webp" | "xl.webp" {
   if (typeof window === "undefined") return "webp";
   const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
   const mobile = window.matchMedia(MOBILE_QUERY).matches;
@@ -31,7 +34,7 @@ function artExt(): "webp" | "svg" {
   // stages are capped by the 1240px card (≈ 630px tall)
   const stageH = mobile ? (window.innerWidth * 4) / 3 : 630;
   const figPx = stageH * (mobile ? LAYOUT.mobile : LAYOUT.desktop).figHeight * dpr;
-  return figPx > HERO_ART_PX ? "svg" : "webp";
+  return figPx > HERO_ART_PX ? "xl.webp" : "webp";
 }
 
 /** Viewports where artExt() always picks the WebPs: desktop, and phones up to
@@ -124,7 +127,7 @@ export const MOTION = {
   suitFloat: 4, // px
   strainPx: 1.8,
   strainHz: 70,
-  boilPx: 0.75, // hand-drawn "line boil" amplitude
+  boilPx: 1.25, // hand-drawn "line boil" amplitude, px
   boilFps: 7,
   weaveCellPx: 3.4,
   tweenSpeed: 3.2, // scene-seconds per real second for prev/next
