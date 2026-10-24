@@ -18,9 +18,11 @@ const REACH = 80; // css px the shading reaches in from an edge, on average
  * @param {number} w image width, px
  * @param {number} h image height, px
  * @param {number} s image px per css px, as the page is usually shown
- * @returns {Buffer} raw RGB: the shading in ink, on white
+ * @param {{ seed?: number, ink?: number[] }} [opts] ink: the pencil's colour, the
+ *   site's --thread burgundy (the darker --ink reads as black where strokes pile up)
+ * @returns {Buffer} raw RGB: the shading in that colour, on white
  */
-export function pageShade(w, h, s, { seed = 5, ink = [74, 12, 24] } = {}) {
+export function pageShade(w, h, s, { seed = 5, ink = [140, 47, 67] } = {}) {
   const rand = mulberry32(seed);
   const reachNoise = valueNoise(w, h, 90 * s, rand);
   const density = new Float32Array(w * h);
