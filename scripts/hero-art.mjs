@@ -12,12 +12,16 @@
 
    Two sizes: HERO_ART_PX tall covers desktop stages at 2× and phones; the
    .xl.webp covers larger stages (portrait tablets at 2×), see artExt() in
-   app/components/hero/config.ts. */
+   app/components/hero/config.ts.
+
+   It also draws the pencil shading round the page (page-shade.mjs), for the
+   desktop stage (16:8.4) and the phone one (3:4). */
 
 import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright-core";
 import sharp from "sharp";
+import { pageShade } from "./page-shade.mjs";
 import { pencil } from "./pencil.mjs";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
@@ -25,6 +29,19 @@ const DIR = path.join(ROOT, "public/hero");
 const HERO_ART_PX = 1300; // keep in step with HERO_ART_PX in app/components/hero/config.ts
 const HERO_ART_XL_PX = 1800; // and HERO_ART_XL_PX
 const ART = ["avatar-1", "avatar-2", "avatar-3", "avatar-4", "suit", "patterns"];
+// [file, width, height, image px per css px where it's usually shown]
+const SHADES = [
+  ["shade", 1800, 945, 1800 / 1144],
+  ["shade-m", 900, 1200, 900 / 366],
+];
+
+for (const [name, w, h, s] of SHADES) {
+  const out = path.join(DIR, `${name}.webp`);
+  await sharp(pageShade(w, h, s), { raw: { width: w, height: h, channels: 3 } })
+    .webp({ quality: 55, effort: 6 })
+    .toFile(out);
+  console.log(`  ${name}.webp  ${w}×${h}  ${Math.round(statSync(out).size / 1024)} KB`);
+}
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? "/usr/bin/chromium", args: ["--no-sandbox"] });
 try {

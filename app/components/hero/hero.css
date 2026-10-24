@@ -311,6 +311,17 @@
   overflow: hidden;
   pointer-events: none;
 }
+/* the grid printed on the paper, as BG_FRAG rules it: every 22 px from the
+   corner, BURG at 8.5%, twice over (on the paper, and multiplied over the art) */
+.hero-poster::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  background:
+    linear-gradient(to right, #e2d7da 1.5px, transparent 1.5px) -0.75px 0 / 22px 22px,
+    linear-gradient(to bottom, #e2d7da 1.5px, transparent 1.5px) 0 -0.75px / 22px 22px;
+}
 .hero-poster img {
   position: absolute;
   left: 58.5%;
@@ -335,6 +346,16 @@
 .hero-canvas canvas {
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+/* pencil shading round the page, drawn once by `npm run hero:art` (ink on
+   white, multiplied over the stage), so it's there from the first frame */
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background: url("/hero/shade.webp") 0 0 / 100% 100% no-repeat;
 }
 .hero[data-ready] .hero-canvas canvas {
   opacity: 1;
@@ -812,6 +833,9 @@
   }
   .hero-poster img {
     left: 50%;
+  }
+  .hero-shade {
+    background-image: url("/hero/shade-m.webp");
   }
   .hero-poster-fig {
     top: 6%;

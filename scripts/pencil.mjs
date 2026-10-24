@@ -24,11 +24,11 @@
    silhouette, and is seeded, so the same SVG always gives the same picture.
    Tuned on art 1300 px tall; other sizes scale. */
 
-const smooth = (k) => k * k * (3 - 2 * k);
-const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const sstep = (a, b, v) => smooth(clamp01((v - a) / (b - a)));
+export const smooth = (k) => k * k * (3 - 2 * k);
+export const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+export const sstep = (a, b, v) => smooth(clamp01((v - a) / (b - a)));
 
-const mulberry32 = (seed) => () => {
+export const mulberry32 = (seed) => () => {
   seed = (seed + 0x6d2b79f5) | 0;
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
   t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
@@ -43,7 +43,7 @@ const hash = (n) => {
 };
 
 /** smooth value noise in 0..1, with features about `cell` px across */
-function valueNoise(w, h, cell, rand) {
+export function valueNoise(w, h, cell, rand) {
   const gw = Math.ceil(w / cell) + 2;
   const g = new Float32Array(gw * (Math.ceil(h / cell) + 2)).map(rand);
   const out = new Float32Array(w * h);
@@ -147,19 +147,20 @@ function hatching(w, h, deg, spacing, width, seed, drift) {
 
 /** loose pencil shading: short scratches scattered at random, more of them and
     harder where `density` (0..1) is high. Most lean along `ang` (radians, give or
-    take `spread`); where it's darkest a few cross them. Returns coverage 0..1. */
-function scatter(w, h, density, s, ang, spread, rand) {
+    take `spread`); where it's darkest a few cross them. `s` is px per unit.
+    Returns coverage 0..1. */
+export function scatter(w, h, density, s, ang, spread, rand, { rate = 0.12, len: [l0, l1] = [5, 13], width: [w0, w1] = [0.7, 0.9], alpha: [a0, a1] = [0.1, 0.22] } = {}) {
   const out = new Float32Array(w * h);
-  const tries = Math.round(((w * h) / (s * s)) * 0.12);
+  const tries = Math.round(((w * h) / (s * s)) * rate);
   for (let k = 0; k < tries; k++) {
     const x = rand() * w;
     const y = rand() * h;
     const d = density[Math.floor(y) * w + Math.floor(x)];
     if (!(rand() < d)) continue;
     const a = (d > 0.6 && rand() < 0.25 ? ang - 1.5 : ang) + (rand() - 0.5) * spread;
-    const len = (5 + rand() * 13) * s * (0.6 + 0.6 * d);
-    const r = ((0.7 + rand() * 0.9) * s) / 2;
-    const alpha = (0.1 + rand() * 0.22) * (0.5 + 0.5 * d);
+    const len = (l0 + rand() * l1) * s * (0.6 + 0.6 * d);
+    const r = ((w0 + rand() * w1) * s) / 2;
+    const alpha = (a0 + rand() * a1) * (0.5 + 0.5 * d);
     const ux = Math.cos(a);
     const uy = Math.sin(a);
     const bend = (rand() - 0.5) * len * 0.2;

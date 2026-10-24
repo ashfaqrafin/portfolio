@@ -158,7 +158,6 @@ void main() {
     rather than pasted onto it. */
 export const BG_FRAG = /* glsl */ `
 uniform vec2 uSize;
-uniform sampler2D uScratch;
 uniform float uOver;
 uniform float uHot;
 uniform vec2 uHotC;
@@ -205,9 +204,6 @@ void main() {
     gl_FragColor = vec4(mix(vec3(1.0), BURG / PAPER, k), 1.0);
     return;
   }
-
-  // pencil shading round the page's edges: random scratches, painted once (scratch.ts)
-  col = mix(col, BURG, texture2D(uScratch, vPx / uSize).a);
 
   gl_FragColor = vec4(col, 1.0);
 }

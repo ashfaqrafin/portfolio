@@ -82,6 +82,9 @@ export default function Hero() {
   // mode). The two poster images are left out: their <img>s already load them.
   for (const href of ART_WEBP_URLS)
     if (!POSTER_ART.includes(href)) preload(href, { as: "fetch", crossOrigin: "anonymous", media: ART_WEBP_MEDIA });
+  // the page's pencil shading (.hero-shade): a CSS background, found late without this
+  preload("/hero/shade.webp", { as: "image", fetchPriority: "high", media: "(min-width: 721px)" });
+  preload("/hero/shade-m.webp", { as: "image", fetchPriority: "high", media: "(max-width: 720px)" });
 
   useEffect(() => {
     const root = rootRef.current;
@@ -186,6 +189,7 @@ export default function Hero() {
 
           <div className="hero-stage" data-hero="stage">
             <div className="hero-canvas" data-hero="canvas" />
+            <div className="hero-shade" aria-hidden="true" />
             <svg className="hero-thread" data-hero="thread" aria-hidden="true" focusable="false">
               <path data-hero="thread-path" fill="none" />
               <circle data-hero="thread-dot" r="4.5" />
