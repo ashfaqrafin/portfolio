@@ -15,7 +15,8 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "node scripts/db-seed.ts",
     "hero:art": "node scripts/hero-art.mjs",
-    "contact:art": "node scripts/contact-art.mjs"
+    "contact:art": "node scripts/contact-art.mjs",
+    "intro:quote": "node scripts/intro-quote.mjs"
   },
   "dependencies": {
     "@types/three": "^0.186.0",

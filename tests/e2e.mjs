@@ -278,6 +278,18 @@ await check("intro", "a first visit opens with the intro, and a click skips it",
   await c.close();
 });
 
+await check("intro", "left alone, it opens onto the site in under 5.5 seconds", async () => {
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p = await c.newPage();
+  watch(p, "intro");
+  await p.goto(BASE + "/", { waitUntil: "commit" });
+  await p.waitForSelector(".intro", { state: "visible", timeout: 5000 });
+  const t0 = Date.now();
+  await p.waitForFunction(() => document.documentElement.dataset.intro === "seen", null, { timeout: 5500 });
+  assert(Date.now() - t0 < 5500, "the intro took too long");
+  await c.close();
+});
+
 await check("intro", "never on a reload, a deep link or another page first", async () => {
   const c = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const p = await c.newPage();
