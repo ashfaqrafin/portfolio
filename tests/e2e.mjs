@@ -307,6 +307,55 @@ await check("intro", "never on a reload, a deep link or another page first", asy
   await Promise.all([c.close(), c2.close(), c3.close()]);
 });
 
+// ── education: three subjects orbiting ─────────────────────────────────────
+await check("education", "each question opens its answer in a window; Escape closes it", async () => {
+  const p = await ctx.newPage();
+  watch(p, "education");
+  await p.goto(BASE + "/#education", { waitUntil: "load" });
+  await p.locator(".ed-stage").scrollIntoViewIfNeeded();
+  await p.waitForSelector(".ed-stage[data-ready] canvas.ed-gl", { timeout: 8000 });
+  for (const q of ["Why computer science?", "Why economics?", "Why political science?"]) {
+    // the labels ride their balls, so open them as a keyboard user would
+    await p.getByRole("button", { name: q }).focus();
+    await p.keyboard.press("Enter");
+    const dialog = p.getByRole("dialog", { name: q });
+    await dialog.waitFor({ timeout: 2000 });
+    assert(((await dialog.textContent()) ?? "").length > 120, `no answer for ${q}`);
+    await p.keyboard.press("Escape");
+    await dialog.waitFor({ state: "detached", timeout: 2000 });
+    assert(await p.evaluate((q) => document.activeElement?.textContent?.includes(q), q), `focus didn't go back to "${q}"`);
+  }
+  await p.close();
+});
+
+await check("education", "the balls orbit, and hold still with reduced motion", async () => {
+  const where = (p) => p.$eval(".ed-qs li:first-child .ed-q", (e) => e.style.transform);
+  const p = await ctx.newPage();
+  await p.goto(BASE + "/#education", { waitUntil: "load" });
+  await p.locator(".ed-stage").scrollIntoViewIfNeeded();
+  await p.waitForSelector(".ed-stage[data-ready]", { timeout: 8000 });
+  await p.waitForTimeout(400);
+  const a = await where(p);
+  await p.waitForTimeout(900);
+  assert(a !== (await where(p)), "the balls aren't moving");
+  await p.close();
+  const c = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+  const q = await c.newPage();
+  await q.goto(BASE + "/#education", { waitUntil: "load" });
+  await q.locator(".ed-stage").scrollIntoViewIfNeeded();
+  await q.waitForSelector(".ed-stage[data-ready]", { timeout: 8000 });
+  await q.waitForTimeout(1600);
+  const b = await where(q);
+  await q.waitForTimeout(900);
+  assert(b === (await where(q)), "the balls move with reduced motion");
+  await q.getByRole("button", { name: "Why economics?" }).click();
+  await q.getByRole("button", { name: "Close" }).click();
+  await q.getByRole("dialog").waitFor({ state: "detached", timeout: 2000 });
+  await q.getByRole("button", { name: "Why economics?" }).click();
+  await q.getByRole("dialog", { name: "Why economics?" }).waitFor({ timeout: 2000 });
+  await c.close();
+});
+
 // ── projects sketchbook ─────────────────────────────────────────────────────
 const projectFiles = readdirSync(path.join(ROOT, "content/projects")).filter((f) => f.endsWith(".md"));
 const draftProjects = projectFiles.filter((f) => /^draft:\s*true\s*$/m.test(readFileSync(path.join(ROOT, "content/projects", f), "utf8")));

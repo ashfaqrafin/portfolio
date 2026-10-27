@@ -4,6 +4,7 @@ import Hero from "./components/hero/Hero";
 import Intro from "./components/intro/Intro";
 import ProjectsSection from "./components/projects/ProjectsSection";
 import ChapterSeam from "./components/site/ChapterSeam";
+import Study from "./components/study/Study";
 
 export default function Home() {
   return (
@@ -13,10 +14,13 @@ export default function Home() {
       <ChapterSeam id="blog" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">
         <BlogSection />
       </ChapterSeam>
-      <ChapterSeam id="projects" title="Projects" side="left" line="Pull a thread long enough and it becomes a thing.">
+      <ChapterSeam id="education" title="Education" side="left" line="Two majors and a minor, pulling on the same thread.">
+        <Study />
+      </ChapterSeam>
+      <ChapterSeam id="projects" title="Projects" line="Pull a thread long enough and it becomes a thing.">
         <ProjectsSection />
       </ChapterSeam>
-      <ChapterSeam id="contact" title="Contact" line="Every thread ends at someone’s door. This one’s mine.">
+      <ChapterSeam id="contact" title="Contact" side="left" line="Every thread ends at someone’s door. This one’s mine.">
         <Contact />
       </ChapterSeam>
     </main>

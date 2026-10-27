@@ -1,0 +1,464 @@
+/* ── Education: three subjects, one orbit (Study.tsx, orbit.ts) ─────────────
+   A plate from an astronomy notebook: him on the page, the orbits pencilled
+   round him, a tailor's tag hanging off each ball, notes in the margin. */
+
+.ed {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.4vw, 18px);
+}
+.ed-head {
+  display: grid;
+  gap: 10px;
+  max-width: 64ch;
+}
+.ed-h2 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(32px, 4vw, 54px);
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+}
+.ed-h2-hand {
+  display: inline-block;
+  font-family: var(--font-hand), cursive;
+  font-size: 0.8em;
+  color: var(--thread);
+  rotate: -2deg;
+}
+.ed-lede {
+  margin: 0;
+  font-family: var(--font-read), Georgia, serif;
+  font-size: clamp(16px, 1.3vw, 18.5px);
+  line-height: 1.55;
+}
+
+/* the plate: faint graph paper with pencil scratched in round its edges (the
+   hero's shading), him, the scene over him, and the tags over that */
+.ed-stage {
+  position: relative;
+  height: clamp(560px, 80vh, 760px);
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(rgba(74, 12, 24, 0.045) 1px, transparent 1px) 0 0 / 26px 26px,
+    linear-gradient(90deg, rgba(74, 12, 24, 0.045) 1px, transparent 1px) 0 0 / 26px 26px;
+}
+.ed-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  background: url("/hero/shade.webp") 0 0 / 100% 100% no-repeat;
+  opacity: 0.85;
+}
+.ed-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border: 1.5px solid var(--ink);
+  filter: url(#tb-rough-s);
+}
+.ed-gl {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.ed-stage[data-over]:not([data-over=""]) .ed-gl {
+  cursor: var(--cursor-pointer, pointer);
+}
+.ed-under,
+.ed-strings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.ed-under {
+  z-index: 1;
+}
+.ed-strings {
+  z-index: 3;
+}
+.ed-strings path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  transition: opacity 0.3s ease;
+}
+.ed-stage:not([data-ready]) .ed-strings {
+  display: none;
+}
+.ed-tie {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
+}
+.ed-poster {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 5%;
+  height: 90%;
+  width: auto;
+  transform: translateX(-50%);
+  /* toned towards the engraving the scene redraws him as */
+  filter: sepia(0.4) saturate(0.75) contrast(1.05);
+  opacity: 0.85;
+}
+/* the scene draws him once it's ready */
+.ed-stage[data-ready] .ed-poster {
+  visibility: hidden;
+}
+
+/* notes in the margin, in pencil */
+.ed-note-me {
+  position: absolute;
+  z-index: 3;
+  left: calc(50% - 300px);
+  top: 7%;
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: 23px;
+  line-height: 1;
+  color: var(--thread);
+  rotate: -4deg;
+  pointer-events: none;
+}
+.ed-note-me svg {
+  display: block;
+  width: 84px;
+  height: 42px;
+  margin: 2px 0 0 70px;
+  overflow: visible;
+}
+.ed-note-me path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ed-fig {
+  position: absolute;
+  z-index: 3;
+  left: 22px;
+  bottom: 16px;
+  margin: 0;
+  max-width: 240px;
+  font-family: var(--font-hand), cursive;
+  font-size: 21px;
+  line-height: 1.05;
+  color: var(--ink);
+  pointer-events: none;
+}
+.ed-fig span {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--thread);
+}
+
+/* the questions: tailor's swing tags on strings. A column beside him until the
+   scene hangs them on their balls */
+.ed-qs {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.ed-q {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 8px 10px;
+  border: 1.3px solid var(--ink);
+  border-radius: 4px 12px 12px 4px;
+  background: #fbf6ea;
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: var(--cursor-pointer, pointer);
+  box-shadow:
+    2px 3px 0 -1px rgba(140, 47, 67, 0.2),
+    0 10px 16px -10px rgba(74, 12, 24, 0.45);
+  transition:
+    opacity 0.3s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+/* the hole at the end nearer the ball */
+.ed-q[data-hole="right"] {
+  flex-direction: row-reverse;
+  padding: 7px 10px 8px 14px;
+  border-radius: 12px 4px 4px 12px;
+  text-align: right;
+}
+.ed-q-hole {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.3px solid var(--ink);
+  border-radius: 50%;
+  background: #f8f3ea;
+  box-shadow: inset 1px 1px 0 rgba(74, 12, 24, 0.25);
+}
+.ed-q-copy {
+  display: grid;
+  gap: 1px;
+}
+.ed-q-meta {
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  color: var(--thread);
+}
+.ed-q-xyz {
+  letter-spacing: 0;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.ed-q-long,
+.ed-q-short {
+  font-family: var(--font-hand), cursive;
+  font-size: 23px;
+  line-height: 1;
+}
+.ed-q-short {
+  display: none;
+}
+.ed-q:hover,
+.ed-q:focus-visible,
+.ed-q[aria-expanded="true"] {
+  background: var(--ink);
+  color: var(--cream);
+  outline: none;
+}
+.ed-q:hover .ed-q-meta,
+.ed-q:focus-visible .ed-q-meta,
+.ed-q[aria-expanded="true"] .ed-q-meta {
+  color: var(--thread-hi);
+}
+.ed-q[data-behind]:not(:hover, :focus-visible, [aria-expanded="true"]) {
+  opacity: 0.6;
+}
+.ed-stage:not([data-ready]) .ed-q {
+  left: calc(50% + 150px);
+}
+.ed-stage:not([data-ready]) li:nth-child(1) .ed-q {
+  top: 26%;
+}
+.ed-stage:not([data-ready]) li:nth-child(2) .ed-q {
+  top: 40%;
+}
+.ed-stage:not([data-ready]) li:nth-child(3) .ed-q {
+  top: 54%;
+}
+
+/* the answer: a small window that floats over the stage */
+.ed-win {
+  position: absolute;
+  z-index: 6;
+  width: min(380px, calc(100% - 24px));
+  background: #fbf7ee;
+  border-radius: 10px;
+  box-shadow:
+    0 1px 0 rgba(255, 252, 245, 0.9) inset,
+    4px 5px 0 -1px rgba(140, 47, 67, 0.14),
+    0 22px 40px -16px rgba(74, 12, 24, 0.5);
+  animation: ed-win-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1.15) both;
+}
+.ed-win::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  filter: url(#tb-rough-s);
+  pointer-events: none;
+}
+@keyframes ed-win-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+}
+.ed-win-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 10px 10px 0 0;
+  background: #f3eadb;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.ed-win-bar:active {
+  cursor: grabbing;
+}
+/* the bar's seam: a running stitch */
+.ed-win-bar::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 1.4px;
+  background: repeating-linear-gradient(to right, var(--thread) 0 7px, transparent 7px 12px);
+  opacity: 0.6;
+}
+.ed-win-dots {
+  display: flex;
+  gap: 6px;
+}
+.ed-win-dots i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--thread);
+}
+.ed-win-dots i:nth-child(2) {
+  background: #b5687a;
+}
+.ed-win-dots i:nth-child(3) {
+  background: #d7a8b1;
+}
+.ed-win-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+.ed-win-x {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1;
+  cursor: var(--cursor-pointer, pointer);
+}
+.ed-win-x:hover,
+.ed-win-x:focus-visible {
+  background: var(--ink);
+  color: var(--cream);
+  outline: none;
+}
+.ed-win-body {
+  padding: 14px 18px 18px;
+}
+.ed-win-kind {
+  margin: 0 0 4px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--thread);
+}
+.ed-win-h {
+  margin: 0 0 10px;
+  font-family: var(--font-hand), cursive;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ink);
+  outline: none;
+}
+.ed-win-body p:not(.ed-win-kind) {
+  margin: 0 0 10px;
+  font-family: var(--font-read), Georgia, serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.ed-win-body p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 860px) {
+  .ed-note-me {
+    left: 16px;
+    top: 4%;
+  }
+  .ed-note-me svg {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .ed-stage {
+    height: auto;
+    aspect-ratio: 3 / 4.8;
+  }
+  .ed-poster {
+    bottom: 18%;
+    height: 74%;
+  }
+  .ed-note-me {
+    font-size: 18px;
+  }
+  /* the bottom strip is the tags' */
+  .ed-fig {
+    display: none;
+  }
+  .ed-q,
+  .ed-q[data-hole="right"] {
+    gap: 6px;
+    padding: 4px 8px 5px 7px;
+  }
+  .ed-q-hole {
+    width: 9px;
+    height: 9px;
+  }
+  .ed-q-long,
+  .ed-q-meta {
+    display: none;
+  }
+  .ed-q-short {
+    display: inline;
+    font-size: 17px;
+  }
+  .ed-stage:not([data-ready]) .ed-q {
+    left: auto;
+    right: 6px;
+  }
+  /* the window docks at the bottom of the stage */
+  .ed-win {
+    left: 8px !important;
+    right: 8px;
+    top: auto !important;
+    bottom: 8px;
+    width: auto;
+  }
+  .ed-win-bar {
+    cursor: default;
+  }
+}
