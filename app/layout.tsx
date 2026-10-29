@@ -38,11 +38,15 @@ export const metadata: Metadata = {
 };
 
 /* Decides, before the first paint, whether the home page opens with the
-   stitched intro (app/components/intro): only when the home page is where the
-   visit starts, once per browser session, never for a deep link (/#projects) or
-   with reduced motion. Without JavaScript the attribute is never set, so the
-   intro never shows. */
-const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1")}catch(e){}`;
+   intro (app/components/intro): only when the home page is where the visit
+   starts, once per browser session, never for a deep link (/#projects) or with
+   reduced motion. While it plays, a click, key, scroll or touch is noted
+   (data-intro-skip, with where a click landed, "x,y"), even before the
+   page's scripts have loaded, so it still skips: the cloth is drawn off by the
+   corner nearest the click, or the page lifts away, and when that lift ends
+   the intro is over.
+   Without JavaScript the attribute is never set, so the intro never shows. */
+const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1");if(d.dataset.intro==="play"){var k=function(e){var c=e&&e.clientX!=null?Math.round(e.clientX)+","+Math.round(e.clientY):"";if(!d.dataset.introSkip)d.dataset.introSkip=c};["pointerdown","keydown","wheel","touchstart"].forEach(function(e){addEventListener(e,k,{once:true,passive:true})});addEventListener("animationend",function(e){if(e.animationName==="intro-out")d.dataset.intro="seen"})}}catch(e){}`;
 
 export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (

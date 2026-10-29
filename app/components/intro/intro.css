@@ -1,325 +1,67 @@
-/* ── Intro: one thread, one terminal ──────────────────────────────────────────
+/* ── Intro: the cloth drawn off the page (Intro.tsx, drape.ts) ────────────────
    Shown only while html[data-intro="play"] (INTRO_GATE in app/layout.tsx).
-     0.00–0.35 s  the terminal settles onto the desk
-     0.35–0.80 s  the command types itself
-     0.78–1.00 s  the thread runs off the spool, through the frame
-     1.00–2.35 s  it writes the quote, stroke by stroke (paced in Intro.tsx)
-     2.35–3.85 s  it rests, written out, long enough to read
-     3.85 s       the terminal answers
-     4.20–4.65 s  the page lifts away onto the site
-   data-skip swaps in intro-lift-fast: a new animation name restarts it. */
+   The first paint is the photo, as a CSS background on the sheet; once the
+   cloth is live in WebGL (html[data-intro-cloth="live"], then "pull") the
+   stand-in goes, so what the cloth uncovers is the site. Without WebGL, or if the photo is slow
+   ("flat"), the page simply lifts away. */
 
 .intro {
   display: none;
 }
 html[data-intro="play"] .intro {
-  --paper: #fbf7ee;
-  --bar: #f3eadb;
   display: block;
   position: fixed;
   inset: 0;
   /* under the paper grain (z 60), over everything else */
   z-index: 55;
-  overflow: hidden;
-  background: radial-gradient(120% 90% at 50% 42%, #f7f0e2 0%, #ece1cc 100%);
-  color: var(--ink);
-  animation: intro-lift 0.45s cubic-bezier(0.6, 0, 0.25, 1) 4.2s forwards;
+  /* if nothing ever takes the cloth away, don't stand in the way for long */
+  animation: intro-failsafe 0.3s ease 9.5s forwards;
 }
-html[data-intro="play"] .intro[data-skip] {
-  animation: intro-lift-fast 0.35s cubic-bezier(0.6, 0, 0.25, 1) forwards;
-}
-@keyframes intro-lift {
+@keyframes intro-failsafe {
   to {
-    opacity: 0;
-    transform: translateY(-3%);
-    visibility: hidden;
-  }
-}
-@keyframes intro-lift-fast {
-  to {
-    opacity: 0;
-    transform: translateY(-3%);
     visibility: hidden;
   }
 }
 
-.intro-desk {
+.intro-sheet {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  overflow: hidden;
+  background: #2b0608;
+}
+/* the stand-in: the same photo, in exactly the place the cloth starts (its
+   bleed past the screen is drape.ts's, 6% a side) */
+.intro-sheet::before {
+  content: "";
+  position: absolute;
+  inset: -6%;
+  background: url("/intro/fabric.webp") center / cover no-repeat;
+}
+html:is([data-intro-cloth="live"], [data-intro-cloth="pull"]) .intro-sheet {
+  background: transparent;
+}
+html:is([data-intro-cloth="live"], [data-intro-cloth="pull"]) .intro-sheet::before {
+  display: none;
 }
 
-/* ── the terminal: cream paper, drawn by hand ─────────────────────────────── */
-.intro-term {
-  position: relative;
-  width: min(700px, 100%);
-  background: var(--paper);
-  border-radius: 12px;
-  box-shadow:
-    0 1px 0 rgba(255, 252, 245, 0.9) inset,
-    4px 5px 0 -1px rgba(140, 47, 67, 0.14),
-    0 22px 40px -18px rgba(74, 12, 24, 0.45);
-  animation: intro-settle 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both;
-}
-/* its outline, a pen line that wobbles */
-.intro-term::before {
-  content: "";
+/* the cloth, casting a soft shadow on the site as it lifts */
+.intro-cloth {
   position: absolute;
   inset: 0;
-  border: 1.6px solid var(--ink);
-  border-radius: 12px;
-  filter: url(#tb-rough-s);
-  pointer-events: none;
-}
-@keyframes intro-settle {
-  from {
-    opacity: 0;
-    transform: translateY(14px) rotate(-0.6deg);
-  }
-}
-/* a strip of washi tape holding it to the desk */
-.intro-tape {
-  position: absolute;
-  z-index: 2;
-  top: -13px;
-  right: 34px;
-  width: 104px;
-  height: 26px;
-  transform: rotate(5deg);
-  background: repeating-linear-gradient(-45deg, rgba(140, 47, 67, 0.26) 0 5px, rgba(140, 47, 67, 0.15) 5px 10px);
-  clip-path: polygon(0 8%, 4% 0, 8% 10%, 12% 0, 88% 0, 92% 12%, 96% 0, 100% 8%, 100% 92%, 96% 100%, 92% 90%, 88% 100%, 12% 100%, 8% 88%, 4% 100%, 0 92%);
-}
-
-.intro-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 11px 16px;
-  background: var(--bar);
-  border-radius: 12px 12px 0 0;
-}
-/* the bar's seam: a running stitch */
-.intro-bar::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
-  height: 1.6px;
-  background: repeating-linear-gradient(to right, var(--thread) 0 8px, transparent 8px 13px);
-  opacity: 0.7;
-}
-.intro-btns {
-  display: flex;
-  gap: 7px;
-}
-/* sewing buttons, for close / minimise / zoom */
-.intro-btn {
-  width: 15px;
-  height: 15px;
-}
-.intro-btn circle {
-  fill: var(--thread);
-}
-.intro-btn:nth-child(2) circle {
-  fill: #b5687a;
-}
-.intro-btn:nth-child(3) circle {
-  fill: #d7a8b1;
-}
-.intro-btn .intro-btn-rim {
-  fill: none;
-  stroke: rgba(255, 250, 240, 0.45);
-  stroke-width: 0.9;
-}
-.intro-btn .intro-btn-hole {
-  fill: var(--bar);
-}
-.intro-title {
-  flex: 1;
-  margin-right: 60px;
-  text-align: center;
-  font-family: var(--font-mono), monospace;
-  font-size: 11.5px;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.intro-body {
-  padding: 18px 26px 20px;
-  font-family: var(--font-mono), monospace;
-  font-size: 13.5px;
-  line-height: 1.6;
-}
-.intro-line {
-  margin: 0;
-  white-space: nowrap;
-}
-.intro-who {
-  color: var(--thread);
-  font-weight: 700;
-}
-.intro-cwd,
-.intro-ps {
-  color: var(--muted);
-}
-.intro-typed {
-  display: inline-block;
-  vertical-align: bottom;
-  overflow: hidden;
-  width: 0;
-  animation: intro-type 0.45s steps(13, end) 0.35s forwards;
-}
-@keyframes intro-type {
-  to {
-    width: 13ch;
-  }
-}
-.intro-caret {
-  display: inline-block;
-  width: 0.6em;
-  height: 1.1em;
-  margin-left: 2px;
-  vertical-align: -0.2em;
-  background: var(--ink);
-  opacity: 0;
-}
-.intro-caret-cmd {
-  animation:
-    intro-blink 0.5s steps(1, end) 0s 2,
-    intro-hide 0s linear 0.95s forwards;
-}
-.intro-caret-out {
-  animation: intro-blink 0.5s steps(1, end) 3.85s infinite;
-}
-@keyframes intro-blink {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-@keyframes intro-hide {
-  to {
-    visibility: hidden;
-  }
-}
-
-/* the page the thread writes on */
-.intro-page {
-  position: relative;
-  margin: 14px 0 12px;
-  padding: 6px 4px 2px 34px;
-}
-/* a notebook's margin line */
-.intro-page::before {
-  content: "";
-  position: absolute;
-  left: 16px;
-  top: -6px;
-  bottom: -4px;
-  width: 1.2px;
-  background: rgba(140, 47, 67, 0.28);
-}
-.intro-quote {
-  display: block;
   width: 100%;
-  height: auto;
-  overflow: visible;
+  height: 100%;
+  filter: drop-shadow(0 22px 34px rgba(30, 0, 8, 0.42));
 }
 
-/* the thread: drawn under a mask that each stroke paints on in turn */
-#intro-written path {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 15;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
-  animation: intro-draw var(--t) linear var(--d) forwards;
+/* a click before the cloth is live (or no cloth at all): the page lifts away */
+html[data-intro-skip]:not([data-intro-cloth]) .intro-sheet,
+html[data-intro-cloth="flat"] .intro-sheet {
+  animation: intro-out 0.45s cubic-bezier(0.6, 0, 0.3, 1) forwards;
 }
-@keyframes intro-draw {
+@keyframes intro-out {
   to {
-    stroke-dashoffset: 0;
-  }
-}
-.intro-thread path {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.intro-thread-shadow path {
-  stroke: rgba(74, 12, 24, 0.2);
-  stroke-width: 9;
-}
-.intro-thread-base path {
-  stroke: var(--thread);
-  stroke-width: 8;
-}
-.intro-thread-ply path {
-  stroke: #c47587;
-  stroke-width: 2.6;
-  opacity: 0.75;
-}
-
-/* the spool beside the terminal, and the thread off it */
-.intro-spool-wood {
-  fill: #e9d6b8;
-  stroke: var(--ink);
-  stroke-width: 2.4;
-}
-.intro-spool-thread {
-  fill: var(--thread);
-  stroke: var(--ink);
-  stroke-width: 2.4;
-}
-.intro-spool-wind {
-  fill: none;
-  stroke: #c47587;
-  stroke-width: 2;
-  opacity: 0.7;
-}
-.intro-spool {
-  animation: intro-spool 0.35s ease 0.25s both;
-}
-@keyframes intro-spool {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-}
-.intro-lead {
-  fill: none;
-  stroke: var(--thread);
-  stroke-width: 6;
-  stroke-linecap: round;
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
-  animation: intro-draw 0.22s ease-in 0.78s forwards;
-}
-
-.intro-out {
-  opacity: 0;
-  color: var(--ink);
-  animation: intro-rise 0.25s ease 3.85s forwards;
-}
-.intro-arrow {
-  color: var(--thread);
-  font-weight: 700;
-}
-@keyframes intro-rise {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(-104%);
+    visibility: hidden;
   }
 }
 
@@ -328,10 +70,10 @@ html[data-intro="play"] .intro[data-skip] {
   right: 20px;
   bottom: 20px;
   padding: 9px 14px 8px;
-  border: 1.4px solid rgba(74, 12, 24, 0.5);
+  border: 1.4px solid rgba(250, 245, 235, 0.45);
   border-radius: 999px;
-  background: transparent;
-  color: var(--ink);
+  background: rgba(20, 2, 5, 0.18);
+  color: var(--cream);
   font-family: var(--font-mono), monospace;
   font-size: 10.5px;
   letter-spacing: 0.18em;
@@ -340,58 +82,16 @@ html[data-intro="play"] .intro[data-skip] {
 }
 .intro-skip:hover,
 .intro-skip:focus-visible {
-  background: var(--ink);
-  color: var(--cream);
+  background: var(--cream);
+  color: var(--ink);
   outline: none;
 }
-
-/* the hero settles in as the page lifts, finishing just before it (the end of
-   the lift flips data-intro, which removes these rules) */
-html[data-intro="play"] .intro ~ .hero {
-  animation: intro-hero 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) 4.2s backwards;
-}
-html[data-intro="play"] .intro[data-skip] ~ .hero {
-  animation: intro-hero-fast 0.36s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
-}
-@keyframes intro-hero {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-}
-@keyframes intro-hero-fast {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
+html[data-intro-skip] .intro-skip,
+html[data-intro-cloth="pull"] .intro-skip {
+  visibility: hidden;
 }
 
-/* phones: no room beside the terminal for the spool */
 @media (max-width: 720px) {
-  .intro-desk {
-    padding: 16px;
-  }
-  .intro-body {
-    padding: 14px 16px 16px;
-    font-size: 12px;
-  }
-  .intro-page {
-    padding-left: 22px;
-  }
-  .intro-page::before {
-    left: 9px;
-  }
-  .intro-title {
-    margin-right: 0;
-    font-size: 10.5px;
-  }
-  .intro-spool {
-    display: none;
-  }
-  .intro-tape {
-    right: 18px;
-    width: 80px;
-  }
   .intro-skip {
     right: 14px;
     bottom: 14px;
