@@ -16,8 +16,6 @@ import "./study.css";
    without WebGL, or without JavaScript, the avatar is a plain image and the
    tags hang in a column beside him. With reduced motion the balls hold still. */
 
-const fmt = (v: number) => (v < 0 ? "−" : "+") + Math.abs(v).toFixed(2);
-
 type Tag = { x: number; y: number; vx: number; vy: number; ok: boolean };
 
 export default function Study() {
@@ -26,7 +24,6 @@ export default function Study() {
   const tieRef = useRef<SVGPathElement>(null);
   const stringRefs = useRef<(SVGPathElement | null)[]>([]);
   const qRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const xyzRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const winRef = useRef<HTMLDivElement>(null);
   const orbit = useRef<Orbit | null>(null);
   const balls = useRef<BallAt[]>([]);
@@ -42,7 +39,6 @@ export default function Study() {
     if (!stage) return;
     let cancelled = false;
     let io: IntersectionObserver | null = null;
-    let lastText = 0;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const tags: Tag[] = SUBJECTS.map(() => ({ x: 0, y: 0, vx: 0, vy: 0, ok: false }));
 
@@ -50,9 +46,6 @@ export default function Study() {
       balls.current = at;
       const W = stage.clientWidth;
       const thin = W < 640;
-      const now = performance.now();
-      const text = now - lastText > 120;
-      if (text) lastText = now;
 
       // where each tag wants to hang: beside its ball on the side away from him,
       // if it fits; else under it (over it when it's behind him). On a phone
@@ -116,8 +109,6 @@ export default function Study() {
           s.setAttribute("d", `M${ex.toFixed(1)} ${ey.toFixed(1)}Q${((ex + hx) / 2).toFixed(1)} ${((ey + hy) / 2 + 8 + len * 0.12).toFixed(1)} ${hx.toFixed(1)} ${hy.toFixed(1)}`);
           s.style.opacity = behind ? "0.35" : "1";
         }
-        const xyz = xyzRefs.current[i];
-        if (xyz && text) xyz.textContent = `${fmt((b.x - W / 2) / (W / 2))} ${fmt(-(b.y - H / 2) / (H / 2))} ${fmt(b.z)}`;
       });
 
       // the open window, tied to its ball by a thread
@@ -282,9 +273,6 @@ export default function Study() {
             <path d="M66 33L79 35L77 22" />
           </svg>
         </p>
-        <p className="ed-fig" aria-hidden="true">
-          <span>fig. 3</span> three subjects in one orbit, drawn from life
-        </p>
 
         <ol className="ed-qs">
           {SUBJECTS.map((sub, i) => (
@@ -304,7 +292,7 @@ export default function Study() {
                 <span className="ed-q-hole" aria-hidden="true" />
                 <span className="ed-q-copy">
                   <span className="ed-q-meta" aria-hidden="true">
-                    No.{String(i + 1).padStart(2, "0")} <span ref={(el) => void (xyzRefs.current[i] = el)} className="ed-q-xyz" />
+                    No.{String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="ed-q-long">{sub.question}</span>
                   <span className="ed-q-short">{sub.short}</span>

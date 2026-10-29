@@ -5,8 +5,8 @@
    matching starts its animation afresh. */
 
 .pl {
-  --ink-red: #6e0f22;
-  --ok: #7fb069;
+  --ink-red: var(--thread);
+  --ok: var(--ink);
   position: relative;
   overflow: hidden;
   aspect-ratio: 1200 / 420;
@@ -117,7 +117,7 @@
   padding: 7px 11px 8px;
   border: 1.5px solid var(--ink);
   border-radius: 3px;
-  background: #fffaf0;
+  background: var(--note);
   box-shadow: 3px 4px 0 -1px rgba(140, 47, 67, 0.2);
   font-family: var(--font-hand), cursive;
   font-size: 19px;
@@ -161,8 +161,8 @@
   position: absolute;
   padding: 6px 12px 5px;
   border-radius: 6px;
-  background: var(--term-bg, #2b0b12);
-  color: #b9e19a;
+  background: var(--term-bg);
+  color: var(--term-prompt);
   font-family: var(--font-mono), monospace;
   font-size: 16px;
   white-space: nowrap;
@@ -184,7 +184,7 @@
   stroke-linecap: round;
   stroke-dasharray: 1 2;
   stroke-dashoffset: 1;
-  filter: drop-shadow(0 0 6px rgba(127, 176, 105, 0.9));
+  filter: drop-shadow(0 0 6px rgba(140, 47, 67, 0.6));
   opacity: 0;
 }
 .pl[data-act="2"] .pl-beam[data-fired] {
@@ -202,7 +202,7 @@
   border: 2px solid var(--ink);
   border-radius: 3px;
   background: var(--ink-red);
-  color: #f6dfe0;
+  color: var(--cream);
   font-family: var(--font-mono), monospace;
   font-size: 15px;
   font-weight: 700;
@@ -242,8 +242,8 @@
   padding: 6px 14px 5px;
   border: 2px solid var(--ok);
   border-radius: 999px;
-  background: #f3f8ec;
-  color: #3d6b2a;
+  background: var(--note);
+  color: var(--ink);
   font-family: var(--font-mono), monospace;
   font-size: 16px;
   font-weight: 700;
@@ -280,8 +280,8 @@
   border-radius: 2px;
   background:
     linear-gradient(var(--thread), var(--thread)) 50% 0 / 2px 100% no-repeat,
-    #fffaf0;
-  box-shadow: 0 0 14px rgba(240, 160, 176, 0.9);
+    var(--note);
+  box-shadow: 0 0 14px rgba(242, 196, 203, 0.9);
   opacity: 0;
 }
 .pl[data-act="3"] .pl-carried {
@@ -330,11 +330,11 @@
 .pl-packet svg {
   display: block;
   width: 100%;
-  fill: #fffaf0;
+  fill: var(--note);
   stroke: var(--ink);
   stroke-width: 2;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 8px rgba(240, 160, 176, 0.95));
+  filter: drop-shadow(0 0 8px rgba(242, 196, 203, 0.95));
 }
 .pl-packet-string {
   stroke: var(--thread);

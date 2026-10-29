@@ -52,7 +52,7 @@
   color: var(--thread);
 }
 .st-danger {
-  color: #a3202f;
+  color: var(--thread);
 }
 
 .st-sheet {
@@ -176,13 +176,13 @@
   padding: 10px 14px;
   border: 1.6px solid var(--ink);
   border-radius: 4px;
-  background: #fffaf0;
+  background: var(--note);
   font-family: var(--font-read), Georgia, serif;
   font-size: 16px;
 }
 .st-alert {
-  border-color: #a3202f;
-  color: #7d1522;
+  border-color: var(--thread);
+  color: var(--ink);
 }
 .st-toast {
   width: min(1240px, 100%);
@@ -330,7 +330,7 @@
   padding: 8px 11px;
   border: 1.6px solid rgba(74, 12, 24, 0.55);
   border-radius: 4px;
-  background: #fffaf0;
+  background: var(--note);
   color: var(--ink);
   font-family: var(--font-read), Georgia, serif;
   font-size: 16px;
@@ -375,7 +375,7 @@
   text-transform: uppercase;
 }
 .st-field[data-invalid] .st-input {
-  border-color: #a3202f;
+  border-color: var(--thread);
 }
 .st-hint {
   margin: 0;
@@ -392,7 +392,7 @@
   margin: 0;
   font-family: var(--font-mono), monospace;
   font-size: 11px;
-  color: #a3202f;
+  color: var(--thread);
 }
 .st-check {
   align-content: end;
@@ -443,7 +443,7 @@
   padding: 16px 18px;
   border: 1.6px dashed rgba(140, 47, 67, 0.5);
   border-radius: 4px;
-  background: #fffaf0;
+  background: var(--note);
 }
 .st-preview-k {
   margin: 0 0 8px;
@@ -629,7 +629,7 @@
   border-radius: 6px;
   background:
     repeating-linear-gradient(135deg, rgba(140, 47, 67, 0.05) 0 1px, transparent 1px 9px),
-    #fffaf0;
+    var(--note);
   text-align: center;
   cursor: var(--cursor-pointer, pointer);
   transition:
@@ -681,8 +681,8 @@
   color: var(--thread);
 }
 .st-badge[data-outcome="error"] {
-  border: 1.5px solid #a3202f;
-  color: #a3202f;
+  border: 1.5px solid var(--thread);
+  color: var(--thread);
 }
 .st-result-msg {
   margin-top: 4px;

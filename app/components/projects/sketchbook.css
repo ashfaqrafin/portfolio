@@ -4,7 +4,7 @@
 
 .pj {
   position: relative;
-  width: min(1080px, 100%);
+  width: min(1240px, 100%);
   color: var(--ink);
   outline: none;
   /* room for the coil when a page turn scrolls the pad back into view */
@@ -34,7 +34,7 @@
   z-index: 0;
   border: 1.4px solid rgba(74, 12, 24, 0.55);
   border-radius: 3px;
-  background: #f3ecdf;
+  background: var(--paper-deep);
   filter: url(#tb-rough-b);
 }
 .pj-pad::before {
@@ -43,7 +43,7 @@
 }
 .pj-pad::after {
   inset: 10px 3px -4px -3px;
-  background: #f6f0e5;
+  background: color-mix(in srgb, var(--paper) 50%, var(--paper-deep));
 }
 
 /* wire coil across the top, punched through every page */
@@ -135,9 +135,7 @@
 /* both faces of the sheet; only the front carries the drawing */
 .pj-front,
 .pj-back {
-  background:
-    radial-gradient(120% 90% at 30% 20%, rgba(255, 252, 245, 0.7), transparent 60%),
-    var(--paper);
+  background: var(--paper);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
@@ -152,7 +150,7 @@
   transform: rotateX(180deg);
   background:
     repeating-linear-gradient(0deg, transparent 0 27px, rgba(140, 47, 67, 0.06) 27px 28px),
-    #f3ecdf;
+    var(--paper-deep);
 }
 .pj-front::before,
 .pj-back::before {

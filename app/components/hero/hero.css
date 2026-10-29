@@ -3,8 +3,8 @@
    tint of those. Borders are displaced by SVG turbulence so no line is ruled. */
 
 .hero {
-  --card: #f8f3ea;
-  --prompt: #f0a0b0;
+  --card: var(--paper);
+  --prompt: var(--term-prompt);
   position: relative;
   min-height: 100svh;
   display: flex;
@@ -513,10 +513,10 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #e0645c;
+  background: var(--dot-1);
   box-shadow:
-    13px 0 0 #e6b450,
-    26px 0 0 #7fb069;
+    13px 0 0 var(--dot-2),
+    26px 0 0 var(--dot-3);
 }
 .qbox[data-skin="2"] .c.caret::after {
   width: 0.55em;

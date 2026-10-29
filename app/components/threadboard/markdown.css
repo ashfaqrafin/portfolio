@@ -158,10 +158,10 @@
   height: 8px;
   margin-right: 26px;
   border-radius: 50%;
-  background: #e0645c;
+  background: var(--dot-1);
   box-shadow:
-    13px 0 0 #e6b450,
-    26px 0 0 #7fb069;
+    13px 0 0 var(--dot-2),
+    26px 0 0 var(--dot-3);
 }
 .md-code pre {
   margin: 0;

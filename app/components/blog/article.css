@@ -13,7 +13,6 @@
   right: 0;
   top: 0;
   height: 4px;
-  background: repeating-linear-gradient(90deg, rgba(140, 47, 67, 0.4) 0 7px, transparent 7px 12px) 0 50% / 100% 1.6px no-repeat;
   pointer-events: none;
 }
 .art-progress-fill {
@@ -48,7 +47,7 @@
   position: relative;
   margin-top: clamp(18px, 3vw, 30px);
   padding: clamp(22px, 3vw, 34px) clamp(18px, 3vw, 30px) clamp(20px, 2.6vw, 28px);
-  background: #fffaf0;
+  background: var(--note);
 }
 .art-head::before {
   content: "";
@@ -172,7 +171,7 @@
   display: grid;
   place-items: center;
   border-radius: 10px 10px 0 0;
-  background: #4a0c18;
+  background: var(--ink);
   border-bottom: 1px solid rgba(243, 227, 223, 0.2);
 }
 .art[data-topic="linux"] .art-skin::before {
@@ -183,10 +182,10 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #e0645c;
+  background: var(--dot-1);
   box-shadow:
-    15px 0 0 #e6b450,
-    30px 0 0 #7fb069;
+    15px 0 0 var(--dot-2),
+    30px 0 0 var(--dot-3);
 }
 .art-skin-path {
   max-width: calc(100% - 140px);
@@ -211,14 +210,14 @@
   color: var(--term-prompt);
 }
 .art[data-topic="linux"] .art-tags li {
-  border-color: rgba(240, 160, 176, 0.55);
+  border-color: rgba(242, 196, 203, 0.55);
   color: var(--term-text);
 }
 
 .art[data-topic="unified"] .art-head::before {
   border: 2px dashed var(--thread);
   box-shadow:
-    inset 0 0 0 6px #fffaf0,
+    inset 0 0 0 6px var(--note),
     inset 0 0 0 7.5px var(--ink);
 }
 .art[data-topic="unified"] .art-skin {
@@ -308,7 +307,7 @@
   gap: 5px;
   height: 100%;
   padding: 26px 16px 14px;
-  background: #fffaf0;
+  background: var(--note);
   color: var(--ink);
   text-decoration: none;
   box-shadow:
@@ -369,7 +368,7 @@
 }
 .art-thread[data-topic="unified"]::before {
   box-shadow:
-    inset 0 0 0 4px #fffaf0,
+    inset 0 0 0 4px var(--note),
     inset 0 0 0 5px rgba(74, 12, 24, 0.55);
 }
 .art-thread-line {

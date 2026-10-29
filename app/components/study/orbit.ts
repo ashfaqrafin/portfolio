@@ -9,8 +9,8 @@ import * as THREE from "three";
      shrinks, fading into the paper, behind. It keeps Kepler's habit of hurrying
      through the near side and lingering at the far one (the three share one
      orbit, a third of a turn apart).
-   - The ring itself is pencilled in, stippled, with tick marks like a chart,
-     its far half behind him and its near half in front.
+   - The ring itself is pencilled in, stippled, its far half behind him and its
+     near half in front.
    - Each ball is a few thousand points: a stippled sphere shaded like pencil
      (denser away from the light), its subject's mark inked on both faces, and
      dust shed from its trailing side. It spins on a tilted axis as it goes.
@@ -683,7 +683,7 @@ export function createOrbit(stage: HTMLElement, { marks, avatar, still, onFrame 
     fu.uSize.value.set(aw * 1.15, aw * 0.16);
     fu.uAlpha.value = 0.55;
 
-    // the ring: a stippled pencil line, gone over twice, with ticks every 15°
+    // the ring: a stippled pencil line, gone over twice
     const far: number[] = [];
     const farA: number[] = [];
     const near: number[] = [];
@@ -701,12 +701,6 @@ export function createOrbit(stage: HTMLElement, { marks, avatar, still, onFrame 
         const wob = (rand() - 0.5) * 1.6 + Math.sin(th * 7 + pass * 2) * (pass ? 1.4 : 0.5);
         dot(p.x, p.y + wob, p.z, (0.25 + rand() * 0.35) * (rand() < 0.08 ? 0 : 1));
       }
-    for (let k = 0; k < 24; k++) {
-      const th = (k / 24) * Math.PI * 2;
-      const p = project(th);
-      const len = (k % 6 === 0 ? 9 : 5) * p.s;
-      for (let t = -len; t <= len; t += 0.6) dot(p.x, p.y + t, p.z, 0.55);
-    }
     const set = (obj: THREE.Points, pts: number[], al: number[]) => {
       obj.geometry.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
       obj.geometry.setAttribute("aAlpha", new THREE.Float32BufferAttribute(al, 1));

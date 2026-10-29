@@ -152,27 +152,6 @@
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.ed-fig {
-  position: absolute;
-  z-index: 3;
-  left: 22px;
-  bottom: 16px;
-  margin: 0;
-  max-width: 240px;
-  font-family: var(--font-hand), cursive;
-  font-size: 21px;
-  line-height: 1.05;
-  color: var(--ink);
-  pointer-events: none;
-}
-.ed-fig span {
-  display: block;
-  font-family: var(--font-mono), monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--thread);
-}
 
 /* the questions: tailor's swing tags on strings. A column beside him until the
    scene hangs them on their balls */
@@ -195,7 +174,7 @@
   padding: 7px 14px 8px 10px;
   border: 1.3px solid var(--ink);
   border-radius: 4px 12px 12px 4px;
-  background: #fbf6ea;
+  background: var(--note);
   color: var(--ink);
   text-align: left;
   white-space: nowrap;
@@ -222,7 +201,7 @@
   height: 11px;
   border: 1.3px solid var(--ink);
   border-radius: 50%;
-  background: #f8f3ea;
+  background: var(--paper);
   box-shadow: inset 1px 1px 0 rgba(74, 12, 24, 0.25);
 }
 .ed-q-copy {
@@ -234,11 +213,6 @@
   font-size: 9.5px;
   letter-spacing: 0.08em;
   color: var(--thread);
-}
-.ed-q-xyz {
-  letter-spacing: 0;
-  opacity: 0.75;
-  font-variant-numeric: tabular-nums;
 }
 .ed-q-long,
 .ed-q-short {
@@ -282,7 +256,7 @@
   position: absolute;
   z-index: 6;
   width: min(380px, calc(100% - 24px));
-  background: #fbf7ee;
+  background: var(--note);
   border-radius: 10px;
   box-shadow:
     0 1px 0 rgba(255, 252, 245, 0.9) inset,
@@ -312,7 +286,7 @@
   gap: 10px;
   padding: 8px 8px 8px 12px;
   border-radius: 10px 10px 0 0;
-  background: #f3eadb;
+  background: var(--paper-deep);
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -339,13 +313,13 @@
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: var(--thread);
+  background: var(--dot-1);
 }
 .ed-win-dots i:nth-child(2) {
-  background: #b5687a;
+  background: var(--dot-2);
 }
 .ed-win-dots i:nth-child(3) {
-  background: #d7a8b1;
+  background: var(--dot-3);
 }
 .ed-win-title {
   flex: 1;
@@ -424,10 +398,6 @@
   }
   .ed-note-me {
     font-size: 18px;
-  }
-  /* the bottom strip is the tags' */
-  .ed-fig {
-    display: none;
   }
   .ed-q,
   .ed-q[data-hole="right"] {

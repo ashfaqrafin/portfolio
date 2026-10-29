@@ -138,6 +138,7 @@ export default function Hero() {
           <a className="hero-nav-wide" href="#blog">
             Thread board
           </a>
+          <a href="#education">Education</a>
           <a href="#projects">Projects</a>
           <a href="#contact">Contact</a>
         </nav>

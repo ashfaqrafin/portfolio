@@ -2,8 +2,8 @@
    A pinned note over the still-mounted board, wearing its topic's skin. */
 
 .tbr {
-  --tbr-card: #f8f3ea;
-  --tbr-note: #fffaf0;
+  --tbr-card: var(--paper);
+  --tbr-note: var(--note);
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -340,10 +340,10 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #e0645c;
+  background: var(--dot-1);
   box-shadow:
-    15px 0 0 #e6b450,
-    30px 0 0 #7fb069;
+    15px 0 0 var(--dot-2),
+    30px 0 0 var(--dot-3);
 }
 .tbr-sheet[data-topic="linux"] .tbr-close {
   top: 46px;

@@ -13,11 +13,16 @@
   --cream: #faf5eb;
   --paper: #f8f3ea;
   --note: #fffaf0;
+  --paper-deep: #f3ecdf; /* the pages under a page */
   --page: #f0e6d2; /* cream paper the sketchbook page sits on */
   --page-text: #4a0c18;
   --term-bg: #2a0a12;
   --term-text: #f5e6e0;
-  --term-prompt: #f0a0b0;
+  --term-prompt: #f2c4cb;
+  /* a window's three buttons, in the palette's own tints */
+  --dot-1: #8c2f43;
+  --dot-2: #b5687a;
+  --dot-3: #d7a8b1;
 }
 
 
@@ -62,12 +67,18 @@ body::after {
   background-repeat: no-repeat;
   will-change: transform;
 }
-/* phones and portrait tablets: the strips are as wide as 0.4 × the screen
-   height, which would cover most of a tall screen; show only their outer,
-   densest edge */
+/* portrait tablets: the strips are as wide as 0.4 × the screen height, which
+   would cover most of a tall screen; show only their outer, densest edge.
+   Phones: none at all; the cards run nearly edge to edge, and all that would
+   show between them is the odd torn tip poking in at the side */
 @media (orientation: portrait) {
   body::after {
     background-position: left -29vh top, right -29vh top;
+  }
+}
+@media (orientation: portrait) and (max-width: 720px) {
+  body::after {
+    background-image: none;
   }
 }
 

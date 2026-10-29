@@ -5,8 +5,8 @@
    container before any script runs; zoom and pan are a transform on top. */
 
 .tb {
-  --tb-card: #f8f3ea;
-  --tb-note: #fffaf0;
+  --tb-card: var(--paper);
+  --tb-note: var(--note);
   --tb-shadow: rgba(74, 12, 24, 0.32);
   position: relative;
   color: var(--ink);
@@ -560,10 +560,10 @@
   width: calc(5 * var(--u));
   height: calc(5 * var(--u));
   border-radius: 50%;
-  background: #e0645c;
+  background: var(--dot-1);
   box-shadow:
-    calc(9 * var(--u)) 0 0 #e6b450,
-    calc(18 * var(--u)) 0 0 #7fb069;
+    calc(9 * var(--u)) 0 0 var(--dot-2),
+    calc(18 * var(--u)) 0 0 var(--dot-3);
 }
 .tb-pin[data-topic="linux"] .tb-pin-kicker,
 .tb-pin[data-topic="linux"] .tb-pin-date {
