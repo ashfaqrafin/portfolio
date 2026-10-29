@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { preload } from "react-dom";
 import "./intro.css";
 
-/* The home page opens under a length of burgundy linen, which is taken up by a
-   pinch and drawn off to unveil the site (drape.ts, served as /intro.js and
-   loaded async so it starts before React). Until the cloth is live, the same
+/* The home page opens under a length of burgundy linen; a character leans in,
+   walks up, pinches it and drags it off to unveil the site (drape.ts and
+   actor.ts, served as /intro.js and loaded async so it starts before React). Until the cloth is live, the same
    photo stands in as a CSS background, so the first paint is already the
    cloth. Any click, key, scroll or touch takes it away at once (INTRO_GATE in
    the root layout notes it as html[data-intro-skip], with where you clicked,
@@ -15,6 +15,7 @@ import "./intro.css";
 
 export default function Intro() {
   preload("/intro/fabric.webp", { as: "image", fetchPriority: "high" });
+  preload("/intro/actor.webp", { as: "image", fetchPriority: "high" });
 
   useEffect(() => {
     const html = document.documentElement;
@@ -36,8 +37,10 @@ export default function Intro() {
   return (
     <div className="intro">
       <div className="intro-sheet">
-        {/* the cloth (drape.ts, which may size it before React gets here) */}
+        {/* the cloth, and the character who takes it away (drape.ts and actor.ts,
+            which may size them before React gets here) */}
         <canvas className="intro-cloth" aria-hidden="true" suppressHydrationWarning />
+        <canvas className="intro-actor" aria-hidden="true" suppressHydrationWarning />
       </div>
       <script src="/intro.js" async />
       <button type="button" className="intro-skip">

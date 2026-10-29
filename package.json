@@ -17,7 +17,8 @@
     "hero:art": "node scripts/hero-art.mjs",
     "contact:art": "node scripts/contact-art.mjs",
     "education:art": "node scripts/education-art.mjs",
-    "intro:art": "node scripts/intro-art.mjs"
+    "intro:art": "node scripts/intro-art.mjs",
+    "intro:actor": "node scripts/intro-actor.mjs"
   },
   "dependencies": {
     "@types/three": "^0.186.0",

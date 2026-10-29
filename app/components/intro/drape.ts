@@ -1,14 +1,15 @@
 /* The intro: the site lies under a length of burgundy linen, a photograph
    mapped onto a simulated cloth in WebGL. A soft light passes over its folds;
-   then the cloth is taken by a corner (the top right, or the one nearest a
-   click) and drawn off along the diagonal, sliding after it in long folds, to
-   unveil the site.
+   then a character (actor.ts) leans in from the left edge, walks up, pinches
+   the cloth and drags it off the page, backing out of the frame with it. (If
+   he can't be had, the cloth is taken by a corner instead and drawn off along
+   the diagonal.)
 
    The cloth is a grid of points held to their neighbours (verlet, with shear
-   and bending), lying on the page with a little friction; the corner is
-   lifted a little and drawn away, and the rest follows. Its shading comes from the grid's own
-   normals over the photo's light, so the folds it makes as it moves are lit
-   like the folds in the picture.
+   and bending), lying on the page with a little friction; the pinch follows
+   his hand, and the rest follows the pinch. Its shading comes from the grid's
+   own normals over the photo's light, so the folds it makes as it moves are
+   lit like the folds in the picture.
 
    It is served as a script of its own (app/intro.js/route.ts) and loaded
    async, so it starts before React: which is why everything it needs is
@@ -19,15 +20,20 @@
    live, then pull once it is being drawn off; or flat), as React leaves that
    element's attributes alone. */
 
+import type { Actor, ActorConfig } from "./actor";
+
 export type DrapeConfig = {
   /** the photograph, and its size in px */
   src: string;
   size: [number, number];
   /** how far the cloth runs past each edge of the screen, as a fraction of it (intro.css insets its stand-in the same) */
   bleed: number;
+  /** the character who takes it away (actor.ts) */
+  actor?: ActorConfig;
 };
 
-export function drape(C: DrapeConfig) {
+/** C: the cloth; cast: actor.ts's actor(), sent along as source too */
+export function drape(C: DrapeConfig, cast?: (A: ActorConfig) => Actor) {
   const html = document.documentElement;
   if (html.dataset.intro !== "play") return;
 
@@ -41,6 +47,8 @@ export function drape(C: DrapeConfig) {
   const PULL_FOR = 2.2; // s at most, however slow the frames
   const SKIP_SPEED = 2.6; // a click takes it away faster
   const SKIP_FOR = 0.8; // s, at most, after a click
+  const ACT_AT = 0.3; // s after the photo is up, when he leans in
+  const ACT_FOR = 4.5; // s at most for his scene, however slow the frames
 
   let sheet: HTMLElement | null = null;
   let canvas: HTMLCanvasElement | null = null;
@@ -73,11 +81,22 @@ export function drape(C: DrapeConfig) {
       given = true;
       lift();
     }, 3000);
+    // he comes along if his pieces load too; without him, the corner pull
+    let who: Actor | null = null;
+    try {
+      who = cast && C.actor ? cast(C.actor) : null;
+    } catch {
+      who = null;
+    }
     img.onload = () => {
-      if (given || html.dataset.intro !== "play") return;
-      window.clearTimeout(giveUp);
-      if ("introSkip" in html.dataset) return lift();
-      start(gl, img);
+      const go = (a: Actor | null) => {
+        if (given || html.dataset.intro !== "play") return;
+        window.clearTimeout(giveUp);
+        if ("introSkip" in html.dataset) return lift();
+        start(gl, img, a);
+      };
+      if (who) who.ready.then(() => go(who), () => go(null));
+      else go(null);
     };
     img.onerror = () => {
       window.clearTimeout(giveUp);
@@ -86,7 +105,7 @@ export function drape(C: DrapeConfig) {
     img.src = C.src;
   }
 
-  function start(gl: WebGLRenderingContext, img: HTMLImageElement) {
+  function start(gl: WebGLRenderingContext, img: HTMLImageElement, who: Actor | null) {
     const cv = canvas!, sh = sheet!;
     const W = sh.clientWidth, H = sh.clientHeight;
     const dpr = Math.min(1.5, window.devicePixelRatio || 1);
@@ -268,10 +287,11 @@ export function drape(C: DrapeConfig) {
     let grip: { k: number; gx: number; gy: number; dirX: number; dirY: number } | null = null;
     // how far each point lay from that corner: linen hardly stretches, so it can't get farther than that
     const tether = new Float32Array(n);
-    // the corner nearest a point on the screen
-    function take(sx: number, sy: number) {
+    // the corner nearest a point on the screen (or, for his hand, the nearest point of all)
+    function take(sx: number, sy: number, corner = true) {
       let k = 0;
-      for (const c of [0, nx - 1, n - nx, n - 1]) if (Math.hypot(px[c] - sx, py[c] - sy) < Math.hypot(px[k] - sx, py[k] - sy)) k = c;
+      for (const c of corner ? [0, nx - 1, n - nx, n - 1] : Array.from({ length: n }, (_, i) => i))
+        if (Math.hypot(px[c] - sx, py[c] - sy) < Math.hypot(px[k] - sx, py[k] - sy)) k = c;
       pinned[k] = 1;
       // no cloth lies quite flat: a whisper of unevenness, for it to fold from
       for (let i = 0; i < n; i++) pz[i] = oz[i] = 0.6 + 0.6 * Math.sin(px[i] * 0.021 + py[i] * 0.017) * Math.sin(py[i] * 0.026 - px[i] * 0.009);
@@ -293,9 +313,9 @@ export function drape(C: DrapeConfig) {
       return [g.gx + g.dirX * away, g.gy + g.dirY * away, z];
     }
 
-    function step(s: number) {
+    // one step of the physics, with the pinch at [hx, hy, hz]
+    function step(hx: number, hy: number, hz: number) {
       const g = grip!;
-      // (s is the hand's time: a click hurries the hand, not the physics)
       for (let k = 0; k < n; k++) {
         if (pinned[k]) continue;
         const vx = (px[k] - ox[k]) * AIR, vy = (py[k] - oy[k]) * AIR, vz = (pz[k] - oz[k]) * AIR;
@@ -306,7 +326,6 @@ export function drape(C: DrapeConfig) {
         py[k] += vy;
         pz[k] += vz - GRAV * DT * DT;
       }
-      const [hx, hy, hz] = hand(s);
       px[g.k] = hx;
       py[g.k] = hy;
       pz[g.k] = hz;
@@ -362,11 +381,24 @@ export function drape(C: DrapeConfig) {
       return true;
     }
 
+    // ── him ──
+    const stage = who ? sh.querySelector<HTMLCanvasElement>("canvas.intro-actor") : null;
+    const sctx = stage?.getContext("2d") ?? null;
+    const sdpr = Math.min(2, window.devicePixelRatio || 1);
+    if (stage) {
+      stage.width = Math.round(W * sdpr);
+      stage.height = Math.round(H * sdpr);
+    }
+    const cast = who && sctx ? who : null;
+    // (with him on stage, a click lifts the page at once, in CSS: intro.css)
+    if (cast) html.dataset.introCast = "";
+    let held: [number, number] | null = null; // where his hand was, the frame before
+
     // ── time ──
     draw(-1);
     requestAnimationFrame(() => (html.dataset.introCloth = "live"));
     const t0 = performance.now();
-    let pullAt = -1, skippedAt = -1, simT = 0, handT = 0, speed = 1, last = t0;
+    let pullAt = -1, skippedAt = -1, simT = 0, handT = 0, actT = 0, speed = 1, last = t0;
     const finish = () => {
       html.dataset.intro = "seen";
     };
@@ -374,31 +406,59 @@ export function drape(C: DrapeConfig) {
       if (html.dataset.intro !== "play") return;
       const now = performance.now();
       const t = (now - t0) / 1000;
+      const dt = Math.min(0.1, (now - last) / 1000);
       const skip = html.dataset.introSkip;
       if (skip !== undefined && skippedAt < 0) {
         skippedAt = t;
         speed = SKIP_SPEED;
+        // with him on stage, a click just lifts the page away (intro.css)
+        if (cast) return lift();
         if (pullAt < 0) {
           const [cx, cy] = skip.split(",").map(Number);
           if (Number.isFinite(cx) && Number.isFinite(cy) && skip) take(cx, cy);
           pullAt = t;
         }
       }
-      if (pullAt < 0 && t >= PULL_AT) pullAt = t;
-      if (pullAt >= 0) {
-        html.dataset.introCloth = "pull";
-        // (by the top right corner, along the folds in the photo, unless a click chose another)
-        if (!grip) take(W, 0);
-        const target = simT + Math.min(0.1, (now - last) / 1000);
-        while (simT + DT <= target) {
-          simT += DT;
-          handT += DT * speed;
-          step(handT);
+      let over = false;
+      if (cast) {
+        // his scene: the cloth is pinched where his hand closes on it, and goes where it goes
+        if (t >= ACT_AT) actT += dt;
+        const { hold, gone: left } = cast.at(actT, W, H);
+        if (hold && !grip) {
+          take(hold[0], hold[1], false);
+          pullAt = t;
+          held = hold;
+          html.dataset.introCloth = "pull";
         }
+        if (grip && hold) {
+          const from = held ?? hold, steps = Math.max(1, Math.floor(dt / DT));
+          const lift = 0.05 * F * Math.min(1, (t - pullAt) / 0.4);
+          for (let i = 1; i <= steps; i++) step(from[0] + ((hold[0] - from[0]) * i) / steps, from[1] + ((hold[1] - from[1]) * i) / steps, lift);
+          held = hold;
+        }
+        sctx!.setTransform(1, 0, 0, 1, 0, 0);
+        sctx!.clearRect(0, 0, stage!.width, stage!.height);
+        sctx!.setTransform(sdpr, 0, 0, sdpr, 0, 0);
+        cast.draw(sctx!);
+        over = (left && grip !== null && gone()) || t - ACT_AT > ACT_FOR || (skippedAt >= 0 && t - skippedAt > SKIP_FOR);
+      } else {
+        if (pullAt < 0 && t >= PULL_AT) pullAt = t;
+        if (pullAt >= 0) {
+          html.dataset.introCloth = "pull";
+          // (by the top right corner, along the folds in the photo, unless a click chose another)
+          if (!grip) take(W, 0);
+          const target = simT + dt;
+          while (simT + DT <= target) {
+            simT += DT;
+            // (a click hurries the hand, not the physics)
+            handT += DT * speed;
+            step(...hand(handT));
+          }
+        }
+        over = pullAt >= 0 && (gone() || t - pullAt > PULL_FOR || (skippedAt >= 0 && t - skippedAt > SKIP_FOR));
       }
       last = now;
       draw(t < SWEEP ? -0.4 + 1.9 * (t / SWEEP) : -1);
-      const over = pullAt >= 0 && (gone() || t - pullAt > PULL_FOR || (skippedAt >= 0 && t - skippedAt > SKIP_FOR));
       if (over) return finish();
       requestAnimationFrame(frame);
     };

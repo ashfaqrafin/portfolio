@@ -44,17 +44,25 @@ html:is([data-intro-cloth="live"], [data-intro-cloth="pull"]) .intro-sheet::befo
   display: none;
 }
 
-/* the cloth, casting a soft shadow on the site as it lifts */
-.intro-cloth {
+/* the cloth, casting a soft shadow on the site as it lifts; and him, on it */
+.intro-cloth,
+.intro-actor {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+}
+.intro-cloth {
   filter: drop-shadow(0 22px 34px rgba(30, 0, 8, 0.42));
 }
+/* his shadow on the linen (one filter: a full-screen canvas's filters are what cost most) */
+.intro-actor {
+  filter: drop-shadow(8px 10px 10px rgba(20, 0, 5, 0.45));
+}
 
-/* a click before the cloth is live (or no cloth at all): the page lifts away */
+/* a click before the cloth is live, or while he's on stage (or no cloth at all): the page lifts away */
 html[data-intro-skip]:not([data-intro-cloth]) .intro-sheet,
+html[data-intro-skip][data-intro-cast] .intro-sheet,
 html[data-intro-cloth="flat"] .intro-sheet {
   animation: intro-out 0.45s cubic-bezier(0.6, 0, 0.3, 1) forwards;
 }
