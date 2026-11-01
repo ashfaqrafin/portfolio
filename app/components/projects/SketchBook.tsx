@@ -135,7 +135,7 @@ export default function SketchBook({ projects }: { projects: ProjectData[] }) {
                   if (role === "leaf" && e.target === e.currentTarget) finish();
                 }}
               >
-                <Page p={p} />
+                <Page p={p} i={i} n={n} />
                 <div className="pj-back" aria-hidden="true" />
               </article>
             );
@@ -168,20 +168,29 @@ export default function SketchBook({ projects }: { projects: ProjectData[] }) {
   );
 }
 
-function Page({ p }: { p: ProjectData }) {
+/* One page: a drafting sheet. A title block across the top (sheet, subject,
+   year), the drawing on the left, and on the right the name, a line on what it
+   is, the notes with their points numbered, and a spec table. */
+function Page({ p, i, n }: { p: ProjectData; i: number; n: number }) {
   return (
     <div className="pj-front">
-      <header className="pj-form">
-        <span className="pj-field">
-          <span className="pj-lbl">Date</span>
-          <span className="pj-val pj-w" style={at(0.25)}>
-            {p.year}
+      <header className="pj-block">
+        <span className="pj-cell">
+          <span className="pj-lbl">Sheet</span>
+          <span className="pj-val pj-w" style={at(0.2)}>
+            {pad2(i + 1)} / {pad2(n)}
           </span>
         </span>
-        <span className="pj-field pj-field-grow">
+        <span className="pj-cell pj-cell-grow">
           <span className="pj-lbl">Subject</span>
-          <span className="pj-val pj-w" style={at(0.4)}>
+          <span className="pj-val pj-w" style={at(0.3)}>
             {p.kind}
+          </span>
+        </span>
+        <span className="pj-cell">
+          <span className="pj-lbl">Year</span>
+          <span className="pj-val pj-w" style={at(0.4)}>
+            {p.year}
           </span>
         </span>
       </header>
@@ -204,43 +213,49 @@ function Page({ p }: { p: ProjectData }) {
               {p.title}
             </span>
           </h3>
-          <svg className="pj-ul" viewBox="0 0 320 12" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-            <path className="pj-line" pathLength={1} style={at(1)} d="M3 8C40 4 66 9 104 6S170 2 214 6 280 9 317 4" />
-          </svg>
-          <p className="pj-tagline pj-w" style={at(1.1)}>
+          <p className="pj-tagline pj-w" style={at(0.9)}>
             {p.tagline}
           </p>
-          <div className="pj-notes pj-wd" style={at(1.4)}>
+          <div className="pj-notes pj-wd" style={at(1.2)}>
             {p.notes.map((b, k) =>
               b.kind === "p" ? (
                 <p key={k}>{b.text}</p>
               ) : (
-                <ul key={k}>
+                <ol key={k}>
                   {b.items.map((t, j) => (
-                    <li key={j}>{t}</li>
+                    <li key={j}>
+                      <span className="pj-no" aria-hidden="true">
+                        {pad2(j + 1)}
+                      </span>
+                      <span>{t}</span>
+                    </li>
                   ))}
-                </ul>
+                </ol>
               ),
             )}
           </div>
-          {p.stack.length > 0 && (
-            <div className="pj-mats">
-              <p className="pj-lbl pj-w" style={at(1.8)}>
-                Materials
-              </p>
-              <ul>
-                {p.stack.map((s, k) => (
-                  <li key={s} className="pj-chip" style={at(1.9 + k * 0.08)}>
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {p.role && (
-            <p className="pj-role pj-w" style={at(2.2)}>
-              <span className="pj-lbl">Role</span> {p.role}
-            </p>
+          {(p.stack.length > 0 || p.role) && (
+            <dl className="pj-spec pj-wd" style={at(1.8)}>
+              {p.stack.length > 0 && (
+                <div>
+                  <dt>Built with</dt>
+                  <dd>
+                    {p.stack.map((s, k) => (
+                      <span key={s}>
+                        {k > 0 && <span className="pj-sep" aria-hidden="true" />}
+                        {s}
+                      </span>
+                    ))}
+                  </dd>
+                </div>
+              )}
+              {p.role && (
+                <div>
+                  <dt>Role</dt>
+                  <dd className="pj-role">{p.role}</dd>
+                </div>
+              )}
+            </dl>
           )}
           {p.links.length > 0 && (
             <ul className="pj-links">

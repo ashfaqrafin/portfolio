@@ -193,8 +193,9 @@ export default function Contact() {
       <header className="ct-head">
         <div>
           <h2 className="ct-h2" id={`${uid}-h`}>
-            Say hello. <span className="ct-h2-hand">tell me about your project.</span>
+            Say hello.
           </h2>
+          <p className="ct-lede">Tell me what you&rsquo;re making and where I could help. I usually reply within a few days.</p>
         </div>
         <p className="ct-status" role="status" aria-live="polite" data-phase={phase}>
           {status}
@@ -328,10 +329,10 @@ export default function Contact() {
             </button>
           </form>
 
-          {/* the packet as it will be posted, filled in as you type */}
+          {/* the packet as it will be posted, filled in as you type: a parcel label */}
           <aside className="ct-label" aria-label="Your packet, as it will be posted" data-phase={phase}>
             <div className="ct-label-in">
-              <p className="ct-label-k">Your packet</p>
+              <p className="ct-label-k ct-label-band">Your packet</p>
               <span className="ct-stamp" aria-hidden="true">
                 <svg viewBox="0 0 40 40" focusable="false">
                   <path d="M9 31L29 9M27 8C30 5 34 6 33 9C32 12 29 11 30 9" />
@@ -365,11 +366,13 @@ export default function Contact() {
       )}
 
       <p className="ct-direct">
-        <span>Rather skip the post?</span>
+        <span>Or write directly</span>
         {DIRECT.map((d) => (
           <a key={d.href} className="ct-pill" href={d.href} target={d.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
             {d.label}
-            {d.href.startsWith("http") && <span aria-hidden="true">&nbsp;&#8599;</span>}
+            <span className="ct-arrow" aria-hidden="true">
+              &#8599;
+            </span>
           </a>
         ))}
       </p>

@@ -1,5 +1,5 @@
 /* ── Contact: the transmission pipeline ─────────────────────────────────────
-   The heading, the form, the airmail label and the direct links. The scene
+   The heading, the form, the parcel label and the direct links. The scene
    above the form has its own file, pipeline.css. data-phase on .ct:
    idle · sending · sent · returned. */
 
@@ -34,12 +34,12 @@
   line-height: 1;
   letter-spacing: -0.01em;
 }
-.ct-h2-hand {
-  display: inline-block;
-  font-family: var(--font-hand), cursive;
-  font-size: 0.78em;
-  color: var(--thread);
-  rotate: -2deg;
+.ct-lede {
+  max-width: 52ch;
+  margin: 10px 0 0;
+  font-family: var(--font-read), Georgia, serif;
+  font-size: clamp(16px, 1.3vw, 18.5px);
+  line-height: 1.5;
 }
 .ct-status {
   margin: 0;
@@ -96,8 +96,8 @@
   }
 }
 .ct-scene {
-  border-top: 1.5px dashed rgba(140, 47, 67, 0.25);
-  border-bottom: 1.5px dashed rgba(140, 47, 67, 0.25);
+  border-top: 1px solid rgba(74, 12, 24, 0.16);
+  border-bottom: 1px solid rgba(74, 12, 24, 0.16);
   background-color: rgba(255, 252, 246, 0.5);
   background-image:
     linear-gradient(rgba(140, 47, 67, 0.06) 1px, transparent 1px),
@@ -310,16 +310,16 @@
   color: var(--paper);
 }
 
-/* the packet label: an airmail envelope, filled in as you type */
+/* the packet label: a parcel label, filled in as you type */
 .ct-label {
   position: relative;
-  padding: 9px;
-  border-radius: 3px;
-  background: repeating-linear-gradient(-45deg, var(--thread) 0 12px, var(--paper) 12px 22px, var(--ink) 22px 34px, var(--paper) 34px 44px);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--note);
   box-shadow:
     5px 7px 0 -1px rgba(140, 47, 67, 0.12),
     0 14px 26px -14px rgba(74, 12, 24, 0.4);
-  rotate: 0.8deg;
+  rotate: 0.6deg;
   transition:
     rotate 0.5s ease,
     translate 0.5s ease;
@@ -330,18 +330,23 @@
 }
 .ct-label-in {
   position: relative;
-  padding: 20px 22px 26px;
-  background: var(--paper);
+  padding: 0 22px 26px;
 }
-.ct-label-in .ct-label-k {
-  margin-bottom: 18px;
+/* its printed band across the top, ruled off */
+.ct-label-in .ct-label-band {
+  margin: 0 -22px 20px;
+  padding: 13px 22px 12px;
+  border-bottom: 1px solid rgba(74, 12, 24, 0.3);
+  border-radius: 3px 3px 0 0;
+  background: var(--paper-deep);
   font-weight: 700;
   color: var(--ink);
 }
 .ct-stamp {
   position: absolute;
-  top: 14px;
+  top: 8px;
   right: 14px;
+  background: var(--note);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -476,15 +481,17 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
+  gap: 8px 28px;
   margin: clamp(26px, 3vw, 38px) 0 0;
-  padding-top: 18px;
-  border-top: 1.5px dashed rgba(140, 47, 67, 0.28);
+  padding-top: 16px;
+  border-top: 1px solid rgba(74, 12, 24, 0.2);
 }
 .ct-direct > span {
-  font-family: var(--font-hand), cursive;
-  font-size: 21px;
-  color: var(--thread);
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 /* an email address reads better as written: no capitals, no wide spacing */
 .ct-pill[href^="mailto:"] {
@@ -495,22 +502,32 @@
   display: inline-flex;
   align-items: center;
   min-height: 38px;
-  padding: 0 15px;
-  border: 1.5px solid var(--ink);
-  border-radius: 999px;
   font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-color: rgba(140, 47, 67, 0.45);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
   transition:
-    background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    text-decoration-color 0.2s ease;
 }
 .ct-pill:hover {
-  background: var(--ink);
-  color: var(--paper);
+  color: var(--thread);
+  text-decoration-color: currentColor;
+}
+/* (an inline block, so the underline stops at the word) */
+.ct-arrow {
+  display: inline-block;
+  margin-left: 0.5em;
+  color: var(--thread);
+  transition: translate 0.2s ease;
+}
+.ct-pill:hover .ct-arrow {
+  translate: 2px -2px;
 }
 .ct-pill:focus-visible {
   outline: 2px solid var(--ink);

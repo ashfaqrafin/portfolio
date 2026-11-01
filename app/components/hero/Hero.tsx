@@ -135,12 +135,19 @@ export default function Hero() {
           </svg>
         </p>
         <nav className="hero-nav" aria-label="Sections">
+          {/* numbered as the chapters are (ChapterSeam) */}
           <a className="hero-nav-wide" href="#blog">
-            Thread board
+            <span className="hero-nav-no">01</span>Thread board
           </a>
-          <a href="#education">Education</a>
-          <a href="#projects">Projects</a>
-          <a href="#contact">Contact</a>
+          <a href="#education">
+            <span className="hero-nav-no">02</span>Education
+          </a>
+          <a href="#projects">
+            <span className="hero-nav-no">03</span>Projects
+          </a>
+          <a href="#contact">
+            <span className="hero-nav-no">04</span>Contact
+          </a>
         </nav>
       </div>
 

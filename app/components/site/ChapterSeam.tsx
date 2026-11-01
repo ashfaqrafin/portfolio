@@ -6,14 +6,16 @@ import "./chapter.css";
 /* The seam between two sections of the home page. A thread leaves the previous
    section's card, is drawn (needle first) as you scroll, ties one loop beside the
    chapter label and ends as the pin that holds up the next section's sheet. The
-   sheet hangs loose until the thread pulls it straight.
+   sheet hangs loose until the thread pulls it straight. The label is numbered
+   like a pattern piece, with a tape-measure rule that is measured out as the
+   thread is drawn.
 
    One scroll progress, `--p` (0 → 1), drives the seam; without JavaScript, or
    with reduced motion, it stays at 1: the thread is drawn and the sheet is straight.
    Performance: `--p` lives on the small seam only (on the section it would restyle
    the whole board every frame), the sheet gets one composited transform, and
    nothing runs while the seam is off screen.
-   Reuse it for every chapter: <ChapterSeam title="Projects" side="left">. */
+   Reuse it for every chapter: <ChapterSeam no="03" title="Projects" side="left">. */
 
 // viewBox 0 0 640 480: out of the card at the top, a long drop into one overhand
 // loop beside the label, a sway, then down to the pin. Tall on purpose: the label
@@ -22,8 +24,10 @@ const PATH =
   "M320 2C318 74 266 104 252 158C238 206 226 258 264 268C302 278 306 216 270 212C234 208 236 266 292 300C334 326 366 354 348 400C336 430 320 442 320 470";
 
 type Props = {
+  /** the chapter's number, as it appears in the masthead's nav ("01") */
+  no: string;
   title: string;
-  /** a hand-written line bridging the two sections */
+  /** a line bridging the two sections */
   line: string;
   /** which side the loop and the label sit on; alternate it between chapters */
   side?: "right" | "left";
@@ -32,7 +36,7 @@ type Props = {
   children: ReactNode;
 };
 
-export default function ChapterSeam({ title, line, side = "right", id, children }: Props) {
+export default function ChapterSeam({ no, title, line, side = "right", id, children }: Props) {
   const seamRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -129,10 +133,16 @@ export default function ChapterSeam({ title, line, side = "right", id, children 
         </svg>
 
         <div className="chapter-label">
-          <p className="chapter-kicker" id={id ? `${id}-chapter` : undefined}>
-            {title}
-          </p>
-          <p className="chapter-line">{line}</p>
+          <span className="chapter-no" aria-hidden="true">
+            {no}
+          </span>
+          <div className="chapter-text">
+            <p className="chapter-kicker" id={id ? `${id}-chapter` : undefined}>
+              {title}
+            </p>
+            <span className="chapter-rule" aria-hidden="true" />
+            <p className="chapter-line">{line}</p>
+          </div>
         </div>
       </div>
 

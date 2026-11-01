@@ -1,6 +1,6 @@
 # The projects sketchbook
 
-Part III of the home page is a spiral-bound sketch pad with one project per page. When a page lands, the project's logo draws itself in burgundy pencil, stroke by stroke. Then the details are written in around it: the date and subject on the printed form, the title and its underline, the notes, the "materials" (the tech stack) and the links. Turning a page flips it up over the coil.
+Part III of the home page is a spiral-bound sketch pad with one project per page. When a page lands, the project's logo draws itself in burgundy pencil, stroke by stroke. Then the details are written in around it. Each page is laid out like a drafting sheet: a title block across the top (sheet number, subject, year), the drawing on the left, and on the right the title, the tagline, the notes (a list's points are numbered and ruled off), a spec table ("Built with", the tech stack; and your role) and the links. Turning a page flips it up over the coil.
 
 You can turn pages with the arrow buttons, the numbered tabs, the ← and → keys, or a swipe on a phone. With reduced motion turned on, pages switch instantly and arrive already drawn. Without JavaScript, every project is listed in order.
 
@@ -18,7 +18,7 @@ year: "2026"                # or 2024 – 2025, or 2025 – now
 kind: University project    # shown as the page's "Subject"
 status: shipped             # optional stamp: shipped | in-progress | archived
 role: Full-stack developer  # optional
-stack: [Next.js 16, Prisma 7, PostgreSQL]   # up to 10 "materials"
+stack: [Next.js 16, Prisma 7, PostgreSQL]   # up to 10, shown as "Built with"
 links:                      # up to 4, http(s) only
   - label: Live site
     href: https://example.com

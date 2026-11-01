@@ -87,12 +87,17 @@
   fill: var(--thread-hi);
 }
 
+/* the label: a pattern piece's number, then its name over a tape-measure rule
+   and a line in the reading face */
 .chapter-label {
   position: absolute;
   left: 55%;
-  top: 37%;
+  top: 34%;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(12px, 1.4vw, 20px);
   width: max-content;
-  max-width: min(440px, 44vw);
+  max-width: min(480px, 44vw);
   /* in early, then it stays while the rest of the thread draws */
   opacity: clamp(0, calc((var(--p) - 0.12) * 4), 1);
   transform: translateY(clamp(0px, calc((0.4 - var(--p)) * 40px), 12px));
@@ -100,10 +105,24 @@
 .chapter[data-side="left"] .chapter-label {
   left: auto;
   right: 55%;
+  flex-direction: row-reverse;
   text-align: right;
 }
+.chapter-no {
+  flex: none;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(64px, 7vw, 104px);
+  line-height: 0.74;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums;
+  color: var(--thread);
+}
+.chapter-text {
+  min-width: 0;
+  padding-top: 2px;
+}
 .chapter-kicker {
-  margin: 0 0 8px;
+  margin: 0;
   font-family: var(--font-mono), monospace;
   font-size: 12px;
   font-weight: 700;
@@ -111,12 +130,34 @@
   text-transform: uppercase;
   color: var(--ink);
 }
+/* a length of tape measure: a fine tick every 6px, a long one every 30px; it
+   is measured out from the number as the thread is drawn */
+.chapter-rule {
+  display: block;
+  width: min(100%, 186px);
+  height: 9px;
+  margin: 9px 0 12px;
+  background:
+    linear-gradient(var(--thread), var(--thread)) 0 100% / 100% 1px no-repeat,
+    repeating-linear-gradient(90deg, var(--thread) 0 1px, transparent 1px 30px) 0 100% / 100% 9px no-repeat,
+    repeating-linear-gradient(90deg, var(--thread) 0 1px, transparent 1px 6px) 0 100% / 100% 4px no-repeat;
+  opacity: 0.75;
+  transform-origin: 0 50%;
+  transform: scaleX(clamp(0, calc((var(--p) - 0.18) * 2.4), 1));
+}
+/* on the left, it runs from the number at its right end */
+.chapter[data-side="left"] .chapter-rule {
+  margin-left: auto;
+  transform-origin: 100% 50%;
+  background-position: 100% 100%;
+}
 .chapter-line {
   margin: 0;
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(26px, 2.9vw, 38px);
-  line-height: 1.04;
-  color: var(--thread);
+  font-family: var(--font-read), Georgia, serif;
+  font-style: italic;
+  font-size: clamp(21px, 2vw, 28px);
+  line-height: 1.28;
+  color: var(--ink);
 }
 
 /* the next section's sheet hangs from the pin and is pulled straight */
@@ -151,12 +192,31 @@
   .chapter[data-side="left"] .chapter-label {
     right: 53%;
   }
+  /* the number over the name, to leave the line its width */
+  .chapter-label,
+  .chapter[data-side="left"] .chapter-label {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .chapter[data-side="left"] .chapter-label {
+    align-items: flex-end;
+  }
+  .chapter-no {
+    font-size: 46px;
+  }
   .chapter-kicker {
     font-size: 9.5px;
     letter-spacing: 0.16em;
   }
+  .chapter-rule {
+    margin: 6px 0 8px;
+  }
+  .chapter[data-side="left"] .chapter-rule {
+    margin-left: auto;
+  }
   .chapter-line {
-    font-size: 22px;
+    font-size: 17px;
+    line-height: 1.3;
   }
 }
 

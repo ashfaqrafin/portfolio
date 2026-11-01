@@ -99,6 +99,21 @@
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
+/* each section's chapter number, as on its seam */
+.hero-nav-no {
+  margin-right: 0.7em;
+  color: var(--thread);
+  letter-spacing: 0.08em;
+  transition: color 0.2s ease;
+}
+.hero-nav a:hover .hero-nav-no {
+  color: var(--thread-hi);
+}
+@media (max-width: 899px) {
+  .hero-nav-no {
+    display: none;
+  }
+}
 
 /* card: a sketchbook page with a doubled, wobbly outline */
 .hero-card {
@@ -223,10 +238,13 @@
 }
 .hero-sub {
   margin: 0;
-  max-width: 34ch;
-  font-family: var(--font-hand), cursive;
-  font-size: clamp(17px, 1.6vw, 22px);
-  line-height: 1.05;
+  /* one line: a label, not a paragraph */
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: clamp(10px, 0.85vw, 11.5px);
+  line-height: 1.5;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
   color: var(--thread);
 }
 .hero-caption.flip .hero-title,
@@ -771,8 +789,9 @@
     font-size: 23px;
   }
   .hero-sub {
-    max-width: none;
-    font-size: 19px;
+    white-space: normal;
+    font-size: 10px;
+    letter-spacing: 0.14em;
   }
   .hbtn {
     width: 44px;
