@@ -6,7 +6,9 @@ import "./chapter.css";
 /* The seam between two sections of the home page. A thread leaves the previous
    section's card, is drawn (needle first) as you scroll, ties one loop beside the
    chapter label and ends as the pin that holds up the next section's sheet. The
-   sheet hangs loose until the thread pulls it straight. The label is numbered
+   sheet hangs loose until the thread pulls it straight. A drop of watercolour
+   has fallen on the paper on the side away from the label (one of four,
+   scripts/desk-strays.mjs). The label is numbered
    like a pattern piece, with a tape-measure rule that is measured out as the
    thread is drawn.
 
@@ -117,6 +119,7 @@ export default function ChapterSeam({ no, title, line, side = "right", id, child
 
   return (
     <section className="chapter" id={id} data-side={side} aria-labelledby={id ? `${id}-chapter` : undefined}>
+      <span className="chapter-drop" aria-hidden="true" style={{ backgroundImage: `url(/desk-drop-${((Number(no) - 1) % 4) + 1}.webp)` }} />
       <div className="chapter-seam" ref={seamRef} style={{ "--p": 1 } as CSSProperties}>
         <svg className="chapter-thread" viewBox="0 0 640 480" aria-hidden="true" focusable="false">
           <circle className="chapter-knot" cx="320" cy="3" r="3.4" />

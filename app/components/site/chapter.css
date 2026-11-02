@@ -160,6 +160,23 @@
   color: var(--ink);
 }
 
+/* a drop of watercolour on the bare paper in the gap, on the side away from
+   the label; under the cards and the thread, over the desk's shading */
+.chapter-drop {
+  position: absolute;
+  z-index: 0;
+  top: calc(min(640px, 100vw - 48px) * 0.26);
+  left: calc(50% - min(410px, 40vw));
+  width: clamp(150px, 20vw, 300px);
+  aspect-ratio: 320 / 240;
+  translate: -50% 0;
+  background: center / contain no-repeat;
+  pointer-events: none;
+}
+.chapter[data-side="left"] .chapter-drop {
+  left: calc(50% + min(410px, 40vw));
+}
+
 /* the next section's sheet hangs from the pin and is pulled straight */
 .chapter-sheet {
   position: relative;
@@ -191,6 +208,15 @@
   }
   .chapter[data-side="left"] .chapter-label {
     right: 53%;
+  }
+  /* small, tucked against the edge of the screen, clear of the label */
+  .chapter-drop {
+    top: calc((100vw - 24px) * 0.5);
+    left: 78px;
+    width: 132px;
+  }
+  .chapter[data-side="left"] .chapter-drop {
+    left: calc(100% - 78px);
   }
   /* the number over the name, to leave the line its width */
   .chapter-label,

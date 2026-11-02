@@ -42,8 +42,16 @@ html {
 }
 
 body {
-  /* transparent: the page colour is on <html>, so the desk layer below shows */
-  background: transparent;
+  /* transparent: the page colour is on <html>, so the desk layer below shows.
+     Over it, stray pencil on the desk (scripts/desk-strays.mjs): a few marks
+     left on the bare paper, on two tiles of different sizes so they never
+     repeat in step. (The drops of watercolour are the chapter seams', one to
+     each gap: chapter.css.) They scroll with the page; the cards cover most of them.
+     (One shorthand: the minifier drops these as separate longhands.) */
+  background:
+    url("/desk-strays-a.webp") 50% 0 / 1500px 2200px repeat,
+    url("/desk-strays-b.webp") calc(50% + 380px) 900px / 1100px 2900px repeat,
+    transparent;
   color: var(--page-text);
   font-family: var(--font-mono), ui-monospace, monospace;
 }
@@ -79,6 +87,13 @@ body::after {
 @media (orientation: portrait) and (max-width: 720px) {
   body::after {
     background-image: none;
+  }
+  /* smaller marks, closer together, so a few land in the narrow gaps */
+  body {
+    background:
+      url("/desk-strays-a.webp") 50% 0 / 900px 1320px repeat,
+      url("/desk-strays-b.webp") calc(50% + 160px) 600px / 660px 1740px repeat,
+      transparent;
   }
 }
 
