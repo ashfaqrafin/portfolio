@@ -8,9 +8,9 @@ import "./hero.css";
 // start fetching the engine (three.js) as soon as this module runs, while React is
 // still hydrating, rather than after the first effect
 const loadEngine = typeof window === "undefined" ? null : import("./engine");
-/** Resolves once the home page's intro (app/components/intro) has finished, or
-   at once if it isn't playing. The engine's set-up is ~0.45 s of main-thread
-   work, which would stutter the intro's threads; the poster shows the same
+/** Resolves once the home page's intro (app/components/field) has finished,
+   or at once if it isn't playing. The engine's set-up is ~0.45 s of
+   main-thread work, which would stutter the intro; the poster shows the same
    first frame meanwhile. */
 function introDone(): Promise<void> {
   const html = document.documentElement;

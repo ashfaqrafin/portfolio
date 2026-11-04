@@ -1,0 +1,122 @@
+/* ── The intro (Field.tsx, field.ts) ──────────────────────────────────────────
+   On a first visit to the home page (html[data-intro="play"]): a canvas over
+   the page, the rings on cream paper, the site hidden under it. At
+   data-intro-reveal it fades as the site comes up from under it; a skip
+   (data-intro-skip) fades it at once. When it is over field.ts marks it
+   data-done and it goes. Without the intro it is never shown. */
+
+.field {
+  display: none;
+}
+html[data-intro="play"] .field,
+html[data-intro-reveal] .field,
+html[data-intro-skip] .field {
+  display: block;
+  position: fixed;
+  inset: 0;
+  /* over the page and the desk, under the paper tooth (globals.css) and the skip button */
+  z-index: 50;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: var(--page);
+}
+/* if it never gets going, it clears */
+html[data-intro="play"] .field {
+  animation: field-gone 0.6s ease 7s forwards;
+}
+html[data-intro-reveal] .field {
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+html[data-intro-skip] .field {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+html .field[data-done] {
+  display: none;
+}
+@keyframes field-gone {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* the home page's content, hidden while the intro plays */
+.home {
+  transition:
+    opacity 1.3s cubic-bezier(0.3, 0.1, 0.2, 1),
+    translate 1.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+html[data-intro="play"]:not([data-intro-reveal]) .home {
+  opacity: 0;
+  translate: 0 18px;
+  pointer-events: none;
+  animation: home-failsafe 0.8s ease 7s forwards;
+}
+@keyframes home-failsafe {
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
+
+/* the skip button, over the intro */
+.intro {
+  display: none;
+}
+html[data-intro="play"] .intro {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  animation: intro-gone 0.2s ease 7s forwards;
+}
+@keyframes intro-gone {
+  to {
+    visibility: hidden;
+  }
+}
+.intro-skip {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  padding: 9px 14px 8px;
+  border: 1.4px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  cursor: var(--cursor-pointer, pointer);
+  transition:
+    opacity 0.4s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+.intro-skip:hover,
+.intro-skip:focus-visible {
+  background: var(--ink);
+  color: var(--paper);
+  outline: none;
+}
+html[data-intro-reveal] .intro-skip {
+  opacity: 0;
+}
+@media (max-width: 720px) {
+  .intro-skip {
+    right: 14px;
+    bottom: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home {
+    transition: none;
+  }
+}
