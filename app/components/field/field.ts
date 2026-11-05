@@ -10,10 +10,14 @@
    inner ones faster), and the layers drift a little against one another, the
    higher ones more, so the stack reads in depth.
 
-   Each ring is drawn round, as with a compass, one after another from the
-   centre out, alternately down and up the screen: its inked rim first, its
-   thread and pencil and speckles following, and its stitches sewn in one by
-   one as the needle reaches them. Once all are drawn the stack lifts a touch
+   It opens on the pattern drafted: every ring's edge pencilled in faintly on
+   the paper, there from the page's very first paint (as CSS, draftCss(),
+   before any script has run), so there is never a blank page waiting for it.
+   The shader starts from that same picture and inks it at once: each ring is
+   drawn round, as with a compass, all of them under way within the first
+   half second, from the centre out and alternately down and up the screen: its
+   inked rim first, its thread and pencil and speckles following, and its
+   stitches sewn in one by one as the needle reaches them. Once all are drawn the stack lifts a touch
    as it fades, and the site comes up from under it. Nothing moves fast and
    nothing moves far, so it stays smooth even where frames are few. It isn't
    on the page after that.
@@ -48,11 +52,11 @@
 type V3 = [number, number, number];
 
 // the intro, in s from the first frame
-const DRAW_AT = 0.15; // the first (innermost) ring starts to be drawn
-const DRAW_STAGGER = 0.13; // each ring out starts this much after the one inside it
-const DRAW_FOR = 1.15; // and takes this long to draw round (the last is done at ~2.5 s)
-const REVEAL_AT = 3.0; // the field fades (field.css: 1.2 s) as the site comes up and the stack lifts
-const DONE_AT = 4.2;
+const DRAW_AT = 0; // the first (innermost) ring starts to be inked: at once
+const DRAW_STAGGER = 0.035; // each ring out starts this much after the one inside it
+const DRAW_FOR = 1.6; // and takes this long to draw round, quickly at first and easing off, like a pen's stroke (the last is done at ~1.9 s)
+const REVEAL_AT = 2.8; // the field fades (field.css: 1.2 s) as the site comes up and the stack lifts
+const DONE_AT = 4.0;
 const LIFT = 0.05; // how much larger the stack grows as it lifts away
 const END = 0.7; // once it is over (or skipped), how long it holds its last frame while it fades out, then stops
 
@@ -68,6 +72,15 @@ const RUST: V3 = [0.7, 0.27, 0.24];
 const ROSE: V3 = [0.8, 0.55, 0.56];
 const OCHRE: V3 = [0.76, 0.54, 0.34];
 const UMBER: V3 = [0.53, 0.32, 0.22];
+
+/* Where the stack is, as shares of the screen: its centre (x of the width, y
+   of the height) and its unit (css px per unit, of the width in landscape, of
+   the height in portrait). Shared by the shader's frames and the drafting the
+   page first paints (draftCss), so the one takes over from the other exactly. */
+const LAND: V3 = [-0.18, 0.5, 0.9];
+const PORT: V3 = [-0.35, 0.5, 0.75];
+// the drafting: every ring's edge in pencil, a line 1 css px across with a soft px either side
+const DRAFT = 0.26; // its strength, over the paper, in THREAD
 
 const SPECKS = 1, WOUND = 2, STITCH = 3, HATCH = 4;
 type Pal = [V3, V3, V3, number, number]; // three colours, and the first two's shares
@@ -136,8 +149,7 @@ uniform vec2 uSh;       // a layer's shadow, from it, css px
 uniform float uRes, uH; // device px per css px; the screen's height, css px
 const float TAU = 6.2831853;
 const float PI = 3.1415927;
-const float HALF = 1.95; // the drawing's arc, either side of the stack's axis, rad (a little more than is on screen)
-const float SOFT = 0.12; // its leading edge, as a share of the arc
+const float SOFT = 0.12; // the drawing's leading edge, as a share of the arc it crosses
 
 float h21(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -146,15 +158,21 @@ float h21(vec2 p) {
 }
 ${ringsGlsl()}
 
-/* How far a ring has been drawn round at an angle: > 0 drawn, the leading
-   edge in (0, SOFT). Each is drawn round over DRAW_FOR, the inner first,
-   alternately down the screen and up it. */
-float drawn(float id, float th) {
+/* How far a ring has been drawn round, at an angle th and radius r on the
+   circle round c: > 0 drawn, the leading edge in (0, SOFT). Each is drawn
+   round over DRAW_FOR, the inner first, alternately down the screen and up
+   it, across just the part of its circle that is on the screen (from where it
+   leaves the top, or the left edge, to where it leaves the bottom), so none of
+   the drawing happens out of sight: off at once, at its quickest, and easing
+   off as it closes, so it is plainly under way from the first frame. */
+float drawn(float id, float th, float r, vec2 c) {
   float p = clamp((uT - (${f(DRAW_AT)} + ${f(DRAW_STAGGER)} * id)) / ${f(DRAW_FOR)}, 0.0, 1.0);
-  p = p * p * (3.0 - 2.0 * p);
-  float dir = mod(id, 2.0) < 0.5 ? 1.0 : -1.0;
-  float a = clamp((dir * th + HALF) / (2.0 * HALF), 0.0, 1.0);
-  return p * (1.0 + SOFT) - a;
+  p = 1.0 - (1.0 - p) * (1.0 - p);
+  float side = acos(clamp(-c.x / r, -1.0, 1.0));
+  float lo = -min(side, asin(clamp(c.y / r, 0.0, 1.0))) - 0.06;
+  float hi = min(side, asin(clamp((uH - c.y) / r, 0.0, 1.0))) + 0.06;
+  float a = mod(id, 2.0) < 0.5 ? (th - lo) / (hi - lo) : (hi - th) / (hi - lo);
+  return p * (1.0 + SOFT) - clamp(a, 0.0, 1.0);
 }
 
 void main() {
@@ -187,7 +205,7 @@ void main() {
   float th = atan(d.y, d.x);
   float span = max(own - pr, 1.0);
   float u = clamp((rp - pr) / span, 0.0, 1.0);
-  float sw = drawn(id, th);
+  float sw = drawn(id, th, rp, cc);
   float mask = clamp(sw / SOFT, 0.0, 1.0);
 
   // the ring's own paper, each a shade apart from the next, with faint fibres running round it
@@ -197,6 +215,10 @@ void main() {
   float sh = h21(vec2(sk, 3.1 + id));
   float streak = step(0.88, sh) * (0.4 + 0.6 * h21(vec2(sk, 7.7))) * (0.55 + 0.45 * sin(th * 3.0 + sh * 40.0));
   col -= streak * vec3(0.035, 0.05, 0.045) * build;
+  // the drafting: every ring's edge pencilled in, from the first frame (as the page's first paint has it: draftCss)
+  float de = abs(own - rp);
+  if (id > 0.5) de = min(de, abs(distance(p, pc) - pr));
+  col = mix(col, ${v3(THREAD)}, ${f(DRAFT)} * clamp(1.5 - de, 0.0, 1.0));
 
   float kind = kindOf(id);
   float ph = speedOf(id) * uT + uSpin;
@@ -245,7 +267,7 @@ void main() {
       float dd = length(vec2(max(abs(uc) - len * 0.5, 0.0), rp - rt - jit)) - w;
       float cov = clamp(-dd * uRes + 0.5, 0.0, 1.0);
       float thc = mod(tph + (cell + 0.5) / N * TAU + PI, TAU) - PI;
-      float sewn = clamp(drawn(id, thc) / 0.02, 0.0, 1.0);
+      float sewn = clamp(drawn(id, thc, rt, cc) / 0.02, 0.0, 1.0);
       col = mix(col, colOf(id, ht / 0.55), cov * (0.72 + 0.28 * hc) * sewn);
     }
   } else if (kind > 3.5) {
@@ -381,7 +403,8 @@ export type FieldConfig = {
   rings: number[];
   timing: { revealAt: number; doneAt: number; end: number };
   lift: number;
-  ground: V3;
+  land: V3;
+  port: V3;
   cell: number;
   cellSoft: number;
   shadow: [number, number];
@@ -393,11 +416,29 @@ export const FIELD: FieldConfig = {
   rings: RINGS.map((r) => r.r),
   timing: { revealAt: REVEAL_AT, doneAt: DONE_AT, end: END },
   lift: LIFT,
-  ground: GROUND,
+  land: LAND,
+  port: PORT,
   cell: CELL,
   cellSoft: CELL_SOFT,
   shadow: SHADOW,
 };
+
+/** The drafting as CSS, for the page's first paint (Field.tsx): the rings'
+    edges pencilled on the paper, where the shader will draw them (vw and
+    window.innerWidth agree; so, near enough, do dvh and innerHeight). */
+export function draftCss() {
+  const pencil = `rgba(140, 47, 67, ${DRAFT})`; // THREAD
+  const lines = (unit: (r: number) => string) =>
+    RINGS.map(({ r }) => {
+      const R = unit(r);
+      return `transparent calc(${R} - 1.5px), ${pencil} calc(${R} - 0.5px), ${pencil} calc(${R} + 0.5px), transparent calc(${R} + 1.5px)`;
+    }).join(", ");
+  const at = (x: number) => `circle at ${+(x * 100).toFixed(3)}vw 50%`;
+  const land = `radial-gradient(${at(LAND[0])}, ${lines((r) => `${+(r * LAND[2] * 100).toFixed(3)}vw`)}), var(--page)`;
+  const port = (vh: string) => `radial-gradient(${at(PORT[0])}, ${lines((r) => `${+(r * PORT[2] * 100).toFixed(3)}${vh}`)}), var(--page)`;
+  const sel = `html[data-intro="play"] .field, html[data-intro-reveal] .field, html[data-intro-skip] .field`;
+  return `${sel} { background: ${land}; } @media (orientation: portrait) { ${sel} { background: ${port("vh")}; background: ${port("dvh")}; } }`;
+}
 
 declare global {
   interface Window {
@@ -422,8 +463,12 @@ export function field(C: FieldConfig) {
     const v = Math.min(1, Math.max(0, u));
     return v * v * v * (v * (v * 6 - 15) + 10);
   };
-  /** where the stack is: its centre (css px), and css px per unit */
-  const frame0 = (W: number, H: number): [number, number, number] => (W >= H ? [-0.18 * W, 0.5 * H, 0.9 * W] : [-0.35 * W, 0.5 * H, 0.75 * H]);
+  /** where the stack is: its centre (css px), and css px per unit; measured as the drafting's CSS is (vw, dvh, orientation) */
+  const frame0 = (H: number): [number, number, number] => {
+    const iw = innerWidth, ih = innerHeight;
+    const [x, y, u] = iw > ih ? C.land : C.port;
+    return [x * iw, y * H, u * (iw > ih ? iw : ih)];
+  };
   const NR = C.rings.length;
   const T = C.timing;
   const started = new WeakSet<HTMLCanvasElement>();
@@ -438,13 +483,11 @@ export function field(C: FieldConfig) {
       html.dataset.introReveal = "";
       html.dataset.intro = "seen";
     };
-    const opts: WebGLContextAttributes = { alpha: false, antialias: false, depth: false, powerPreference: "low-power" };
+    // (transparent until its first frame, so the drafting the page first painted shows through until then)
+    const opts: WebGLContextAttributes = { alpha: true, antialias: false, depth: false, powerPreference: "low-power" };
     const fast = cv.getContext("webgl", { ...opts, failIfMajorPerformanceCaveat: true });
     const gl = fast ?? cv.getContext("webgl", opts);
     if (!gl) return done();
-    // the paper, until the first frame
-    gl.clearColor(C.ground[0], C.ground[1], C.ground[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
     // (Chrome doesn't count its own software renderer as a caveat: ask it by name)
     const info = gl.getExtension("WEBGL_debug_renderer_info");
     const soft = !fast || /swiftshader|llvmpipe|software|basic render/i.test(String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER)));
@@ -570,15 +613,15 @@ export function field(C: FieldConfig) {
 
         // lifting away as the site comes up: a touch larger, turning a little further
         const lift = smooth((t - T.revealAt) / (T.doneAt - T.revealAt));
-        const [cx, cy, px] = frame0(W, H);
-        /* the layers' drift: each by its height (the innermost highest),
-           floating slowly, settling together as they are drawn, and parting a
-           little as they lift */
-        const settle = Math.pow(1 - smooth(t / 2.6), 2);
+        const [cx, cy, px] = frame0(H);
+        /* the layers' drift: each by its height (the innermost highest):
+           concentric at first, as drafted, then floating gently apart as they
+           are drawn, and parting a little more as they lift */
+        const float = smooth(t / 2.2);
         for (let k = 0; k < NR; k++) {
           const h = (NR - 1 - k) / (NR - 1);
-          off[k * 2] = h * (Math.sin(t * 0.13 + k * 0.4) * 9 - (settle + lift) * 14);
-          off[k * 2 + 1] = h * (Math.cos(t * 0.1 + k * 0.3) * 7 - (settle + lift) * 18);
+          off[k * 2] = h * (float * (Math.sin(t * 0.13 + k * 0.4) * 9 - 6) - lift * 14);
+          off[k * 2 + 1] = h * (float * (Math.cos(t * 0.1 + k * 0.3) * 7 - 8) - lift * 18);
         }
         g.uniform2f(loc.C, cx - 0.02 * W * lift, cy);
         g.uniform2fv(loc.off, off);
