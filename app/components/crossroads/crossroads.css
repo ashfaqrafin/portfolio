@@ -1,68 +1,65 @@
-/* ── The intro (Field.tsx, field.ts) ──────────────────────────────────────────
-   On a first visit to the home page (html[data-intro="play"]): a canvas over
-   the page, the rings on cream paper, the site hidden under it. At
-   data-intro-reveal it fades as the site comes up from under it; a skip
-   (data-intro-skip) fades it at once. When it is over field.ts marks it
-   data-done and it goes. Without the intro it is never shown. */
+/* ── The intro (Crossroads.tsx, crossroads.ts) ────────────────────────────────
+   On a first visit to the home page (html[data-intro="play"]): a transparent
+   canvas over the page, drawn on the page's own desk (globals.css) while the
+   site itself is hidden. At data-intro-reveal the drawing fades as the site
+   comes up on the same paper; a skip (data-intro-skip) fades it at once. When
+   it is over crossroads.ts marks it data-done and it goes. Without the intro
+   it is never shown. */
 
-.field {
+.crossroads {
   display: none;
 }
-html[data-intro="play"] .field,
-html[data-intro-reveal] .field,
-html[data-intro-skip] .field {
+html[data-intro="play"] .crossroads,
+html[data-intro-reveal] .crossroads,
+html[data-intro-skip] .crossroads {
   display: block;
   position: fixed;
   inset: 0;
-  /* over the page and the desk, under the paper tooth (globals.css) and the skip button */
+  /* over the page, under the paper tooth (globals.css) and the skip button */
   z-index: 50;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  background: var(--page);
 }
 /* if it never gets going, it clears */
-html[data-intro="play"] .field {
-  animation: field-gone 0.6s ease 7s forwards;
+html[data-intro="play"] .crossroads {
+  animation: crossroads-gone 0.6s ease 7s forwards;
 }
-html[data-intro-reveal] .field {
+html[data-intro-reveal] .crossroads {
   opacity: 0;
-  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
-html[data-intro-skip] .field {
+html[data-intro-skip] .crossroads {
   opacity: 0;
   transition: opacity 0.6s ease;
 }
-html .field[data-done] {
+html .crossroads[data-done] {
   display: none;
 }
-@keyframes field-gone {
+@keyframes crossroads-gone {
   to {
     opacity: 0;
     visibility: hidden;
   }
 }
 
-/* the home page's content, hidden while the intro plays */
+/* the home page's content, hidden while the intro plays: it only fades in, in
+   place, so the hero's headline comes up just where the intro wrote it */
 .home {
-  transition:
-    opacity 1.3s cubic-bezier(0.3, 0.1, 0.2, 1),
-    translate 1.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: opacity 1.3s cubic-bezier(0.3, 0.1, 0.2, 1);
 }
 html[data-intro="play"]:not([data-intro-reveal]) .home {
   opacity: 0;
-  translate: 0 18px;
   pointer-events: none;
   animation: home-failsafe 0.8s ease 7s forwards;
 }
 @keyframes home-failsafe {
   to {
     opacity: 1;
-    translate: none;
   }
 }
 
-/* the skip button, over the intro */
+/* the skip button: a paper tag, like the site's */
 .intro {
   display: none;
 }

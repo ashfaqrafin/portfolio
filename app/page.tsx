@@ -1,6 +1,6 @@
 import BlogSection from "./components/blog/BlogSection";
+import Crossroads from "./components/crossroads/Crossroads";
 import Contact from "./components/contact/Contact";
-import Field from "./components/field/Field";
 import Hero from "./components/hero/Hero";
 import ProjectsSection from "./components/projects/ProjectsSection";
 import ChapterSeam from "./components/site/ChapterSeam";
@@ -9,7 +9,7 @@ import Study from "./components/study/Study";
 export default function Home() {
   return (
     <>
-      <Field />
+      <Crossroads />
       <main className="home flex flex-1 flex-col">
         <Hero />
         <ChapterSeam id="blog" no="01" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Caveat, DM_Serif_Display, Newsreader, Space_Mono } from "next/font/google";
+import { ATLAS } from "./components/crossroads/crossroads";
 import CutTrail from "./components/site/CutTrail";
 import OwnerBar from "./components/site/OwnerBar";
 import RoughDefs from "./components/site/RoughDefs";
@@ -38,13 +39,14 @@ export const metadata: Metadata = {
 };
 
 /* Decides, before the first paint, whether the home page opens with the
-   intro (app/components/field): only when the home page is where the visit
+   intro (app/components/crossroads): only when the home page is where the visit
    starts, once per browser session, never for a deep link (/#projects) or with
    reduced motion. While it plays, a click, key, scroll or touch ends it
    (data-intro="seen", and data-intro-skip), even before the page's scripts
-   have loaded; the intro then fades straight away to the desk.
+   have loaded; the intro then fades straight away to the desk. When it is to
+   play, the drawings it needs are asked for at once, from here in the head.
    Without JavaScript the attribute is never set, so the intro never shows. */
-const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1");if(d.dataset.intro==="play"){var k=function(){d.dataset.introSkip="";d.dataset.intro="seen"};["pointerdown","keydown","wheel","touchstart"].forEach(function(e){addEventListener(e,k,{once:true,passive:true})})}}catch(e){}`;
+const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1");if(d.dataset.intro==="play"){var l=document.createElement("link");l.rel="preload";l.as="image";l.href=${JSON.stringify(ATLAS)};l.setAttribute("fetchpriority","high");document.head.appendChild(l);var k=function(){d.dataset.introSkip="";d.dataset.intro="seen"};["pointerdown","keydown","wheel","touchstart"].forEach(function(e){addEventListener(e,k,{once:true,passive:true})})}}catch(e){}`;
 
 export default function RootLayout({ children, modal }: LayoutProps<"/">) {
   return (
