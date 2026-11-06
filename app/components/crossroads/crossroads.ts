@@ -41,7 +41,13 @@
 
    The intro's steps are on <html> (INTRO_GATE in app/layout.tsx sets "play"):
    data-intro-reveal when the site starts to come up, and data-intro="seen"
-   when it has (the hero starts then). A click, key, scroll or touch sets
+   when it has (the hero starts then). Between the two, a drop of burgundy
+   watercolour falls where the road goes off and blooms out across the paper:
+   under its spreading, ragged edge (darker at the rim, as watercolour dries)
+   the story gives way and the site comes up (the site is masked to the bloom,
+   from here, as it grows), and the wash dries away. The headline holds
+   throughout, and at "seen" the hero's own takes its place in the same frame
+   as this one goes. A click, key, scroll or touch sets
    "seen" (and data-intro-skip) straight away: the drawing fades at once
    (crossroads.css). Then it stops and lets its canvas go. */
 
@@ -51,22 +57,36 @@ import FRAMES from "./frames.json";
 export const ATLAS = "/intro/crossroads.webp";
 
 /** the story, in s from the first frame */
+/* (paced to be followed: each beat has a moment to itself before the next) */
 const BEATS = {
-  draw: [0, 1.0], // the road, the lanes, the signpost, the headline
-  walkUp: [0.85, 1.85], // up the Tailoring lane
-  shrug: [1.85, 2.4],
-  turnFront: [2.4, 2.72],
-  walkBack: [2.72, 3.45],
-  idea: [3.45, 4.15], // the panel: a grin, then a finger up
-  turnBack: [4.15, 4.47],
-  shears: [4.47, 5.17], // two snips
-  aside: [4.62, 5.12], // "or don't."
-  underline: [5.12, 5.3],
-  merge: [5.15, 5.8], // the lanes swing together
-  needle: [5.65, 6.25], // and are sewn into one
-  walkOff: [6.1, 7.7],
-  reveal: 6.95, // the drawing fades (crossroads.css: 1.1 s) as the site comes up
-  done: 8.0,
+  // the scene comes in: the road, the hills, the lanes ([first start, each's length, each after the last]),
+  // the signpost and its boards (the same), the headline; and I appear at the fork
+  trunk: [0, 0.55],
+  hills: [0.1, 1.0],
+  lanes: [0.3, 0.8, 0.1],
+  post: [0.55, 1.3],
+  boards: [0.8, 0.75, 0.12],
+  head: [0.35, 1.4],
+  appear: [0.15, 0.55],
+  // I look the signs over, then
+  walkUp: [2.1, 3.35], // up the Tailoring lane
+  shrug: [3.45, 4.2],
+  turnFront: [4.2, 4.6],
+  walkBack: [4.6, 5.6],
+  idea: [5.7, 6.95], // the panel: a grin, then a finger up
+  turnBack: [6.95, 7.35],
+  shears: [7.35, 8.4], // two snips
+  snips: [0.45, 0.77], // (into the shears beat)
+  aside: [7.7, 8.3], // "or don't."
+  underline: [8.3, 8.55],
+  merge: [8.45, 9.35], // the lanes swing together
+  needle: [9.2, 10.05], // and are sewn into one
+  walkOff: [9.95, 11.8],
+  drop: [10.7, 11.05], // a drop of burgundy watercolour falls where the road goes off
+  reveal: 11.05, // and blooms out across the paper, the site coming up under its spreading edge
+  bloom: [11.05, 12.85],
+  dry: [12.55, 13.15], // the wash dries away
+  done: 13.15, // the site is all there: the hero's own headline takes over from this one, which goes
   end: 0.7, // once over (or skipped), how long it holds while it fades out, then stops
 };
 
@@ -314,7 +334,7 @@ export function crossroads(C: IntroConfig) {
       const fx = lerp(S.far[i], S.start[0] + (i - 1.5) * lerp(S.farHalf, 1.1, m) * 2, m);
       return [fx + ((bx - fx) * (y - S.horizon)) / (S.fork - S.horizon), y];
     };
-    const snips = [B.shears[0] + 0.32, B.shears[0] + 0.52];
+    const snips = B.snips.map((d) => B.shears[0] + d);
 
     /* the far hills, where the roads go off: two rounded ones either side of
        where they vanish, a taller and fainter one behind (seen only above
@@ -346,7 +366,7 @@ export function crossroads(C: IntroConfig) {
       }
     };
     const drawHills = (t: number) => {
-      const hp = out(through(t, [0.05, 0.7]));
+      const hp = out(through(t, B.hills));
       if (hp <= 0) return;
       ctx.save();
       // drawn out from the middle
@@ -401,7 +421,7 @@ export function crossroads(C: IntroConfig) {
       const m = merged(t);
       const amp = 1.1 * U;
       // the trunk road, coming up the page to the fork
-      const tp = out(through(t, [0, 0.4]));
+      const tp = out(through(t, B.trunk));
       const ty = lerp(H, Y(S.fork), tp);
       const yb = (H - oy) / U;
       ctx.save();
@@ -422,12 +442,12 @@ export function crossroads(C: IntroConfig) {
 
       // the lanes: hatched strips of cloth, unrolled from the fork like bolts, a stitch down each
       C.lanes.forEach(([, col], i) => {
-        const lp = out(through(t, [0.22 + i * 0.08, 0.8 + i * 0.08]));
+        const lp = out(through(t, [B.lanes[0] + i * B.lanes[2], B.lanes[0] + B.lanes[1] + i * B.lanes[2]]));
         if (lp <= 0) return;
         const e = lane(i, m);
         // a snipped lane's cut end, lifting and curling as it comes loose
         const cutAt = snips[i < 2 ? 0 : 1];
-        const lift = t >= cutAt ? Math.sin(Math.min(1, (t - cutAt) / 0.45) * Math.PI) * 9 * U * (1 - m * 0.6) : 0;
+        const lift = t >= cutAt ? Math.sin(Math.min(1, (t - cutAt) / 0.6) * Math.PI) * 9 * U * (1 - m * 0.6) : 0;
         const base = Y(S.fork) - lift;
         const reach = lerp(base, Y(S.horizon), lp);
         const at = (a: number, b: number, y: number) => lerp(e[a], e[b], (Y(S.fork) - y) / (Y(S.fork) - Y(S.horizon)));
@@ -473,7 +493,7 @@ export function crossroads(C: IntroConfig) {
 
       // a burst where each snip lands, and threads falling from the cut
       snips.forEach((at, k) => {
-        const u = (t - at) / 0.25;
+        const u = (t - at) / 0.35;
         const cx = X(S.start[0] + (k ? 1 : -1) * S.trunk[0] * 0.5), cy = Y(S.fork) - 4 * U;
         if (u > 0 && u < 1) {
           ctx.globalAlpha = 1 - u;
@@ -484,7 +504,7 @@ export function crossroads(C: IntroConfig) {
           }
           ctx.globalAlpha = 1;
         }
-        const f = (t - at) / 0.8;
+        const f = (t - at) / 1.1;
         if (f > 0 && f < 1) {
           for (let q = 0; q < 5; q++) {
             const sx = cx + (q - 2) * 9 * U + Math.sin(q * 7.1) * 4 * U, sy = cy + f * f * 46 * U + q * 2 * U;
@@ -562,8 +582,8 @@ export function crossroads(C: IntroConfig) {
       drawHills(t);
 
       // the signpost: it drops in, and each board swings round on its nail; at the end they all spin to point up the one road
-      const sp = spring(through(t, [0.4, 1.0]));
-      if (t > 0.4) {
+      const sp = spring(through(t, B.post));
+      if (t > B.post[0]) {
         const [px, foot, topY] = S.post;
         const drop = (1 - sp) * -70 * U;
         ctx.save();
@@ -576,14 +596,14 @@ export function crossroads(C: IntroConfig) {
         hatch(X(px - 6), Y(topY), X(px + 6), Y(foot), 4, INK, 0.25, 0.8);
         ctx.restore();
         C.lanes.forEach(([name], i) => {
-          const bu = through(t, [0.6 + i * 0.09, 1.25 + i * 0.09]);
+          const bu = through(t, [B.boards[0] + i * B.boards[2], B.boards[0] + B.boards[1] + i * B.boards[2]]);
           if (bu <= 0) return;
           const by = S.boards[i];
           const toward = Math.atan2(Y(S.horizon) - Y(by), X(S.start[0]) - X(px));
           const a0 = i < 2 ? Math.PI + 0.08 : -0.08;
           let d = toward - a0;
           d -= Math.round(d / 6.2832) * 6.2832;
-          const turn = spring(through(t, [B.merge[0] + 0.05 * i, B.merge[0] + 0.7 + 0.05 * i]));
+          const turn = spring(through(t, [B.merge[0] + 0.07 * i, B.merge[0] + 0.95 + 0.07 * i]));
           // swinging up into place from hanging off its nail
           const hang = (i < 2 ? -1 : 1) * (1 - spring(bu)) * 1.4;
           const a = a0 + d * turn + hang;
@@ -626,18 +646,20 @@ export function crossroads(C: IntroConfig) {
     const cycle = (t: number, a: number, n: number, per: number) => Math.floor(((t - a) / per) * n) % n;
     /** which drawing of me, and where, at time t */
     const pose = (t: number): Pose => {
-      const alpha = ease(through(t, [0.1, 0.4]));
+      const alpha = ease(through(t, B.appear));
       const at = (z: number, set: string, i: number, lane = 0): Pose => ({ set, i, z, lane, alpha });
       if (t < B.walkUp[0]) return at(1, "turn", 0);
-      if (t < B.walkUp[1]) return at(lerp(1, 1.9, ease(through(t, B.walkUp))), "walkAway", cycle(t, B.walkUp[0], 7, 0.84));
-      if (t < B.shrug[1]) return at(1.9, "shrug", sched(t, B.shrug[0], [[0, 0.06], [1, 0.09], [2, 0.26], [3, 0.1], [0, 1]]));
+      if (t < B.walkUp[1]) return at(lerp(1, 1.9, ease(through(t, B.walkUp))), "walkAway", cycle(t, B.walkUp[0], 7, 0.95));
+      if (t < B.shrug[0]) return at(1.9, "turn", 0);
+      if (t < B.shrug[1]) return at(1.9, "shrug", sched(t, B.shrug[0], [[0, 0.07], [1, 0.1], [2, 0.42], [3, 0.12], [0, 1]]));
       if (t < B.turnFront[1]) return at(1.9, "turn", Math.min(4, Math.floor(through(t, B.turnFront) * 5)));
-      if (t < B.walkBack[1]) return at(lerp(1.9, 1, ease(through(t, B.walkBack))), "walkToward", cycle(t, B.walkBack[0], 6, 0.8));
+      if (t < B.walkBack[1]) return at(lerp(1.9, 1, ease(through(t, B.walkBack))), "walkToward", cycle(t, B.walkBack[0], 6, 0.9));
       if (t < B.idea[1]) return at(1, "turn", 4);
       if (t < B.turnBack[1]) return at(1, "turn", 4 - Math.min(4, Math.floor(through(t, B.turnBack) * 5)));
-      if (t < B.walkOff[0]) return at(1, "shears", sched(t, B.shears[0], [[0, 0.1], [1, 0.12], [2, 0.1], [3, 0.12], [2, 0.08], [3, 0.14], [4, 0.3], [0, 9]]));
+      // the shears: out, up, open, snip, open, snip (on B.snips), held up, and down
+      if (t < B.walkOff[0]) return at(1, "shears", sched(t, B.shears[0], [[0, 0.15], [1, 0.16], [2, 0.14], [3, 0.18], [2, 0.14], [3, 0.2], [4, 0.35], [0, 9]]));
       const u = through(t, B.walkOff);
-      return at(lerp(1, 10, u * u * 0.5 + u * 0.5), "walkAway", cycle(t, B.walkOff[0], 7, 0.84), -1);
+      return at(lerp(1, 10, u * u * 0.5 + u * 0.5), "walkAway", cycle(t, B.walkOff[0], 7, 0.95), -1);
     };
     const drawMe = (t: number, q: Pose) => {
       if (!ready || q.alpha <= 0) return;
@@ -659,7 +681,7 @@ export function crossroads(C: IntroConfig) {
       if (q.set === "shears") {
         // the shears are up at the drawing's top right: a glint as they come up open, and "snip!" at each snip
         const left = x - f[4] * k, top = y - f[5] * k, w = f[2] * k, h = f[3] * k;
-        const g = (t - (B.shears[0] + 0.22)) / 0.22;
+        const g = (t - (B.shears[0] + 0.3)) / 0.3;
         if (g > 0 && g < 1) {
           const r = Math.sin(g * Math.PI) * 9 * U, gx = left + w * 0.93, gy = top + h * 0.12;
           ctx.save();
@@ -673,7 +695,7 @@ export function crossroads(C: IntroConfig) {
           ctx.restore();
         }
         snips.forEach((at, n) => {
-          const u = (t - at) / 0.5;
+          const u = (t - at) / 0.7;
           if (u <= 0 || u >= 1) return;
           ctx.save();
           ctx.globalAlpha *= 1 - u * u;
@@ -707,7 +729,7 @@ export function crossroads(C: IntroConfig) {
       let cx = X(bx) - tall * 0.66, cy = Y(by) - tall * 1.02;
       cx = Math.min(W - pw / 2 - 12, Math.max(pw / 2 + 12, cx));
       cy = Math.max(ph / 2 + 12, cy);
-      const pop = u < 0.85 ? spring(Math.min(1, u / 0.3)) : 1 - ease((u - 0.85) / 0.15);
+      const pop = u < 0.88 ? spring(Math.min(1, u / 0.24)) : 1 - ease((u - 0.88) / 0.12);
       // a little bounce as the drawing changes
       const bump = which ? 1 + 0.05 * Math.sin(Math.min(1, (u - 0.42) / 0.12) * Math.PI) : 1;
       // the dots, from my head out to it
@@ -747,7 +769,7 @@ export function crossroads(C: IntroConfig) {
       if (!head) return;
       const { main, aside } = head;
       // "Pick a lane.", written out left to right
-      const p = out(through(t, [0.25, 1.0]));
+      const p = out(through(t, B.head));
       if (p > 0) {
         ctx.save();
         ctx.beginPath();
@@ -797,6 +819,106 @@ export function crossroads(C: IntroConfig) {
       ctx.restore();
     };
 
+    /* ── the end: a drop of watercolour, blooming out across the paper ───
+       The site (.home) is shown only inside the bloom, masked to a circle a
+       little within its ragged edge; the story is cleared inside the same
+       circle, so the two cross over under the band of wash. */
+    let home: HTMLElement | null = null;
+    const WASH = "140, 47, 67";
+    /** the bloom's centre (where the road goes off) and how far it has to go to cover the screen */
+    const bloomAt = (t: number) => {
+      const cx = X(S.start[0]), cy = Y(S.horizon);
+      const far = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy));
+      // spreading at a steady pace, easing off a little at the end, as a wash does (not all at once)
+      const u = through(t, B.bloom);
+      return { cx, cy, r: ((far + 40) / 0.9) * (0.6 * u + 0.4 * (1 - (1 - u) * (1 - u))) };
+    };
+    const maskSite = (t: number) => {
+      home ||= document.querySelector<HTMLElement>(".home");
+      if (!home) return;
+      const { cx, cy, r } = bloomAt(t);
+      const box = home.getBoundingClientRect(), c = cv.getBoundingClientRect();
+      const x = cx + c.left - box.left, y = cy + c.top - box.top, outer = Math.max(0.5, r * 0.9), inner = Math.max(0, outer - 36);
+      const g = `radial-gradient(circle ${outer.toFixed(1)}px at ${x.toFixed(1)}px ${y.toFixed(1)}px, #000 ${inner.toFixed(1)}px, transparent ${outer.toFixed(1)}px)`;
+      home.style.setProperty("-webkit-mask-image", g);
+      home.style.setProperty("mask-image", g);
+    };
+    const unmaskSite = () => {
+      home?.style.removeProperty("-webkit-mask-image");
+      home?.style.removeProperty("mask-image");
+    };
+    /** the drop, falling (a little drawn out as it goes), and its splash as it lands */
+    const drawDrop = (t: number) => {
+      const u = through(t, B.drop), { cx, cy } = bloomAt(t);
+      if (u > 0 && u < 1) {
+        const y = lerp(cy - 280 * U, cy, u * u), r = 10 * Math.max(0.8, U), st = 1 + u * 0.7;
+        ctx.save();
+        ctx.translate(cx, y);
+        ctx.scale(1 / Math.sqrt(st), st);
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 2.1);
+        ctx.bezierCurveTo(r * 0.5, -r * 1.2, r, -r * 0.4, r, r * 0.15);
+        ctx.arc(0, r * 0.15, r, 0, Math.PI);
+        ctx.bezierCurveTo(-r, -r * 0.4, -r * 0.5, -r * 1.2, 0, -r * 2.1);
+        ctx.fillStyle = `rgba(${WASH}, 0.85)`;
+        ctx.fill();
+        ctx.restore();
+      }
+      const sp = (t - B.drop[1]) / 0.45;
+      if (sp > 0 && sp < 1) {
+        for (let k = 0; k < 9; k++) {
+          const a = -Math.PI * (0.08 + (0.84 * k) / 8), d = (14 + 22 * (k % 3)) * U * out(sp);
+          ellipse(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.6 + sp * sp * 10 * U, (1.6 + (k % 2)) * U, (1.6 + (k % 2)) * U, 600 + k * 7, 0, 8);
+          fill(`rgba(${WASH}, ${0.8 * (1 - sp)})`);
+        }
+      }
+    };
+    /** the bloom: the story cleared inside it, and the wash itself, ragged, pale within and deep at its rim, drying away */
+    const drawBloom = (t: number) => {
+      const { cx, cy, r } = bloomAt(t);
+      if (r <= 0) return;
+      ctx.save();
+      ctx.globalCompositeOperation = "destination-out";
+      const clear = ctx.createRadialGradient(cx, cy, Math.max(0, r * 0.9 - 36), cx, cy, r * 0.9);
+      clear.addColorStop(0, "rgba(0, 0, 0, 1)");
+      clear.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = clear;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+      const wet = 1 - ease(through(t, B.dry));
+      if (wet <= 0) return;
+      // its edge: never quite round, as a wash spreads along the paper's grain
+      const edge = (a: number) => r * (1 + 0.055 * Math.sin(3 * a + 1.3) + 0.035 * Math.sin(7 * a + 4.1) + 0.02 * Math.sin(13 * a + 0.4));
+      ctx.beginPath();
+      for (let k = 0; k <= 96; k++) {
+        const a = (k / 96) * 6.2832, e = edge(a);
+        if (k) ctx.lineTo(cx + Math.cos(a) * e, cy + Math.sin(a) * e);
+        else ctx.moveTo(cx + Math.cos(a) * e, cy + Math.sin(a) * e);
+      }
+      ctx.closePath();
+      const wash = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.1);
+      wash.addColorStop(0, `rgba(${WASH}, 0)`);
+      wash.addColorStop(0.55, `rgba(${WASH}, ${0.05 * wet})`);
+      wash.addColorStop(0.85, `rgba(${WASH}, ${0.15 * wet})`);
+      wash.addColorStop(1, `rgba(${WASH}, ${0.24 * wet})`);
+      ctx.fillStyle = wash;
+      ctx.fill();
+      // the rim, where the pigment gathers as it dries: a soft band, and a fine dark line
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = `rgba(120, 32, 52, ${0.12 * wet})`;
+      ctx.lineWidth = 10;
+      ctx.stroke();
+      ctx.strokeStyle = `rgba(110, 28, 48, ${0.42 * wet})`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // grains of pigment settling just inside it
+      ctx.fillStyle = `rgba(110, 28, 48, ${0.3 * wet})`;
+      for (let k = 0; k < 160; k++) {
+        const a = (k * 2.39996) % 6.2832, d = edge(a) * (0.9 + 0.09 * ((k * 0.618) % 1)), z = 1 + (k % 3) * 0.6;
+        ctx.fillRect(cx + Math.cos(a) * d, cy + Math.sin(a) * d, z, z);
+      }
+    };
+
     fit();
     const ro = new ResizeObserver(() => {
       if (cv.clientWidth && cv.clientHeight && (cv.clientWidth !== W || cv.clientHeight !== H)) fit();
@@ -804,7 +926,8 @@ export function crossroads(C: IntroConfig) {
     ro.observe(cv);
     // the headline moves when the site's faces come in: measure it again then
     document.fonts?.ready.then(() => void (head = null));
-    let fallback = window.setTimeout(() => html.dataset.intro === "play" && done(), 12000);
+    // if the story stalls: let the site come up anyway, a little after it would have (and after any wait for the drawings)
+    let fallback = window.setTimeout(() => html.dataset.intro === "play" && done(), (B.done + 6) * 1000);
     let t0 = -1, last = -1, raf = 0, endAt = -1, revealed = false, waited = 0;
     const stop = () => {
       cancelAnimationFrame(raf);
@@ -813,6 +936,7 @@ export function crossroads(C: IntroConfig) {
       fallback = 0;
       cv.width = cv.height = 0;
       cv.setAttribute("data-done", "");
+      unmaskSite();
     };
 
     const frame = () => {
@@ -822,8 +946,9 @@ export function crossroads(C: IntroConfig) {
       if (t0 < 0) t0 = now;
       const dt = last < 0 ? 0 : now - last;
       last = now;
-      // over, or skipped: it holds while it fades out (crossroads.css), then stops
+      // over, or skipped: it holds while it fades out (crossroads.css), then stops; the site shown whole at once
       if (html.dataset.intro !== "play") {
+        unmaskSite();
         if (endAt < 0) endAt = now;
         if (now - endAt >= B.end) stop();
         return;
@@ -835,12 +960,22 @@ export function crossroads(C: IntroConfig) {
         t = now - t0 - waited;
         if (waited > 2.5) return done();
       }
-      if (t >= B.reveal && !revealed) {
-        revealed = true;
-        html.dataset.introReveal = "";
+      // the bloom: the site, shown only inside it (masked before it is shown at all, in the same frame)
+      if (t >= B.reveal) {
+        maskSite(t);
+        if (!revealed) {
+          revealed = true;
+          html.dataset.introReveal = "";
+        }
       }
-      if (t >= B.done) done();
+      // all down: the hero's headline (shown from "seen", crossroads.css) takes this one's place in the same frame
+      if (t >= B.done) {
+        done();
+        return stop();
+      }
       if (!W) return;
+      // drawing: from here the story runs the show (crossroads.css lets its stand-in failsafes go)
+      if (!cv.hasAttribute("data-live")) cv.setAttribute("data-live", "");
       bf = Math.floor(t * 8);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, cv.width, cv.height);
@@ -855,6 +990,8 @@ export function crossroads(C: IntroConfig) {
       drawMe(t, pose(t));
       ctx.restore();
       drawIdea(t);
+      drawDrop(t);
+      drawBloom(t);
       drawHead(t);
     };
     raf = requestAnimationFrame(frame);
