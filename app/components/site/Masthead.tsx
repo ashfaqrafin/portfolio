@@ -17,6 +17,7 @@ export default function Masthead({ current }: { current?: "board" | "article" })
           <Link href="/blog" aria-current={current === "board" ? "page" : undefined}>
             Thread board
           </Link>
+          <Link href="/worldview">World view</Link>
         </nav>
       </div>
     </header>

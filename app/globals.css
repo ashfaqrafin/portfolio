@@ -208,3 +208,15 @@ body::before {
     display: none;
   }
 }
+
+/* Between pages that load afresh (the home page and the world view): one
+   fades into the other instead of cutting. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.5s;
+  }
+}

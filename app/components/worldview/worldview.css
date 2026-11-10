@@ -1,0 +1,415 @@
+/* The world view page (/worldview): a dark stage that stays in view while a
+   long track scrolls past it; the story is drawn on its canvas, and its
+   words are type over it. */
+
+.wv {
+  --wv-ink: #16100f;
+  --wv-cream: #f6efe2;
+  --wv-red: #c8102e;
+  position: relative;
+  /* no ground of its own: it opens on the site's desk, and the stage covers it once the story starts */
+  color: var(--wv-cream);
+  /* above the desk the rest of the site sits on */
+  isolation: isolate;
+}
+
+.wv-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── the top bar ──────────────────────────────────────────────────────────── */
+.wv-top {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px clamp(16px, 3vw, 28px);
+  pointer-events: none;
+}
+.wv-top > * {
+  pointer-events: auto;
+}
+.wv-mark {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1;
+  color: var(--wv-cream);
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6);
+}
+.wv-chapter {
+  margin: 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wv-cream);
+  opacity: 0.82;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+.wv-sound {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--wv-cream);
+  background: rgba(22, 16, 15, 0.6);
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 8px 14px 7px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+/* over paper (the opening on the desk, the ink and sketchbook chapters): the site's own ink */
+.wv[data-tone="paper"] .wv-mark,
+.wv[data-tone="paper"] .wv-chapter {
+  color: var(--burgundy, #4a0c18);
+  text-shadow: none;
+}
+.wv[data-tone="paper"] .wv-sound {
+  color: var(--burgundy, #4a0c18);
+  background: rgba(248, 243, 234, 0.7);
+}
+.wv-sound[aria-pressed="true"] {
+  background: var(--wv-red);
+  border-color: var(--wv-red);
+}
+.wv-sound:focus-visible,
+.wv-begin button:focus-visible,
+.wv-end a:focus-visible,
+.wv-end button:focus-visible,
+.wv-tear:focus-visible {
+  outline: 2px solid var(--wv-red);
+  outline-offset: 3px;
+}
+
+/* ── the track and the stage ──────────────────────────────────────────────── */
+.wv-track {
+  position: relative;
+  height: calc((var(--wv-screens) + 1) * 100vh);
+}
+.wv-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.wv-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* a sideways swipe tears the flag; an upright one still scrolls the page */
+  touch-action: pan-y;
+}
+.wv-stage[data-waiting]::after {
+  content: "turning the page\2026";
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--wv-cream);
+  opacity: 0.7;
+  animation: wv-pulse 1.4s ease-in-out infinite;
+}
+@keyframes wv-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ── the title card ───────────────────────────────────────────────────────── */
+.wv-title {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 80px 20px 40px;
+  text-align: center;
+  color: var(--ink, #4a0c18);
+}
+.wv-title[inert] {
+  pointer-events: none;
+}
+.wv-kicker {
+  margin: 0 0 14px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--thread, #a0263a);
+}
+.wv-title h1 {
+  margin: 0;
+  max-width: 14ch;
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-size: clamp(42px, 7.4vw, 104px);
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.wv-lede {
+  margin: 18px 0 0;
+  font-family: var(--font-read), var(--font-display), serif;
+  font-style: italic;
+  font-size: clamp(18px, 2vw, 24px);
+}
+.wv-begin {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 34px;
+}
+.wv-begin-sound {
+  font: 700 13px/1 var(--font-mono), monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--wv-red);
+  border: 0;
+  border-radius: 999px;
+  padding: 15px 24px 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(200, 16, 46, 0.35);
+}
+.wv-begin-sound::before {
+  content: "\25B6\FE0E";
+  margin-right: 10px;
+  font-size: 11px;
+}
+.wv-begin-quiet {
+  font: italic 17px/1.2 var(--font-read), serif;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 6px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+/* ── what is said ─────────────────────────────────────────────────────────── */
+.wv-cap {
+  --w: min(32ch, 86vw);
+  position: absolute;
+  left: 50%;
+  bottom: max(9vh, 64px);
+  width: var(--w);
+  margin: 0 0 0 calc(var(--w) / -2);
+  text-align: center;
+  font-family: var(--font-display), serif;
+  font-size: clamp(22px, 2.9vw, 38px);
+  line-height: 1.16;
+  text-wrap: balance;
+  color: #fbf6ec;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.75), 0 1px 3px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.wv-stage[data-tone="paper"] .wv-cap {
+  color: #241513;
+  text-shadow: 0 0 18px rgba(255, 250, 240, 0.95), 0 0 4px rgba(255, 250, 240, 0.9);
+}
+
+/* ── the end ──────────────────────────────────────────────────────────────── */
+.wv-end {
+  position: absolute;
+  left: 50%;
+  top: max(9vh, 64px);
+  z-index: 2;
+  width: min(560px, 90vw);
+  margin-left: calc(min(560px, 90vw) / -2);
+  padding: 22px 26px 20px;
+  text-align: center;
+  color: #2a1916;
+  background: rgba(250, 245, 236, 0.9);
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(60, 30, 20, 0.18);
+  opacity: 0;
+}
+.wv-end[inert] {
+  pointer-events: none;
+}
+.wv-end-line {
+  margin: 0;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(26px, 3.2vw, 38px);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+.wv-end-sign {
+  margin: 8px 0 14px;
+  font-family: var(--font-hand), cursive;
+  font-size: 24px;
+  color: var(--wv-red);
+}
+.wv-end-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.wv-end-links a,
+.wv-end-links button {
+  font: 700 11px/1 var(--font-mono), monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #2a1916;
+  background: none;
+  border: 1.5px solid #2a1916;
+  border-radius: 999px;
+  padding: 10px 16px 9px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.wv-end-links a {
+  color: #fff;
+  background: var(--wv-red);
+  border-color: var(--wv-red);
+}
+
+/* ── small things ─────────────────────────────────────────────────────────── */
+.wv-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  margin: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fbf6ec;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  transition: opacity 0.6s;
+  pointer-events: none;
+}
+.wv-hint::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 22px;
+  margin: 8px auto 0;
+  background: currentColor;
+  animation: wv-drip 1.6s ease-in-out infinite;
+  transform-origin: top;
+}
+.wv-hint[data-on] {
+  opacity: 0.85;
+}
+.wv-stage[data-tone="paper"] .wv-hint {
+  color: #241513;
+  text-shadow: none;
+}
+@keyframes wv-drip {
+  0% {
+    transform: scaleY(0);
+  }
+  60% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+.wv-tear {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  display: none;
+  transform: translateX(-50%);
+  font: 700 11px/1 var(--font-mono), monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--wv-ink);
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px 9px;
+  cursor: pointer;
+}
+.wv-tear[data-live] {
+  display: block;
+  opacity: 0;
+}
+.wv-tear[data-live]:focus-visible {
+  opacity: 1;
+}
+.wv-progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.wv-progress span {
+  display: block;
+  height: 100%;
+  background: var(--wv-red);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+/* without JavaScript: the story as text */
+.wv-plain {
+  background: var(--wv-ink);
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 110px 20px 80px;
+  font-family: var(--font-read), serif;
+  font-size: 20px;
+  line-height: 1.5;
+}
+.wv-plain h1 {
+  font-family: var(--font-display), serif;
+  font-weight: 400;
+  font-size: 48px;
+  line-height: 1;
+}
+.wv-plain h2 {
+  margin-top: 2em;
+  font-family: var(--font-mono), monospace;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #e9b9b2;
+}
+.wv-plain a {
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .wv-chapter {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wv-hint::after,
+  .wv-stage[data-waiting]::after {
+    animation: none;
+  }
+}

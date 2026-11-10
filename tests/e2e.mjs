@@ -308,6 +308,102 @@ await check("intro", "never on a reload, a deep link or another page first", asy
   await Promise.all([c.close(), c2.close(), c3.close()]);
 });
 
+// ── the world view page ─────────────────────────────────────────────────────
+const wvSeek = (p, t) => p.evaluate((t) => document.querySelector(".wv").dispatchEvent(new CustomEvent("wv:seek", { detail: t })), t);
+const wvAt = (p) => p.evaluate(() => Number(document.querySelector(".wv").dataset.t));
+
+await check("world view", "it opens on its first chapter, drawn, with the story also there as text", async () => {
+  const p = await ctx.newPage();
+  watch(p, "world view");
+  await p.goto(BASE + "/", { waitUntil: "load" });
+  assert(await p.locator('.hero-nav a[href="/worldview"]').count(), "the home page doesn't link to it");
+  await p.goto(BASE + "/worldview", { waitUntil: "load" });
+  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
+  assert(await p.getByRole("heading", { level: 1, name: "The flag nobody could break" }).isVisible(), "no title");
+  const caps = await p.locator(".wv-cap").count();
+  assert(caps >= 15, `only ${caps} captions in the page`);
+  assert((await p.getByRole("heading", { level: 2 }).count()) >= 7, "the chapters aren't headed");
+  // it opens on the site's desk (the canvas clear); the story is drawn once it starts
+  await wvSeek(p, 3);
+  await p.waitForFunction(() => document.querySelector(".wv").dataset.t === "3.0", null, { timeout: 15000 });
+  await p.waitForTimeout(300);
+  const inked = await p.evaluate(() => {
+    const c = document.querySelector(".wv-canvas");
+    const d = c.getContext("2d").getImageData(c.width >> 1, c.height >> 2, 1, 1).data;
+    return d[3] > 0 && d[0] + d[1] + d[2] > 40;
+  });
+  assert(inked, "the canvas is blank");
+  await p.close();
+});
+
+await check("world view", "scrolling plays the story through to the closing card, and back", async () => {
+  const p = await ctx.newPage();
+  watch(p, "world view");
+  await p.goto(BASE + "/worldview", { waitUntil: "load" });
+  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
+  const height = await p.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < height; y += 1200) await p.mouse.wheel(0, 1200);
+  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) >= 116, null, { timeout: 60000 });
+  const back = p.getByRole("link", { name: "Back to the portfolio" });
+  await back.waitFor({ state: "visible", timeout: 4000 });
+  assert((await back.getAttribute("href")) === "/", "the closing card's link goes nowhere");
+  assert((await p.evaluate(() => document.querySelector(".wv").dataset.flag)) === "5", "the climax didn't end on its last flag");
+  await p.evaluate(() => scrollTo(0, 0));
+  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) === 0, null, { timeout: 30000 });
+  await p.close();
+});
+
+await check("world view", "the flag tears under a drag and is sewn back as the next flag", async () => {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  watch(p, "world view");
+  await p.goto(BASE + "/worldview", { waitUntil: "load" });
+  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
+  await p.waitForTimeout(1500);
+  await wvSeek(p, 62.5);
+  await p.waitForFunction(() => document.querySelector(".wv").dataset.t === "62.5", null, { timeout: 15000 });
+  await p.waitForTimeout(1200);
+  assert((await p.evaluate(() => document.querySelector(".wv").dataset.flag)) === "0", "not on the first flag");
+  // a slash across the flag, which flies above and to the right of him
+  await p.mouse.move(1440 * 0.5, 900 * 0.16);
+  await p.mouse.down();
+  for (let k = 1; k <= 20; k++) await p.mouse.move(1440 * (0.5 + 0.25 * (k / 20)), 900 * (0.16 + 0.08 * (k / 20)));
+  await p.mouse.up();
+  await p.waitForFunction(() => document.querySelector(".wv").dataset.flag === "1", null, { timeout: 5000 });
+  assert(Math.abs((await wvAt(p)) - 62.5) < 0.05, "tearing moved the story on");
+  await p.close();
+});
+
+await check("world view", "sound starts only when asked, and the march streams once it plays", async () => {
+  const p = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  watch(p, "world view");
+  const audio = [];
+  p.on("request", (r) => r.url().includes("/worldview/audio/") && audio.push(r.url()));
+  await p.goto(BASE + "/worldview", { waitUntil: "load" });
+  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
+  await p.waitForTimeout(1000);
+  assert(audio.length === 0, "music was fetched before anyone asked for sound");
+  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "false", "sound starts on");
+  await p.getByRole("button", { name: "Begin, with sound" }).click();
+  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "true", "the sound button didn't turn on");
+  // (the band comes in once the march is a crowd)
+  await wvSeek(p, 34);
+  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) >= 33.9, null, { timeout: 15000 });
+  for (let k = 0; k < 20 && !audio.some((u) => u.endsWith("march.m4a")); k++) await p.waitForTimeout(250);
+  assert(audio.some((u) => u.endsWith("march.m4a")), "the march never streamed");
+  await p.getByRole("button", { name: "Sound on" }).click();
+  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "false", "sound wouldn't turn off");
+  await p.close();
+});
+
+await check("world view", "without JavaScript it reads as text", async () => {
+  const c = await browser.newContext({ javaScriptEnabled: false });
+  const p = await c.newPage();
+  await p.goto(BASE + "/worldview", { waitUntil: "load" });
+  const text = await p.locator(".wv-plain").innerText();
+  assert(text.includes("They told us the world was finished.") && text.includes("We fold them down into a table."), "the story isn't there as text");
+  await c.close();
+});
+
 // ── education: three subjects orbiting ─────────────────────────────────────
 await check("education", "each question opens its answer in a window; Escape closes it", async () => {
   const p = await ctx.newPage();

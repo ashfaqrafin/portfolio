@@ -148,6 +148,10 @@ export default function Hero() {
           <a href="#contact">
             <span className="hero-nav-no">04</span>Contact
           </a>
+          {/* a page of its own, not a section: the arrow instead of a number */}
+          <a className="hero-nav-wide" href="/worldview">
+            <span className="hero-nav-no">↗</span>World view
+          </a>
         </nav>
       </div>
 
