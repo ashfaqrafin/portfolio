@@ -4,6 +4,7 @@ import Contact from "./components/contact/Contact";
 import Hero from "./components/hero/Hero";
 import ProjectsSection from "./components/projects/ProjectsSection";
 import ChapterSeam from "./components/site/ChapterSeam";
+import WorldDoor from "./components/site/WorldDoor";
 import Study from "./components/study/Study";
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
         <ChapterSeam id="contact" no="04" title="Contact" side="left" line="Every thread ends at someone’s door. This one’s mine.">
           <Contact />
         </ChapterSeam>
+        <WorldDoor />
       </main>
     </>
   );

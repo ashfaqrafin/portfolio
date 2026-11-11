@@ -5,7 +5,8 @@
 .wv {
   --wv-ink: #16100f;
   --wv-cream: #f6efe2;
-  --wv-red: #c8102e;
+  /* the page's own accents are the site's ink and thread; only the flag is red */
+  --wv-red: var(--thread, #8c2f43);
   position: relative;
   /* no ground of its own: it opens on the site's desk, and the stage covers it once the story starts */
   color: var(--wv-cream);
@@ -184,13 +185,18 @@
   font: 700 13px/1 var(--font-mono), monospace;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #fff;
-  background: var(--wv-red);
+  color: var(--cream, #faf5eb);
+  background: var(--ink, #4a0c18);
   border: 0;
   border-radius: 999px;
   padding: 15px 24px 14px;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(200, 16, 46, 0.35);
+  box-shadow: 0 10px 24px -12px rgba(74, 12, 24, 0.6);
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), background 0.3s;
+}
+.wv-begin-sound:hover {
+  transform: translateY(-2px);
+  background: var(--thread, #8c2f43);
 }
 .wv-begin-sound::before {
   content: "\25B6\FE0E";
@@ -368,7 +374,7 @@
 .wv-progress span {
   display: block;
   height: 100%;
-  background: var(--wv-red);
+  background: var(--flag, #c8102e);
   transform: scaleX(0);
   transform-origin: left;
 }

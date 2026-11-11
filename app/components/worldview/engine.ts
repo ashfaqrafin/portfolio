@@ -273,13 +273,13 @@ export function startWorldView(root: HTMLElement): () => void {
     }
     const top = track.getBoundingClientRect().top + scrollY;
     const range = track.offsetHeight - innerHeight;
-    scrollTo({ top: top + (SCROLL_AT[1] / SCROLL_SCREENS) * range * 0.6, behavior: reduced ? "auto" : "smooth" });
+    scrollTo({ top: top + (SCROLL_AT[1] / SCROLL_SCREENS) * range * 0.6, behavior: reduced ? "instant" : "smooth" });
   };
   const beginLoud = begin(true), beginQuiet = begin(false);
   root.querySelector(".wv-begin-sound")?.addEventListener("click", beginLoud);
   root.querySelector(".wv-begin-quiet")?.addEventListener("click", beginQuiet);
   const onReplay = () => {
-    scrollTo({ top: track.getBoundingClientRect().top + scrollY, behavior: "auto" });
+    scrollTo({ top: track.getBoundingClientRect().top + scrollY, behavior: "instant" });
     w.t = w.prevT = 0;
     Object.assign(state, { flag: null, flagIndex: 0, stitch: null, slash: null, tearHintGone: false, flagNote: null, particles: [] });
     readScroll();
