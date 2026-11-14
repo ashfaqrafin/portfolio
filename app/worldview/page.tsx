@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { Baloo_Da_2 } from "next/font/google";
-import WorldView from "../components/worldview/WorldView";
+import { Anton } from "next/font/google";
+import Film from "../components/film/Film";
 
-// the climax's Bangla: the sound the flag makes coming back, and what he says
-const bangla = Baloo_Da_2({
-  variable: "--font-bangla",
-  subsets: ["bengali"],
-  weight: "800",
+// the film's poster face: its title, and the words slammed onto the paper
+const poster = Anton({
+  variable: "--font-poster",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
-  title: "World view — Ashfaq",
+  title: "All of us — Ashfaq",
   description:
-    "The flag nobody could break: my world view in seven chapters, from a red rag on a railing to a long table with room for everyone.",
+    "All of us: my world view as a film of ninety seconds, drawn in code. A factory, a refusal, a revolt, and one long table. Not a ladder. A table.",
 };
 
 export default function WorldViewPage() {
-  return <WorldView className={bangla.variable} />;
+  return <Film className={poster.variable} />;
 }

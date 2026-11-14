@@ -308,99 +308,150 @@ await check("intro", "never on a reload, a deep link or another page first", asy
   await Promise.all([c.close(), c2.close(), c3.close()]);
 });
 
-// ── the world view page ─────────────────────────────────────────────────────
-const wvSeek = (p, t) => p.evaluate((t) => document.querySelector(".wv").dispatchEvent(new CustomEvent("wv:seek", { detail: t })), t);
-const wvAt = (p) => p.evaluate(() => Number(document.querySelector(".wv").dataset.t));
+// ── the world view page: ALL OF US, a film ──────────────────────────────────
+const filmSeek = (p, t, pause = false) =>
+  p.evaluate(([t, pause]) => document.querySelector(".film").dispatchEvent(new CustomEvent("film:seek", { detail: { t, pause } })), [t, pause]);
+const filmAttr = (p, name) => p.evaluate((name) => document.querySelector(".film").getAttribute(name), name);
+const filmT = async (p) => Number(await filmAttr(p, "data-t"));
+/** how much of the canvas isn't bare paper (0..1) */
+const filmInked = (p) =>
+  p.evaluate(() => {
+    const c = document.querySelector(".film-canvas");
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    let n = 0, all = 0;
+    for (let k = 0; k < d.length; k += 4 * 97) {
+      all++;
+      if (Math.abs(d[k] - 251) + Math.abs(d[k + 1] - 246) + Math.abs(d[k + 2] - 234) > 150) n++;
+    }
+    return n / all;
+  });
 
-await check("world view", "it opens on its first chapter, drawn, with the story also there as text", async () => {
+await check("world view", "it opens on the film's title card, with the film also there as text", async () => {
   const p = await ctx.newPage();
   watch(p, "world view");
   await p.goto(BASE + "/", { waitUntil: "load" });
   assert(await p.locator('.hero-nav a[href="/worldview"]').count(), "the home page doesn't link to it");
+  assert((await p.locator(".door-title").innerText()).trim() === "All of us", "the door doesn't name the film");
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
-  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
-  assert(await p.getByRole("heading", { level: 1, name: "The flag nobody could break" }).isVisible(), "no title");
-  const caps = await p.locator(".wv-cap").count();
-  assert(caps >= 15, `only ${caps} captions in the page`);
-  assert((await p.getByRole("heading", { level: 2 }).count()) >= 7, "the chapters aren't headed");
-  // it opens on the site's desk (the canvas clear); the story is drawn once it starts
-  await wvSeek(p, 3);
-  await p.waitForFunction(() => document.querySelector(".wv").dataset.t === "3.0", null, { timeout: 15000 });
-  await p.waitForTimeout(300);
-  const inked = await p.evaluate(() => {
-    const c = document.querySelector(".wv-canvas");
-    const d = c.getContext("2d").getImageData(c.width >> 1, c.height >> 2, 1, 1).data;
-    return d[3] > 0 && d[0] + d[1] + d[2] > 40;
-  });
-  assert(inked, "the canvas is blank");
+  await p.waitForSelector(".film[data-ready]", { timeout: 15000 });
+  assert(await p.getByRole("heading", { level: 1, name: "All of us" }).isVisible(), "no title");
+  assert((await filmAttr(p, "data-state")) === "title", "it isn't waiting on its title card");
+  assert((await p.locator(".film-sr li").count()) === 8, "the eight scenes aren't there as text");
+  // nothing plays until it is asked to
+  await p.waitForTimeout(700);
+  assert((await filmT(p)) === 0, "it started by itself");
+  assert((await filmInked(p)) < 0.02, "something is drawn under the title card");
   await p.close();
 });
 
-await check("world view", "scrolling plays the story through to the closing card, and back", async () => {
-  const p = await ctx.newPage();
+await check("world view", "it plays by itself to the end; it can be paused, jumped and watched again", async () => {
+  const p = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   watch(p, "world view");
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
-  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
-  const height = await p.evaluate(() => document.documentElement.scrollHeight);
-  for (let y = 0; y < height; y += 1200) await p.mouse.wheel(0, 1200);
-  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) >= 116, null, { timeout: 60000 });
+  await p.waitForSelector(".film[data-ready]", { timeout: 15000 });
+  await p.getByRole("button", { name: "play in silence" }).click();
+  await p.waitForFunction(() => Number(document.querySelector(".film").dataset.t) > 0.5, null, { timeout: 5000 });
+  assert((await filmAttr(p, "data-state")) === "playing", "it isn't playing");
+  // space pauses, and plays
+  await p.keyboard.press("Space");
+  assert((await filmAttr(p, "data-state")) === "paused", "space didn't pause it");
+  const held = await filmT(p);
+  await p.waitForTimeout(500);
+  assert((await filmT(p)) === held, "the clock runs while paused");
+  await p.getByRole("button", { name: "Play", exact: true }).click();
+  assert((await filmAttr(p, "data-state")) === "playing", "the play button didn't play it");
+  // a scene mark jumps there
+  await p.getByRole("button", { name: /^Scene 2: The factory/ }).click();
+  await p.waitForFunction(() => document.querySelector(".film").dataset.scene === "2", null, { timeout: 3000 });
+  await filmSeek(p, 14, true);
+  await p.waitForTimeout(300);
+  assert((await filmInked(p)) > 0.04, "the factory isn't drawn");
+  // to the end: the closing buttons
+  await filmSeek(p, 88.8);
+  await p.waitForFunction(() => document.querySelector(".film").dataset.state === "ended", null, { timeout: 8000 });
   const back = p.getByRole("link", { name: "Back to the portfolio" });
   await back.waitFor({ state: "visible", timeout: 4000 });
-  assert((await back.getAttribute("href")) === "/", "the closing card's link goes nowhere");
-  assert((await p.evaluate(() => document.querySelector(".wv").dataset.flag)) === "5", "the climax didn't end on its last flag");
-  await p.evaluate(() => scrollTo(0, 0));
-  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) === 0, null, { timeout: 30000 });
+  assert((await back.getAttribute("href")) === "/", "the closing link goes nowhere");
+  assert((await filmInked(p)) > 0.2, "the last frame isn't drawn");
+  await p.getByRole("button", { name: "Watch again" }).first().click();
+  await p.waitForFunction(() => document.querySelector(".film").dataset.state === "playing" && Number(document.querySelector(".film").dataset.t) < 3, null, { timeout: 4000 });
   await p.close();
 });
 
-await check("world view", "the flag tears under a drag and is sewn back as the next flag", async () => {
-  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await check("world view", "a worker wakes when clicked, the picture tears under a drag, a frame saves as a poster, a scene loops", async () => {
+  const p = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   watch(p, "world view");
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
-  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
-  await p.waitForTimeout(1500);
-  await wvSeek(p, 62.5);
-  await p.waitForFunction(() => document.querySelector(".wv").dataset.t === "62.5", null, { timeout: 15000 });
-  await p.waitForTimeout(1200);
-  assert((await p.evaluate(() => document.querySelector(".wv").dataset.flag)) === "0", "not on the first flag");
-  // a slash across the flag, which flies above and to the right of him
-  await p.mouse.move(1440 * 0.5, 900 * 0.16);
+  await p.waitForSelector(".film[data-ready]", { timeout: 15000 });
+  await p.getByRole("button", { name: "play in silence" }).click();
+  // the shot down the line: the page says where a worker's head is
+  await filmSeek(p, 6.2);
+  await p.waitForFunction(() => document.querySelector(".film").dataset.zone, null, { timeout: 3000 });
+  const [zx, zy] = (await filmAttr(p, "data-zone")).split(",").map(Number);
+  await p.mouse.click(zx, zy);
+  await p.waitForFunction(() => document.querySelector(".film").dataset.stood === "1", null, { timeout: 3000 });
+  assert((await filmAttr(p, "data-state")) === "playing", "clicking a worker paused the film");
+  // a slash across the paper
+  await p.mouse.move(300, 200);
   await p.mouse.down();
-  for (let k = 1; k <= 20; k++) await p.mouse.move(1440 * (0.5 + 0.25 * (k / 20)), 900 * (0.16 + 0.08 * (k / 20)));
+  for (let k = 1; k <= 14; k++) await p.mouse.move(300 + k * 45, 200 + k * 22);
   await p.mouse.up();
-  await p.waitForFunction(() => document.querySelector(".wv").dataset.flag === "1", null, { timeout: 5000 });
-  assert(Math.abs((await wvAt(p)) - 62.5) < 0.05, "tearing moved the story on");
+  await p.waitForFunction(() => document.querySelector(".film").dataset.torn === "1", null, { timeout: 3000 });
+  assert((await filmAttr(p, "data-state")) === "playing", "tearing the paper paused the film");
+  // the frame, as a picture
+  const [download] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.getByRole("button", { name: "Poster" }).click()]);
+  assert(/^all-of-us-.*\.png$/.test(download.suggestedFilename()), `the poster is called ${download.suggestedFilename()}`);
+  assert(Number(await filmAttr(p, "data-poster")) > 50000, "the poster is empty");
+  // explore: the scene comes round again
+  await p.locator(".film-explore").click();
+  assert((await p.locator(".film-explore").getAttribute("aria-pressed")) === "true", "explore didn't turn on");
+  await filmSeek(p, 17.7);
+  await p.waitForFunction(() => Number(document.querySelector(".film").dataset.t) < 8, null, { timeout: 4000 });
+  assert((await p.locator(".film-caption").innerText()).includes("worker"), "explore doesn't say what there is to do");
   await p.close();
 });
 
-await check("world view", "sound starts only when asked, and the march streams once it plays", async () => {
+await check("world view", "sound starts only when asked, and the march comes in with the revolt", async () => {
   const p = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   watch(p, "world view");
   const audio = [];
   p.on("request", (r) => r.url().includes("/worldview/audio/") && audio.push(r.url()));
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
-  await p.waitForSelector(".wv[data-ready]", { timeout: 15000 });
+  await p.waitForSelector(".film[data-ready]", { timeout: 15000 });
   await p.waitForTimeout(1000);
   assert(audio.length === 0, "music was fetched before anyone asked for sound");
-  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "false", "sound starts on");
-  await p.getByRole("button", { name: "Begin, with sound" }).click();
-  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "true", "the sound button didn't turn on");
-  // (the band comes in once the march is a crowd)
-  await wvSeek(p, 34);
-  await p.waitForFunction(() => Number(document.querySelector(".wv").dataset.t) >= 33.9, null, { timeout: 15000 });
+  assert((await p.locator(".film-sound").getAttribute("aria-pressed")) === "false", "sound starts on");
+  await p.getByRole("button", { name: "Play with sound" }).click();
+  assert((await p.locator(".film-sound").getAttribute("aria-pressed")) === "true", "the sound button didn't turn on");
+  await filmSeek(p, 35.2);
   for (let k = 0; k < 20 && !audio.some((u) => u.endsWith("march.m4a")); k++) await p.waitForTimeout(250);
   assert(audio.some((u) => u.endsWith("march.m4a")), "the march never streamed");
   await p.getByRole("button", { name: "Sound on" }).click();
-  assert((await p.locator(".wv-sound").getAttribute("aria-pressed")) === "false", "sound wouldn't turn off");
+  assert((await p.locator(".film-sound").getAttribute("aria-pressed")) === "false", "sound wouldn't turn off");
   await p.close();
 });
 
-await check("world view", "without JavaScript it reads as text", async () => {
-  const c = await browser.newContext({ javaScriptEnabled: false });
-  const p = await c.newPage();
+await check("world view", "with reduced motion it is eight posters with captions; without JavaScript it reads as text", async () => {
+  const still = await browser.newContext({ viewport: { width: 1280, height: 720 }, reducedMotion: "reduce" });
+  const p = await still.newPage();
+  watch(p, "world view");
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
-  const text = await p.locator(".wv-plain").innerText();
-  assert(text.includes("They told us the world was finished.") && text.includes("We fold them down into a table."), "the story isn't there as text");
+  await p.waitForSelector(".film[data-ready]", { timeout: 15000 });
+  assert(!(await p.getByRole("button", { name: "Play with sound" }).isVisible()), "it offers to play, with reduced motion");
+  await p.getByRole("button", { name: "see it as eight posters" }).click();
+  await p.waitForFunction(() => document.querySelector(".film-caption").textContent.startsWith("1 / 8"), null, { timeout: 3000 });
+  const at = await filmT(p);
+  await p.waitForTimeout(500);
+  assert((await filmT(p)) === at, "the poster moves");
+  await p.getByRole("button", { name: "Next poster" }).click();
+  await p.waitForFunction(() => document.querySelector(".film-caption").textContent.startsWith("2 / 8"), null, { timeout: 3000 });
+  assert((await filmInked(p)) > 0.04, "the poster isn't drawn");
+  await still.close();
+  const c = await browser.newContext({ javaScriptEnabled: false });
+  const q = await c.newPage();
+  await q.goto(BASE + "/worldview", { waitUntil: "load" });
+  const text = await q.locator(".film-plain").innerText();
+  assert(text.includes("The squeeze.") && text.includes("Not a ladder. A table."), "the film isn't there as text");
   await c.close();
 });
 

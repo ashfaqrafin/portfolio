@@ -1,0 +1,436 @@
+/* The world view page (/worldview): ALL OF US, a film drawn on one canvas
+   that fills the window. Around the picture there is as little as possible:
+   a title card to start it, a timeline with a mark for each scene, and the
+   end's three buttons. Everything is the film's own paper, ink and red. */
+
+.film {
+  --f-paper: #fbf6ea;
+  --f-cream: #faf5eb;
+  --f-ink: #17110f;
+  --f-red: #e2371f;
+  --f-gold: #e3a622;
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  color: var(--f-ink);
+  background: var(--f-paper);
+  /* above the desk the rest of the site sits on */
+  isolation: isolate;
+}
+.film-stage {
+  position: absolute;
+  inset: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.film-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* a drag tears the paper */
+  touch-action: none;
+}
+.film-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.film button,
+.film-end a {
+  font: 700 11px/1 var(--font-mono), monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--f-ink);
+  background: var(--f-cream);
+  border: 2px solid var(--f-ink);
+  border-radius: 0;
+  padding: 10px 14px 9px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--f-ink);
+  transition: transform 0.14s, box-shadow 0.14s, background 0.14s, color 0.14s;
+}
+.film button:hover,
+.film-end a:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--f-red);
+}
+.film button:active,
+.film-end a:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--f-ink);
+}
+.film button:focus-visible,
+.film a:focus-visible {
+  outline: 3px solid var(--f-red);
+  outline-offset: 3px;
+}
+.film button[aria-pressed="true"] {
+  color: var(--f-cream);
+  background: var(--f-red);
+}
+
+/* ── the top ──────────────────────────────────────────────────────────────── */
+.film-top {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px clamp(16px, 3vw, 28px);
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.film-top > * {
+  pointer-events: auto;
+}
+.film-home {
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(26px, 2.6vw, 34px);
+  line-height: 1;
+  color: var(--f-ink);
+  text-decoration: none;
+}
+
+/* ── the title card ───────────────────────────────────────────────────────── */
+.film-title {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  padding: 70px 20px 40px;
+  text-align: center;
+  transition: opacity 0.35s ease-in, transform 0.35s ease-in, visibility 0s 0.35s;
+}
+.film:not([data-state="title"]) .film-title {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.5);
+  pointer-events: none;
+}
+.film-kicker {
+  margin: 0 0 6px;
+  font: 700 12px/1 var(--font-mono), monospace;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+.film-title h1 {
+  margin: 0;
+  font-family: var(--font-poster), Impact, sans-serif;
+  font-weight: 400;
+  font-size: clamp(84px, 19vw, 270px);
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--f-red);
+  text-shadow: 0.035em 0.04em 0 var(--f-ink);
+  transform: rotate(-3deg);
+}
+.film-lede {
+  margin: 20px 0 0;
+  font: italic clamp(19px, 2.2vw, 26px) / 1.2 var(--font-read), var(--font-display), serif;
+}
+.film-begin {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 34px;
+}
+.film .film-play-sound {
+  font-size: 13px;
+  color: var(--f-cream);
+  background: var(--f-ink);
+  padding: 16px 22px 15px;
+  box-shadow: 4px 4px 0 var(--f-red);
+}
+.film .film-play-sound::before {
+  content: "\25B6\FE0E";
+  margin-right: 10px;
+  font-size: 11px;
+}
+.film .film-play-sound:hover {
+  box-shadow: 6px 6px 0 var(--f-red);
+}
+.film .film-play-quiet {
+  font: italic 18px/1.2 var(--font-read), serif;
+  letter-spacing: 0;
+  text-transform: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 6px;
+}
+.film .film-play-quiet:hover {
+  color: var(--f-red);
+  box-shadow: none;
+  transform: none;
+}
+.film-when-still,
+.film[data-stills] .film-when-moving,
+.film[data-stills] .film-play-sound,
+.film[data-stills] .film-sound {
+  display: none;
+}
+.film[data-stills] .film-when-still {
+  display: inline;
+}
+@media (prefers-reduced-motion: reduce) {
+  .film-when-moving,
+  .film .film-play-sound,
+  .film .film-sound {
+    display: none;
+  }
+  .film-when-still {
+    display: inline;
+  }
+}
+
+/* ── the timeline ─────────────────────────────────────────────────────────── */
+.film-bar {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px clamp(14px, 3vw, 28px) max(14px, env(safe-area-inset-bottom));
+  transition: opacity 0.5s;
+}
+.film[data-state="title"] .film-bar {
+  opacity: 0;
+  visibility: hidden;
+}
+.film[data-idle] .film-bar,
+.film[data-idle] .film-top {
+  opacity: 0.22;
+}
+.film[data-idle] .film-bar:focus-within,
+.film[data-idle] .film-top:focus-within {
+  opacity: 1;
+}
+.film .film-toggle {
+  flex: none;
+  width: 38px;
+  height: 34px;
+  padding: 0;
+}
+.film-toggle::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 12px;
+  margin: 0 auto;
+  border-left: 3.5px solid currentColor;
+  border-right: 3.5px solid currentColor;
+}
+.film-toggle[data-icon="play"]::before {
+  width: 0;
+  height: 0;
+  border: 0 solid transparent;
+  border-width: 7px 0 7px 11px;
+  border-left-color: currentColor;
+  transform: translateX(1px);
+}
+.film .film-prev,
+.film .film-next {
+  display: none;
+  flex: none;
+  font-size: 15px;
+  letter-spacing: 0;
+  padding: 7px 11px;
+}
+.film[data-stills] .film-prev,
+.film[data-stills] .film-next {
+  display: block;
+}
+.film[data-stills] .film-toggle,
+.film[data-stills] .film-explore {
+  display: none;
+}
+.film-line {
+  position: relative;
+  flex: 1;
+  height: 34px;
+  /* room for the first and last marks, clear of the buttons beside the line */
+  margin: 0 12px;
+  cursor: pointer;
+}
+.film-line::before,
+.film-fill {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 4px;
+  margin-top: -2px;
+  background: rgba(23, 17, 15, 0.22);
+}
+.film-fill {
+  background: var(--f-red);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.film .film-marks button {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  padding: 0;
+  background: var(--f-ink);
+  border: 0;
+  box-shadow: none;
+  transform: rotate(45deg);
+}
+.film .film-marks button::before {
+  /* a bigger target than the mark */
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+.film .film-marks button:hover,
+.film .film-marks button[aria-current="true"] {
+  background: var(--f-red);
+  box-shadow: none;
+  transform: rotate(45deg) scale(1.3);
+}
+.film .film-marks button::after {
+  content: attr(data-name);
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  transform-origin: 0 100%;
+  transform: rotate(-45deg) translate(-50%, -18px);
+  padding: 5px 8px 4px;
+  font: 700 10px/1 var(--font-mono), monospace;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  color: var(--f-cream);
+  background: var(--f-ink);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.film .film-marks button:hover::after,
+.film .film-marks button:focus-visible::after {
+  opacity: 1;
+}
+.film-time {
+  flex: none;
+  font: 700 11px/1 var(--font-mono), monospace;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── what is said: a poster's caption, or what there is to play with ──────── */
+.film-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 74px;
+  z-index: 3;
+  width: max-content;
+  max-width: min(46ch, 90vw);
+  margin: 0;
+  padding: 10px 16px 9px;
+  transform: translateX(-50%) rotate(-0.6deg);
+  font: 18px/1.35 var(--font-read), serif;
+  text-align: center;
+  text-wrap: balance;
+  background: var(--f-cream);
+  border: 2px solid var(--f-ink);
+  box-shadow: 4px 4px 0 var(--f-ink);
+  pointer-events: none;
+}
+.film-caption:empty {
+  display: none;
+}
+.film[data-explore] .film-caption {
+  font: 700 12px/1.5 var(--font-mono), monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ── the end ──────────────────────────────────────────────────────────────── */
+.film-end {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  width: max-content;
+  max-width: 92vw;
+  transform: translateX(-50%);
+  transition: opacity 0.8s 0.4s, transform 0.8s 0.4s;
+}
+.film-end[inert] {
+  opacity: 0;
+  transform: translate(-50%, 14px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+.film .film-again {
+  color: var(--f-cream);
+  background: var(--f-red);
+}
+
+/* ── without JavaScript: the film in words ────────────────────────────────── */
+.film-plain {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 90px 20px 80px;
+  font: 20px/1.5 var(--font-read), serif;
+}
+.film-plain h1 {
+  margin: 0;
+  font: 400 clamp(72px, 16vw, 150px) / 0.95 var(--font-poster), Impact, sans-serif;
+  text-transform: uppercase;
+  color: var(--f-red);
+  text-shadow: 0.035em 0.04em 0 var(--f-ink);
+}
+.film-plain li {
+  margin: 0.7em 0;
+}
+.film-plain a {
+  color: inherit;
+}
+
+@media (max-width: 640px) {
+  .film-time,
+  .film .film-poster {
+    display: none;
+  }
+  .film-bar {
+    gap: 9px;
+  }
+  .film-caption {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .film-title,
+  .film-end,
+  .film-bar,
+  .film-top,
+  .film button,
+  .film-end a {
+    transition: none;
+  }
+}

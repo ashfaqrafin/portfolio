@@ -18,8 +18,7 @@
     "contact:art": "node scripts/contact-art.mjs",
     "education:art": "node scripts/education-art.mjs",
     "desk:strays": "node scripts/desk-strays.mjs",
-    "intro:art": "node scripts/crossroads-art.mjs",
-    "worldview:art": "node scripts/worldview-art.mjs"
+    "intro:art": "node scripts/crossroads-art.mjs"
   },
   "dependencies": {
     "@types/three": "^0.186.0",
