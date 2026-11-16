@@ -163,7 +163,7 @@ export function mix(a: Pose, b: Pose, f: number): Pose {
 }
 
 /** a limb's piece, as an outline: a tapered bar with a round joint at each end */
-function part(path: Path2D, x0: number, y0: number, x1: number, y1: number, w0: number, w1: number) {
+export function part(path: Path2D, x0: number, y0: number, x1: number, y1: number, w0: number, w1: number) {
   const dx = x1 - x0, dy = y1 - y0, d = Math.hypot(dx, dy) || 1, nx = -dy / d, ny = dx / d;
   path.moveTo(x0 - (nx * w0) / 2, y0 - (ny * w0) / 2);
   path.lineTo(x1 - (nx * w1) / 2, y1 - (ny * w1) / 2);
@@ -177,7 +177,7 @@ function part(path: Path2D, x0: number, y0: number, x1: number, y1: number, w0: 
 }
 
 /** flat colour in two tones inside `path`: the edge away from the light (`L` is which side it comes from) stays dark; the edge toward it may catch a rim */
-function cel(g: G, path: Path2D, fill: string, shade: string, rim: string | undefined, L: number, sw: number, rw: number) {
+export function cel(g: G, path: Path2D, fill: string, shade: string, rim: string | undefined, L: number, sw: number, rw: number) {
   const toward = new Path2D(), away = new Path2D();
   toward.addPath(path, new DOMMatrix().translate(L * sw, -sw * 0.45));
   away.addPath(path, new DOMMatrix().translate(-L * rw, rw * 0.45));

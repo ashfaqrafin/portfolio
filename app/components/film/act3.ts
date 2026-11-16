@@ -1,4 +1,4 @@
-import { C, DAWN, DUSK, POSE, TAU, type Look, type Pose, brush, burst, coin, crowd, disc, dust, ease, figure, fist, flag, flare, focus, hash, hat, lerp, mix, out, outBack, poly, ransom, rays, ring, seg, shield, sitter, sky, speed, tint } from "./draw";
+import { C, DAWN, DUSK, POSE, TAU, type Look, type Pose, brush, burst, cel, coin, crowd, disc, dust, ease, figure, fist, flag, flare, focus, hash, hat, lerp, mix, out, outBack, part, poly, ransom, rays, ring, seg, shield, sitter, sky, speed, tails, tint } from "./draw";
 import type { Ctx, Shot } from "./kit";
 import { RED, bearer, dusk, wash, who } from "./sets";
 
@@ -411,11 +411,116 @@ function laugh(c: Ctx) {
     g.stroke();
   }
 }
+/** a child on someone's shoulders, facing us with the sun behind: ankles held, one hand on the grown-up's head, the other waving a flag */
 function kid(c: Ctx) {
-  const { g, now } = c, bob = Math.abs(Math.sin(now * 7)) * 22;
-  morning(c, 880, 800, now * 0.03, 360);
-  const at = figure(g, 760, 1150 - bob, 760, 1, { ...POSE.stand, aF: [2.55, 0.5], aB: [2.4, 0.6], head: -0.1 }, who(4, RED, { wind: 0.5 }), now);
-  bearer(g, at.sh.x - 30, at.head.y - 20, 360, 1, { lean: 0.02, head: -0.15, aF: [2.15 + 0.2 * Math.sin(now * 9), 0.7], aB: [0.5, 0.7], lF: [1.25, -1.45], lB: [1.05, -1.35] }, who(91, RED, { hair: 3, wind: 0.5 }), now, { len: 190, w: 210, fh: 120, seed: 3, speedK: 1.4, pole: 9 });
+  const { g, now, tw } = c, u = 640, x = 800, by = 1130;
+  morning(c, 800, 800, now * 0.03, 340);
+  // the table, a little way behind them
+  for (let n = 0; n < 14; n++) if (n < 5 || n > 8) sitter(g, -60 + n * 130, 812, 150, who(n + 100, { body: "#d9482c", shade: C.redD, band: 1 }), false, Math.sin(now * 0.8 + n * 1.7), 0, now);
+  poly(g, [-4000, 800, 5600, 800, 5600, 828, -4000, 828], C.paper, C.ink, 6);
+  // the two of them move as one: the grown-up bounces, the child follows a beat late
+  const sway = Math.sin(tw * 3.1) * 0.012 * u, ab = Math.sin(tw * 6.2) * 0.012 * u, kb = ab + Math.sin(tw * 6.2 - 1) * 0.012 * u;
+  const ax = x + sway, hipY = by - 0.5 * u + ab * 0.4, shY = by - 0.79 * u + ab, hr = 0.075 * u, headY = shY - 0.105 * u;
+  const kx = ax, ky = shY - 0.1 * u + (kb - ab), ksx = kx + Math.sin(tw * 6.2 - 1.4) * 0.01 * u, ksy = ky - 0.2 * u, kr = 0.062 * u, khy = ksy - 0.088 * u;
+  const wave = Math.sin(now * 7) * 0.035 * u;
+  const ink = Math.max(4, u * 0.022), lookRim = C.goldHi;
+  const lay = (path: Path2D, body: string = C.red, shade: string = C.redD) => {
+    g.lineJoin = "round";
+    g.lineWidth = ink;
+    g.strokeStyle = C.ink;
+    g.stroke(path);
+    cel(g, path, body, shade, lookRim, 1, u * 0.022, u * 0.01);
+  };
+  const quad = (path: Path2D, x0: number, y0: number, w0: number, x1: number, y1: number, w1: number) => {
+    path.moveTo(x0 - w0, y0);
+    path.lineTo(x1 - w1, y1);
+    path.lineTo(x1 + w1, y1);
+    path.lineTo(x0 + w0, y0);
+    path.closePath();
+  };
+  const cap = (hx: number, hy: number, r: number) => {
+    const pts: number[] = [];
+    for (let i = 0; i <= 12; i++) pts.push(hx + Math.cos(Math.PI + (i / 12) * Math.PI) * r * 1.09, hy - r * 0.1 + Math.sin(Math.PI + (i / 12) * Math.PI) * r * 1.02);
+    poly(g, pts, C.ink);
+  };
+  const band = (hx: number, hy: number, r: number, len: number, seed: number) => {
+    tails(g, hx - r * 0.96, hy - r * 0.26, len, 1, now, seed, 0.85);
+    g.fillStyle = C.ink;
+    g.fillRect(hx - r * 1.03, hy - r * 0.5, r * 2.06, r * 0.42);
+    g.fillStyle = C.red;
+    g.fillRect(hx - r * 1.03, hy - r * 0.43, r * 2.06, r * 0.28);
+  };
+  // the grown-up: legs and trunk
+  const trunk = new Path2D();
+  for (const s of [-1, 1]) {
+    part(trunk, x + s * 0.066 * u, hipY, x + s * 0.086 * u, by - 0.25 * u, 0.125 * u, 0.098 * u);
+    part(trunk, x + s * 0.086 * u, by - 0.25 * u, x + s * 0.092 * u, by, 0.098 * u, 0.072 * u);
+  }
+  quad(trunk, x, hipY + 0.03 * u, 0.105 * u, ax, shY, 0.142 * u);
+  for (const s of [-1, 1]) {
+    trunk.moveTo(ax + s * 0.105 * u + 0.045 * u, shY + 0.01 * u);
+    trunk.arc(ax + s * 0.105 * u, shY + 0.01 * u, 0.045 * u, 0, TAU);
+  }
+  lay(trunk);
+  // the child's body, behind the grown-up's head
+  const kt = new Path2D();
+  quad(kt, kx, ky + 0.02 * u, 0.058 * u, ksx, ksy, 0.07 * u);
+  kt.moveTo(ksx + 0.07 * u, ksy + 0.012 * u);
+  kt.arc(ksx, ksy + 0.012 * u, 0.07 * u, Math.PI, 0);
+  kt.closePath();
+  lay(kt);
+  // the child's legs: over the shoulders either side of the neck, and down the chest
+  const kl = new Path2D();
+  for (const s of [-1, 1]) {
+    const nx = ax + s * 0.128 * u, ny = shY + 0.004 * u + (kb - ab) * 0.5, fx = ax + s * 0.112 * u + Math.sin(tw * 6.2 + s) * 0.006 * u, fy = shY + 0.15 * u;
+    part(kl, kx + s * 0.082 * u, shY - 0.04 * u + (kb - ab), nx, ny, 0.064 * u, 0.056 * u);
+    part(kl, nx, ny, fx, fy, 0.056 * u, 0.044 * u);
+    part(kl, fx, fy, fx + s * 0.012 * u, fy + 0.035 * u, 0.046 * u, 0.042 * u);
+  }
+  lay(kl);
+  // the grown-up's head, between the child's knees
+  const head = new Path2D();
+  part(head, ax, shY, ax, headY, 0.075 * u, 0.075 * u);
+  head.moveTo(ax + hr, headY);
+  head.arc(ax, headY, hr, 0, TAU);
+  lay(head);
+  cap(ax, headY, hr);
+  band(ax, headY, hr, 0.2 * u, 1);
+  // the grown-up's arms: elbows out, hands round the ankles
+  const arms = new Path2D();
+  for (const s of [-1, 1]) {
+    const sxx = ax + s * 0.15 * u, syy = shY + 0.03 * u, ex = ax + s * 0.235 * u, ey = shY + 0.17 * u, hx = ax + s * 0.122 * u, hy = shY + 0.128 * u;
+    part(arms, sxx, syy, ex, ey, 0.078 * u, 0.062 * u);
+    part(arms, ex, ey, hx, hy, 0.062 * u, 0.052 * u);
+    arms.moveTo(hx + 0.04 * u, hy);
+    arms.arc(hx, hy, 0.04 * u, 0, TAU);
+  }
+  lay(arms);
+  // the flag in the child's hand
+  const fhx = ksx - 0.152 * u + wave, fhy = ksy - 0.185 * u, topX = fhx - 0.02 * u + wave * 1.4, topY = fhy - 0.33 * u;
+  brush(g, [fhx + 0.012 * u, fhy + 0.06 * u, topX, topY], Math.max(6, 0.014 * u), C.ink, 2);
+  flag(g, topX, topY, 0.34 * u, 0.19 * u, -1, now, 3, 1, 1.4);
+  // the child's arms: one up with the flag, one resting on the grown-up's head
+  const ka = new Path2D();
+  part(ka, ksx - 0.066 * u, ksy + 0.022 * u, ksx - 0.138 * u + wave * 0.4, ksy - 0.06 * u, 0.048 * u, 0.04 * u);
+  part(ka, ksx - 0.138 * u + wave * 0.4, ksy - 0.06 * u, fhx, fhy, 0.04 * u, 0.034 * u);
+  ka.moveTo(fhx + 0.03 * u, fhy);
+  ka.arc(fhx, fhy, 0.03 * u, 0, TAU);
+  const rhx = ax + 0.05 * u, rhy = headY - hr * 0.98;
+  part(ka, ksx + 0.066 * u, ksy + 0.022 * u, ksx + 0.118 * u, ksy + 0.105 * u, 0.048 * u, 0.04 * u);
+  part(ka, ksx + 0.118 * u, ksy + 0.105 * u, rhx, rhy, 0.04 * u, 0.034 * u);
+  ka.moveTo(rhx + 0.03 * u, rhy);
+  ka.arc(rhx, rhy, 0.03 * u, 0, TAU);
+  lay(ka);
+  // the child's head: bigger for its body than a grown-up's, a knot of hair on top
+  const kh = new Path2D();
+  part(kh, ksx, ksy, ksx, khy, 0.05 * u, 0.05 * u);
+  kh.moveTo(ksx + kr, khy);
+  kh.arc(ksx, khy, kr, 0, TAU);
+  lay(kh);
+  disc(g, ksx + kr * 0.15, khy - kr * 1.12, kr * 0.42, C.ink);
+  cap(ksx, khy, kr);
+  band(ksx, khy, kr, 0.13 * u, 5);
 }
 
 /** everyone, at one table; and the words */
@@ -455,6 +560,6 @@ export const ACT3: Shot[] = [
   { at: 76, bloom: 0.14, cam: (c) => [800, lerp(330, 560, ease(c.u)), lerp(1.3, 1.14, ease(c.u)), 0], draw: arrive },
   { at: 79.5, bloom: 0.14, cam: (c) => [800, 500, 1.04 + 0.04 * c.u, -0.03], draw: bread },
   { at: 80.47, bloom: 0.14, cam: (c) => [800, 520, 1.02 + 0.04 * c.u, 0.03], draw: laugh },
-  { at: 81.43, fx: 760, bloom: 0.14, cam: (c) => [760, 340, 0.9 + 0.05 * c.u, -0.03], draw: kid },
+  { at: 81.43, bloom: 0.14, cam: (c) => [800, 470, 1 + 0.05 * c.u, -0.02], draw: kid },
   { at: 82.4, bloom: 0.14, cam: (c) => [800, c.tall ? 560 : 520, (c.tall ? 1.55 : 1.32) - 0.14 * ease(c.u), 0], draw: last },
 ];
