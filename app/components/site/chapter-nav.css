@@ -1,0 +1,414 @@
+/* ── The home page's masthead (ChapterNav.tsx) ───────────────────────────
+   At the top, the hero's masthead: my name, and the chapters on paper tags.
+   Once the page scrolls under it, it stays: a strip of paper comes up behind
+   it (the tags giving way to the strip), with the chapter seams' tape-measure
+   along it and a stitched thread under the chapter you're in. Its place in
+   the page never changes size, so nothing below it moves. */
+
+/* the thread's two ends, so each can be drawn along on its own */
+@property --cnav-l {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --cnav-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+:root {
+  /* above the masthead, and its height: the hero is laid out under them (hero.css) */
+  --cnav-pad: clamp(12px, 2vw, 26px);
+  --cnav-row: clamp(30px, 3vw, 38px);
+  /* a tag's height, and the paper round the tags in the strip */
+  --cnav-tag: 30px;
+  --cnav-margin: 9px;
+}
+@media (max-width: 720px) {
+  :root {
+    --cnav-pad: 12px;
+    --cnav-row: 30px;
+    --cnav-tag: 27px;
+    --cnav-margin: 8px;
+  }
+}
+
+/* a link to a chapter lands just under the strip, not beneath it */
+html:has(.cnav) {
+  scroll-padding-top: calc(var(--cnav-tag) + var(--cnav-margin) * 2 + 12px);
+}
+
+.cnav {
+  position: sticky;
+  top: 0;
+  z-index: 45;
+  display: flex;
+  justify-content: center;
+  height: calc(var(--cnav-pad) + var(--cnav-row));
+  padding: var(--cnav-pad) clamp(12px, 2.4vw, 32px) 0;
+  /* the band round it lets clicks through to the page */
+  pointer-events: none;
+}
+.cnav-in {
+  position: relative;
+  isolation: isolate;
+  width: min(1240px, 100%);
+  height: var(--cnav-row);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 4px;
+  pointer-events: auto;
+  transition:
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    padding 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* in the strip, drawn up so the paper's top edge is 8px from the window's,
+   its ends in line with the cards below, the contents drawn in from them */
+.cnav[data-stuck] .cnav-in {
+  transform: translateY(calc(8px - var(--cnav-pad) - var(--cnav-row) + var(--cnav-tag) + var(--cnav-margin)));
+  padding: 0 calc(var(--cnav-margin) + 4px) 0 calc(var(--cnav-margin) + 12px);
+}
+
+/* the strip: paper with the doubled, wobbly outline every card here has,
+   coming up behind the masthead */
+.cnav-in::before,
+.cnav-in::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: calc(var(--cnav-row) - var(--cnav-tag) - var(--cnav-margin)) 0 calc(-1 * var(--cnav-margin)) 0;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0;
+  transform: scaleY(0.82);
+  transition:
+    opacity 0.35s ease,
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cnav-in::before {
+  background: var(--paper);
+  box-shadow:
+    0 1px 0 rgba(255, 250, 240, 0.8) inset,
+    4px 5px 0 -1px rgba(140, 47, 67, 0.12),
+    0 16px 28px -16px rgba(74, 12, 24, 0.5);
+}
+.cnav-in::after {
+  border: 1.4px solid var(--ink);
+  filter: url(#rough-s);
+}
+.cnav[data-stuck] .cnav-in::before,
+.cnav[data-stuck] .cnav-in::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* my name, and its underline */
+.cnav-mark {
+  position: relative;
+  flex: none;
+  font-family: var(--font-hand), cursive;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1;
+  color: var(--burgundy);
+  text-decoration: none;
+  transform-origin: 0 100%;
+  transition:
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    color 0.2s ease;
+}
+.cnav-mark svg {
+  position: absolute;
+  left: -2px;
+  bottom: -7px;
+  width: calc(100% + 6px);
+  height: 8px;
+  overflow: visible;
+}
+@media (hover: hover) {
+  .cnav-mark:hover {
+    color: var(--thread);
+  }
+}
+.cnav[data-stuck] .cnav-mark {
+  transform: translateY(-3px) scale(0.8);
+}
+
+/* the chapters */
+.cnav-nav {
+  min-width: 0;
+}
+.cnav-track {
+  position: relative;
+}
+.cnav-list {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+/* at the top, a paper tag each, so they read over the desk's pencil hatching */
+.cnav-list a {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  padding: 8px 13px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background 0.3s ease,
+    color 0.2s ease,
+    padding 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cnav-list a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid var(--ink);
+  border-radius: 999px;
+  filter: url(#rough-s);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+@media (hover: hover) {
+  .cnav-list a:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .cnav-list a:hover .cnav-no {
+    color: var(--thread-hi);
+  }
+  .cnav[data-stuck] .cnav-list a:hover {
+    background: rgba(140, 47, 67, 0.08);
+    color: var(--ink);
+  }
+  .cnav[data-stuck] .cnav-list a:hover .cnav-no {
+    color: var(--thread);
+  }
+}
+.cnav-list a:focus-visible,
+.cnav-mark:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+/* each chapter's number, as on its seam; a label that can fold away on a phone */
+.cnav-no,
+.cnav-t {
+  display: inline-grid;
+  grid-template-columns: 1fr;
+  transition:
+    grid-template-columns 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s ease;
+}
+.cnav-no > span,
+.cnav-t > span {
+  min-width: 0;
+  overflow: hidden;
+}
+.cnav-no {
+  color: var(--thread);
+  letter-spacing: 0.08em;
+}
+.cnav-t > span {
+  padding-left: 0.7em;
+  transition: padding-left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* in the strip, the tags give way to it */
+.cnav[data-stuck] .cnav-list a {
+  background: transparent;
+  color: rgba(74, 12, 24, 0.68);
+}
+.cnav[data-stuck] .cnav-list a::before {
+  opacity: 0;
+}
+.cnav[data-stuck] .cnav-list a[aria-current] {
+  color: var(--ink);
+}
+
+/* the tape-measure along the strip */
+.cnav-track::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -7px;
+  height: 5px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, var(--thread) 0 1px, transparent 1px 30px) 0 100% / 100% 5px no-repeat,
+    repeating-linear-gradient(90deg, var(--thread) 0 1px, transparent 1px 6px) 0 100% / 100% 2.5px no-repeat;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.cnav[data-stuck] .cnav-track::after {
+  opacity: 0.3;
+}
+
+/* the thread under the chapter you're in: a running stitch, drawn along
+   when the chapter changes. The end it's heading for goes first, the tail
+   follows, so it stretches as it travels and draws up short as it lands. */
+.cnav-thread {
+  position: absolute;
+  left: var(--cnav-l);
+  bottom: -6px;
+  width: max(0px, calc(var(--cnav-r) - var(--cnav-l)));
+  height: 8px;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.cnav-thread path {
+  fill: none;
+  stroke: var(--thread);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
+}
+.cnav[data-stuck] .cnav-thread[data-on] {
+  opacity: 1;
+}
+.cnav-thread[data-dir="r"] {
+  transition:
+    --cnav-r 0.42s cubic-bezier(0.3, 0.9, 0.3, 1),
+    --cnav-l 0.52s cubic-bezier(0.55, 0, 0.2, 1) 0.1s,
+    opacity 0.3s ease;
+}
+.cnav-thread[data-dir="l"] {
+  transition:
+    --cnav-l 0.42s cubic-bezier(0.3, 0.9, 0.3, 1),
+    --cnav-r 0.52s cubic-bezier(0.55, 0, 0.2, 1) 0.1s,
+    opacity 0.3s ease;
+}
+
+/* narrower: the masthead's tags drop their numbers (the strip keeps them) */
+@media (max-width: 899px) {
+  .cnav:not([data-stuck]) .cnav-no {
+    grid-template-columns: 0fr;
+    opacity: 0;
+  }
+  .cnav:not([data-stuck]) .cnav-t > span {
+    padding-left: 0;
+  }
+}
+
+/* in a narrower strip the chapters sit closer together; narrower still, they
+   are numbers, and the chapter you're in opens out to its name (as on a phone) */
+@media (max-width: 1100px) {
+  .cnav[data-stuck] .cnav-list {
+    gap: 2px;
+    letter-spacing: 0.14em;
+  }
+  .cnav[data-stuck] .cnav-list a {
+    padding: 9px 9px 8px;
+  }
+}
+@media (min-width: 721px) and (max-width: 860px) {
+  .cnav[data-stuck] .cnav-t {
+    grid-template-columns: 0fr;
+    opacity: 0;
+  }
+  .cnav[data-stuck] a[aria-current] .cnav-t {
+    grid-template-columns: 1fr;
+    opacity: 1;
+  }
+}
+
+/* phones: smaller tags; in the strip, numbers, and the chapter you're in
+   opens out to its name */
+@media (max-width: 720px) {
+  .cnav-in {
+    align-items: center;
+  }
+  .cnav-list {
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .cnav-list a {
+    padding: 7px 10px 6px;
+  }
+  .cnav[data-stuck] .cnav-list {
+    gap: 2px;
+  }
+  .cnav[data-stuck] .cnav-list a {
+    padding: 8px 8px 7px;
+  }
+  .cnav[data-stuck] .cnav-t {
+    grid-template-columns: 0fr;
+    opacity: 0;
+  }
+  .cnav[data-stuck] .cnav-t > span {
+    padding-left: 0.6em;
+  }
+  .cnav[data-stuck] a[aria-current] .cnav-t {
+    grid-template-columns: 1fr;
+    opacity: 1;
+  }
+  /* the name made smaller, not scaled, so the chapters get the room */
+  .cnav[data-stuck] .cnav-in {
+    gap: 8px;
+    padding: 0 6px 0 14px;
+  }
+  .cnav-mark {
+    transition:
+      font-size 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 0.2s ease;
+  }
+  .cnav[data-stuck] .cnav-mark {
+    transform: none;
+    font-size: 23px;
+  }
+}
+/* narrow phones: at the top, the board is right below and the film is at the foot */
+@media (max-width: 420px) {
+  .cnav:not([data-stuck]) .cnav-list li[data-wide] {
+    display: none;
+  }
+  .cnav[data-stuck] .cnav-list {
+    letter-spacing: 0.08em;
+  }
+  .cnav[data-stuck] .cnav-list a {
+    padding: 8px 6px 7px;
+  }
+}
+/* the narrowest: in the strip, the film's door is left to the foot of the page */
+@media (max-width: 360px) {
+  .cnav[data-stuck] .cnav-list li[data-door] {
+    display: none;
+  }
+}
+@media (max-width: 340px) {
+  .cnav[data-stuck] .cnav-mark {
+    font-size: 20px;
+  }
+  .cnav[data-stuck] .cnav-list {
+    letter-spacing: 0.04em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cnav-in,
+  .cnav-in::before,
+  .cnav-in::after,
+  .cnav-mark,
+  .cnav-list a,
+  .cnav-no,
+  .cnav-t,
+  .cnav-t > span,
+  .cnav-thread[data-dir] {
+    transition: none;
+  }
+}

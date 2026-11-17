@@ -42,15 +42,9 @@
 .md h3 + * {
   margin-top: 0.55em;
 }
+/* links are sewn along a pencil line when pointed at (globals.css) */
 .md a {
   color: inherit;
-  text-decoration: underline dashed var(--thread) 1.5px;
-  text-underline-offset: 4px;
-  transition: background 0.2s ease;
-}
-.md a:hover {
-  background: rgba(140, 47, 67, 0.1);
-  text-decoration-style: solid;
 }
 .md strong {
   font-weight: 650;
@@ -216,6 +210,7 @@
   background: rgba(243, 227, 223, 0.06);
   border-left-color: var(--term-prompt);
 }
-.tbr-sheet[data-topic="linux"] .md a {
-  text-decoration-color: var(--term-prompt);
+.tbr-sheet[data-topic="linux"] {
+  --stitch: var(--term-prompt);
+  --stitch-rest: rgba(242, 196, 203, 0.4);
 }

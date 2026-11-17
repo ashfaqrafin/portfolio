@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { clearRed } from "../site/door-bloom";
 import { startFilm } from "./engine";
 import { END, SCENES } from "./film";
 import "./film.css";
@@ -31,6 +32,8 @@ function Script() {
 export default function Film({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => (ref.current ? startFilm(ref.current) : undefined), []);
+  // reached through the door on the home page: the red that ran out of the rag clears off (site/door-bloom.ts)
+  useEffect(() => clearRed(), []);
 
   return (
     <div ref={ref} className={`film ${className}`} data-state="title" data-sound="off" data-no-cut>

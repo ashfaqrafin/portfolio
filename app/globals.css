@@ -134,6 +134,55 @@ html {
   color: var(--cream);
 }
 
+/* ── one hover for every text link: sewn along the pencil line ────────────
+   A tailor marks the line in pencil, then sews along it. A text link rests
+   on a faint pencil line; pointed at (or focused), a running stitch in thread
+   is sewn in along it, left to right, the same stitch as the one under the
+   headline's "or don't."; as the pointer leaves, the thread is pulled out
+   through the far end. Painted as backgrounds, so it follows a link over a
+   line break.
+     .stitch      a text link
+     .stitch-in   the words inside a bigger link (a list row, a card),
+                  sewn when the link is pointed at; no pencil line at rest
+   --stitch and --stitch-rest set the thread and the pencil, for a dark skin. */
+.stitch,
+.stitch-in,
+.md a {
+  text-decoration: none;
+  background-image:
+    repeating-linear-gradient(90deg, var(--stitch, var(--thread)) 0 6px, transparent 6px 10px),
+    linear-gradient(var(--stitch-rest, rgba(140, 47, 67, 0.38)), var(--stitch-rest, rgba(140, 47, 67, 0.38)));
+  background-repeat: no-repeat;
+  background-position:
+    100% 100%,
+    0 100%;
+  background-size:
+    0% 2px,
+    100% 1px;
+  padding-bottom: 0.12em;
+  transition: background-size 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.stitch-in {
+  --stitch-rest: transparent;
+}
+.stitch:is(:hover, :focus-visible),
+.md a:is(:hover, :focus-visible),
+:is(a, button):is(:hover, :focus-visible) .stitch-in {
+  background-position:
+    0 100%,
+    0 100%;
+  background-size:
+    100% 2px,
+    100% 1px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stitch,
+  .stitch-in,
+  .md a {
+    transition: none;
+  }
+}
+
 /* the owner's writing shortcuts (OwnerBar.tsx): only ever shown to the owner */
 .owner-bar {
   position: fixed;
@@ -237,5 +286,135 @@ html {
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation-duration: 0.5s;
+  }
+}
+
+/* ── One sheet of paper, three sizes (threadboard/lift.ts) ────────────────
+   An article's card on the board, its quick-read popup and its page's title
+   box are drawn as one sheet going from place to place. Up, off its pin: the
+   card is lifted (a deeper shadow while it's in the air), straightened from
+   its tilt and grown into the popup, its face giving way to the popup's on
+   the way. Down, back onto the board: the same the other way round, a little
+   quicker, as putting a thing back is. Both faces are held by their top-left
+   corner, where the kicker and title are, so the words stay put while the
+   paper grows round them: the card is scaled to the sheet's width; the sheet
+   fills the card's place from its top. */
+::view-transition-group(.tb-lift-up) {
+  animation-duration: 0.62s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-group(.tb-lift-down) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.15, 1);
+}
+/* following a thread, one card goes back down as the next comes up: the one
+   going back passes under the one coming up */
+::view-transition-group(.tb-lift-down) {
+  z-index: 1;
+}
+::view-transition-group(.tb-lift-up) {
+  z-index: 2;
+}
+::view-transition-image-pair(.tb-lift-up),
+::view-transition-image-pair(.tb-lift-down) {
+  animation: tb-lift-air 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+::view-transition-image-pair(.tb-lift-down) {
+  animation-duration: 0.5s;
+}
+::view-transition-old(.tb-lift-up),
+::view-transition-new(.tb-lift-up),
+::view-transition-old(.tb-lift-down),
+::view-transition-new(.tb-lift-down) {
+  height: 100%;
+  object-position: 0 0;
+}
+::view-transition-old(.tb-lift-up),
+::view-transition-new(.tb-lift-down) {
+  object-fit: contain;
+}
+::view-transition-new(.tb-lift-up),
+::view-transition-old(.tb-lift-down) {
+  object-fit: cover;
+}
+/* one face hands over to the other: their opacities always add up to one,
+   so the paper is never see-through in the air */
+::view-transition-old(.tb-lift-up) {
+  animation: tb-face-out 0.62s linear both;
+}
+::view-transition-new(.tb-lift-up) {
+  animation: tb-face-in 0.62s linear both;
+}
+::view-transition-old(.tb-lift-down) {
+  animation: tb-face-out 0.5s linear both;
+}
+::view-transition-new(.tb-lift-down) {
+  animation: tb-face-in 0.5s linear both;
+}
+/* the popup with no card to come from (opened from the list) or go back to */
+::view-transition-new(.tb-pin-in) {
+  animation: tb-pin-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+::view-transition-old(.tb-pin-out) {
+  animation: tb-pin-out 0.2s ease-in both;
+}
+/* "Read the full article": the popup's title block grows into the page's title box */
+::view-transition-group(tb-head) {
+  animation-duration: 0.56s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-old(tb-head) {
+  animation: tb-face-out 0.56s linear both;
+}
+::view-transition-new(tb-head) {
+  animation: tb-face-in 0.56s linear both;
+}
+@keyframes tb-lift-air {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(42, 10, 18, 0));
+  }
+  42% {
+    filter: drop-shadow(0 22px 20px rgba(42, 10, 18, 0.28));
+  }
+}
+@keyframes tb-face-out {
+  0%,
+  6% {
+    opacity: 1;
+  }
+  28%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes tb-face-in {
+  0%,
+  6% {
+    opacity: 0;
+  }
+  28%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes tb-pin-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) rotate(-1.2deg) scale(0.985);
+  }
+}
+@keyframes tb-pin-out {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) rotate(-0.8deg) scale(0.985);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

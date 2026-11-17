@@ -10,8 +10,12 @@ export default function NotFound() {
         <h1 className="nf-title">This thread doesn&rsquo;t lead anywhere.</h1>
         <p className="nf-sub">Maybe it was never pinned, or it&rsquo;s still on the cutting table.</p>
         <p className="nf-links">
-          <Link href="/blog">Back to the thread board</Link>
-          <Link href="/">Home</Link>
+          <Link className="stitch" href="/blog">
+            Back to the thread board
+          </Link>
+          <Link className="stitch" href="/">
+            Home
+          </Link>
         </p>
       </div>
     </main>

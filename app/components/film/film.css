@@ -202,6 +202,65 @@
   }
 }
 
+/* ── through the door ─────────────────────────────────────────────────────
+   Reached from the red rag at the foot of the home page, whose red ran out
+   until the window was red (site/door-bloom.ts): the page opens still red
+   (data-door="in", set by layout.tsx before the first paint), until the
+   script clears it with a bloom of clear water from the title outwards
+   (data-door="clearing"). The title comes up out of it on the bare paper, its
+   shadow growing as it lifts off the page, its own red the last of the dye;
+   then the rest. If the script never comes, the red lifts by itself. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-door="in"] .film::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    background: #c8102e;
+    animation: film-door-lift 0.6s ease 2.6s forwards;
+  }
+  html[data-door="clearing"] .film-title h1 {
+    animation: film-door-rise 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s backwards;
+  }
+  html[data-door="clearing"] .film-kicker,
+  html[data-door="clearing"] .film-lede,
+  html[data-door="clearing"] .film-begin,
+  html[data-door="clearing"] .film-top {
+    animation: film-door-up 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+  html[data-door="clearing"] .film-kicker {
+    animation-delay: 0.42s;
+  }
+  html[data-door="clearing"] .film-lede {
+    animation-delay: 0.56s;
+  }
+  html[data-door="clearing"] .film-begin {
+    animation-delay: 0.68s;
+  }
+  html[data-door="clearing"] .film-top {
+    animation-delay: 0.85s;
+  }
+}
+@keyframes film-door-lift {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@keyframes film-door-rise {
+  from {
+    transform: translateY(0.24em) rotate(-3deg) scale(0.93);
+    text-shadow: 0 0 0 var(--f-ink);
+  }
+}
+@keyframes film-door-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 /* ── the timeline ─────────────────────────────────────────────────────────── */
 .film-bar {
   position: absolute;

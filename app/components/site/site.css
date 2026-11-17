@@ -161,8 +161,6 @@
 }
 .nf-links a {
   color: var(--ink);
-  text-decoration: underline dashed var(--thread) 1.5px;
-  text-underline-offset: 5px;
 }
 
 /* the door to the world view, at the foot of the home page (WorldDoor.tsx) */
@@ -239,6 +237,16 @@
 }
 .door-link:hover .door-title,
 .door-link:focus-visible .door-title {
+  background-size: 100% 2px;
+}
+/* going through: the rag snaps in a gust as its red runs out (door-bloom.ts) */
+.door-link[data-going] .door-rag {
+  transform: rotate(7deg) translateY(-6px);
+}
+.door-link[data-going] .door-cloth {
+  animation-duration: 0.42s;
+}
+.door-link[data-going] .door-title {
   background-size: 100% 2px;
 }
 @media (prefers-reduced-motion: reduce) {

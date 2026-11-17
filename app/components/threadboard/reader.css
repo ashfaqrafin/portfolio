@@ -43,6 +43,13 @@
     transform: translateY(-14px) rotate(-1.2deg) scale(0.985);
   }
 }
+/* where the browser can draw it as the card itself, lifted off the board
+   (lift.ts, globals.css), that is its entrance instead */
+@supports (view-transition-name: none) {
+  .tbr-sheet {
+    animation: none;
+  }
+}
 .tbr-sheet::before {
   content: "";
   position: absolute;
@@ -196,10 +203,6 @@
   font-family: var(--font-display), Georgia, serif;
   font-size: 18px;
   line-height: 1.2;
-}
-.tbr-threads a:hover .tbr-rel-title {
-  text-decoration: underline dashed var(--thread) 1.5px;
-  text-underline-offset: 4px;
 }
 
 .tbr-actions {

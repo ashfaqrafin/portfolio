@@ -330,7 +330,7 @@ await check("world view", "it opens on the film's title card, with the film also
   const p = await ctx.newPage();
   watch(p, "world view");
   await p.goto(BASE + "/", { waitUntil: "load" });
-  assert(await p.locator('.hero-nav a[href="/worldview"]').count(), "the home page doesn't link to it");
+  assert(await p.locator('.cnav a[href="/worldview"]').count(), "the home page doesn't link to it");
   assert((await p.locator(".door-title").innerText()).trim() === "All of us", "the door doesn't name the film");
   await p.goto(BASE + "/worldview", { waitUntil: "load" });
   await p.waitForSelector(".film[data-ready]", { timeout: 15000 });

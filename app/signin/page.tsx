@@ -59,7 +59,9 @@ export default function SignInPage({ searchParams }: PageProps<"/signin">) {
           <SignInForm searchParams={searchParams} />
         </Suspense>
         <p className="st-fine">
-          Just here to read? <Link href="/blog">The thread board</Link> is open to everyone.
+          Just here to read? <Link className="stitch" href="/blog">
+            The thread board
+          </Link> is open to everyone.
         </p>
       </div>
     </main>

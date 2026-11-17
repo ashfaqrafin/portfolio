@@ -127,34 +127,6 @@ export default function Hero() {
         </defs>
       </svg>
 
-      <div className="hero-masthead">
-        <p className="hero-mark">
-          <span>Ashfaq</span>
-          <svg viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-            <path d="M2 6C20 2 34 8 54 4.5C74 1.5 92 7.5 118 3.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-          </svg>
-        </p>
-        <nav className="hero-nav" aria-label="Sections">
-          {/* numbered as the chapters are (ChapterSeam) */}
-          <a className="hero-nav-wide" href="#blog">
-            <span className="hero-nav-no">01</span>Thread board
-          </a>
-          <a href="#education">
-            <span className="hero-nav-no">02</span>Education
-          </a>
-          <a href="#projects">
-            <span className="hero-nav-no">03</span>Projects
-          </a>
-          <a href="#contact">
-            <span className="hero-nav-no">04</span>Contact
-          </a>
-          {/* a page of its own, not a section: the arrow instead of a number */}
-          <a className="hero-nav-wide" href="/worldview">
-            <span className="hero-nav-no">↗</span>World view
-          </a>
-        </nav>
-      </div>
-
       <div className="hero-card">
         <header className="hero-head">
           <h1 className="hero-h1">

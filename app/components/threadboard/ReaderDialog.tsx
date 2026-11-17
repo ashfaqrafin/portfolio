@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useId, useRef, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, ViewTransition, type MouseEvent, type ReactNode } from "react";
 import type { RelatedRef } from "@/lib/blog/data";
 import { formatDate } from "@/lib/blog/format";
 import { REL_LABEL } from "@/lib/blog/graph";
 import { TOPIC_LABEL } from "@/lib/blog/topics";
 import type { Topic } from "@/lib/blog/types";
+import { HEAD_NAME, LIFT_UP, liftName, PIN_IN, PIN_OUT } from "./lift";
 import "./reader.css";
 
 /* The quick-read popup. Framework-agnostic: closing and following a thread are
-   callbacks. "Read the full article" is a plain link, so it is a real page load. */
+   callbacks. "Read the full article" is a plain link, so it is a real page load.
+
+   It is the card off the board, grown (lift.ts): the sheet shares the card's
+   view-transition name, so opening lifts the card off its pin into the popup
+   and closing puts it back. On "Read the full article" the title block is
+   named for the page load too, and grows into the article's title box. */
 
 export type ReaderArticle = {
   slug: string;
@@ -56,12 +62,15 @@ export default function ReaderDialog({ article, children, isWhole, relations, fu
   const sheetRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLElement>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
-  useEffect(() => {
+  // a layout effect: the popup has focus the moment it's there, not a frame or two later
+  // when it arrives as the card lifted off the board (a view transition holds plain effects back)
+  useLayoutEffect(() => {
     // Next can keep a closed route mounted but hidden (display: none) to make "forward"
     // instant. A hidden dialog must not take focus or lock the page; when it is shown
     // again the effect runs again.
@@ -129,62 +138,77 @@ export default function ReaderDialog({ article, children, isWhole, relations, fu
     onFollow(slug);
   };
 
+  // the title block goes on to the article's page with this page load (see lift.ts)
+  const toFull = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !headRef.current) return;
+    const head = headRef.current;
+    head.style.viewTransitionName = HEAD_NAME;
+    // back again from the article (the page restored as it was left): unname it
+    window.addEventListener("pageshow", () => head.style.removeProperty("view-transition-name"), { once: true });
+  };
+
   const shown = relations.slice(0, 5);
 
   return (
     <div className="tbr" ref={scrollRef} onClick={onBackdrop}>
-      <article ref={sheetRef} className="tbr-sheet" data-topic={article.topic} role="dialog" aria-modal="true" aria-labelledby={`${id}-t`} key={article.slug}>
-        <span className="tbr-deco" aria-hidden="true" />
-        <button ref={closeRef} type="button" className="tbr-close" onClick={onClose} aria-label="Close the quick read">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
-            <path d="M5.5 5.8C10 10.2 13.8 14 18.6 18.4M18.3 5.5C13.9 10 10 13.7 5.7 18.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-
-        <p className="tbr-kicker">
-          {TOPIC_LABEL[article.topic]} &middot; {formatDate(article.date)} &middot; {article.readMins} min read
-        </p>
-        <h2 className="tbr-title" id={`${id}-t`}>
-          {article.topic === "linux" && <span className="tbr-prompt">$ </span>}
-          {article.title}
-        </h2>
-        {article.excerpt && <p className="tbr-excerpt">{article.excerpt}</p>}
-
-        <div className="tbr-body">{children}</div>
-
-        <p className="tbr-note">
-          <span aria-hidden="true">&#9986;</span>{" "}
-          {isWhole ? "That’s the whole piece. It’s a short one." : `That was the quick read. The full piece runs ${article.readMins} min.`}
-        </p>
-
-        {shown.length > 0 && (
-          <nav className="tbr-threads" aria-label="Follow a thread">
-            <h3>Follow a thread</h3>
-            <ul>
-              {shown.map((r) => (
-                <li key={r.slug}>
-                  <a href={hrefFor(r.slug)} data-topic={r.topic} onClick={(e) => follow(e, r.slug)}>
-                    <span className="tbr-rel" data-kind={r.kind}>
-                      {REL_LABEL[r.rel]}
-                      {r.note ? <em> &middot; {r.note}</em> : null}
-                    </span>
-                    <span className="tbr-rel-title">{r.title}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
-
-        <div className="tbr-actions">
-          <a className="tbr-btn tbr-primary" href={fullHref}>
-            Read the full article <span aria-hidden="true">&rarr;</span>
-          </a>
-          <button type="button" className="tbr-btn" onClick={onClose}>
-            Keep exploring
+      <ViewTransition key={article.slug} name={liftName(article.slug)} share={LIFT_UP} enter={PIN_IN} exit={PIN_OUT} default="none">
+        <article ref={sheetRef} className="tbr-sheet" data-topic={article.topic} role="dialog" aria-modal="true" aria-labelledby={`${id}-t`}>
+          <span className="tbr-deco" aria-hidden="true" />
+          <button ref={closeRef} type="button" className="tbr-close" onClick={onClose} aria-label="Close the quick read">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+              <path d="M5.5 5.8C10 10.2 13.8 14 18.6 18.4M18.3 5.5C13.9 10 10 13.7 5.7 18.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </button>
-        </div>
-      </article>
+
+          <header className="tbr-head" ref={headRef}>
+            <p className="tbr-kicker">
+              {TOPIC_LABEL[article.topic]} &middot; {formatDate(article.date)} &middot; {article.readMins} min read
+            </p>
+            <h2 className="tbr-title" id={`${id}-t`}>
+              {article.topic === "linux" && <span className="tbr-prompt">$ </span>}
+              {article.title}
+            </h2>
+            {article.excerpt && <p className="tbr-excerpt">{article.excerpt}</p>}
+          </header>
+
+          <div className="tbr-body">{children}</div>
+
+          <p className="tbr-note">
+            <span aria-hidden="true">&#9986;</span>{" "}
+            {isWhole ? "That’s the whole piece. It’s a short one." : `That was the quick read. The full piece runs ${article.readMins} min.`}
+          </p>
+
+          {shown.length > 0 && (
+            <nav className="tbr-threads" aria-label="Follow a thread">
+              <h3>Follow a thread</h3>
+              <ul>
+                {shown.map((r) => (
+                  <li key={r.slug}>
+                    <a href={hrefFor(r.slug)} data-topic={r.topic} onClick={(e) => follow(e, r.slug)}>
+                      <span className="tbr-rel" data-kind={r.kind}>
+                        {REL_LABEL[r.rel]}
+                        {r.note ? <em> &middot; {r.note}</em> : null}
+                      </span>
+                      <span className="tbr-rel-title">
+                          <span className="stitch-in">{r.title}</span>
+                        </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
+          <div className="tbr-actions">
+            <a className="tbr-btn tbr-primary" href={fullHref} onClick={toFull}>
+              Read the full article <span aria-hidden="true">&rarr;</span>
+            </a>
+            <button type="button" className="tbr-btn" onClick={onClose}>
+              Keep exploring
+            </button>
+          </div>
+        </article>
+      </ViewTransition>
     </div>
   );
 }

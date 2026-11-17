@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  ViewTransition,
   type CSSProperties,
   type KeyboardEvent as RKeyboardEvent,
   type MouseEvent as RMouseEvent,
@@ -19,6 +20,7 @@ import { REL_LABEL } from "@/lib/blog/graph";
 import { danglingGeom, headOf, LANE_GAP, offboardGeom, threadGeom, threadJitter, type Pt } from "@/lib/blog/layout";
 import { TOPIC_LABEL, TOPICS } from "@/lib/blog/topics";
 import type { Edge, Topic } from "@/lib/blog/types";
+import { LIFT_DOWN, liftName } from "./lift";
 import "./threadboard.css";
 
 /* The Thread Board. Framework-agnostic: it knows nothing about routing.
@@ -495,7 +497,8 @@ export default function ThreadBoard({
   };
 
   // ── hover preview placement (screen space, outside the zoomed world) ──────
-  const previewSlug = dragging ? null : (hover ?? focused);
+  // no preview while a card is off the board and open in the reader
+  const previewSlug = dragging || openSlug ? null : (hover ?? focused);
   const [previewAt, setPreviewAt] = useState<{ left: number; top: number; side: "r" | "l" } | null>(null);
   const rootRef = useRef<HTMLElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -760,18 +763,26 @@ export default function ThreadBoard({
                 }}
                 onBlur={() => setFocused((f) => (f === p.slug ? null : f))}
               >
-                <span className="tb-card">
-                  <span className="tb-deco" aria-hidden="true" />
-                  <span className="tb-pin-kicker">
-                    {TOPIC_LABEL[p.topic]} &middot; {p.readMins} min
-                  </span>
-                  <span className="tb-pin-title">
-                    {p.topic === "linux" && <span className="tb-prompt">$ </span>}
-                    {p.title}
-                  </span>
-                  <span className="tb-pin-date">{formatDate(p.date)}</span>
-                  {p.isNewest && <span className="tb-new">new</span>}
-                </span>
+                {/* while it's open in the reader the card is off the board, in your
+                    hands (lift.ts): only its pin is left, over the paler patch it hung on */}
+                {openSlug === p.slug ? (
+                  <span className="tb-card-gone" aria-hidden="true" />
+                ) : (
+                  <ViewTransition name={liftName(p.slug)} share={LIFT_DOWN} default="none">
+                    <span className="tb-card">
+                      <span className="tb-deco" aria-hidden="true" />
+                      <span className="tb-pin-kicker">
+                        {TOPIC_LABEL[p.topic]} &middot; {p.readMins} min
+                      </span>
+                      <span className="tb-pin-title">
+                        {p.topic === "linux" && <span className="tb-prompt">$ </span>}
+                        {p.title}
+                      </span>
+                      <span className="tb-pin-date">{formatDate(p.date)}</span>
+                      {p.isNewest && <span className="tb-new">new</span>}
+                    </span>
+                  </ViewTransition>
+                )}
               </a>
             );
           })}
@@ -966,7 +977,9 @@ export default function ThreadBoard({
                         {TOPIC_LABEL[p.topic]} &middot; {formatDate(p.date)} &middot; {p.readMins} min
                         {looseSet.has(p.slug) && <> &middot; loose</>}
                       </span>
-                      <span className="tb-row-title">{p.title}</span>
+                      <span className="tb-row-title">
+                        <span className="stitch-in">{p.title}</span>
+                      </span>
                       {p.excerpt && <span className="tb-row-excerpt">{p.excerpt}</span>}
                       {p.rels.length > 0 && <span className="tb-row-rels">{p.rels.map(([k, v]) => `${k} ${v.join(", ")}`).join(" · ")}</span>}
                     </span>

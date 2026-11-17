@@ -38,13 +38,15 @@
 .art-back:hover,
 .art-board:hover {
   color: var(--ink);
-  text-decoration: underline dashed 1.5px;
-  text-underline-offset: 5px;
 }
 
 /* header and its topic skin */
 .art-head {
   position: relative;
+  /* arriving from the quick read, the popup's title block grows into this
+     (threadboard/lift.ts); from one article to the next, one title box gives
+     way to the other in place */
+  view-transition-name: tb-head;
   margin-top: clamp(18px, 3vw, 30px);
   padding: clamp(22px, 3vw, 34px) clamp(18px, 3vw, 30px) clamp(20px, 2.6vw, 28px);
   background: var(--note);
@@ -407,6 +409,9 @@
   font-size: 19px;
   line-height: 1.15;
 }
+.art-thread[data-topic="linux"] {
+  --stitch: var(--term-prompt);
+}
 .art-thread[data-topic="linux"] .art-thread-title {
   font-family: var(--font-mono), monospace;
   font-weight: 700;
@@ -447,10 +452,6 @@
   font-family: var(--font-display), Georgia, serif;
   font-size: 19px;
   line-height: 1.15;
-}
-.art-pager a:hover .art-pager-t {
-  text-decoration: underline dashed var(--thread) 1.5px;
-  text-underline-offset: 4px;
 }
 .art-board {
   justify-self: center;

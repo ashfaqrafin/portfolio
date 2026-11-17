@@ -46,6 +46,12 @@ export const metadata: Metadata = {
    have loaded; the intro then fades straight away to the desk. When it is to
    play, the drawings it needs are asked for at once, from here in the head.
    Without JavaScript the attribute is never set, so the intro never shows. */
+/* Reached through the door at the foot of the home page (site/WorldDoor.tsx),
+   the world view opens under the red that ran out of the rag there
+   (data-door, film.css): set before the first paint, so the red is the first
+   frame here as it was the last there. Once only, never with reduced motion. */
+const DOOR_GATE = `try{var ds=sessionStorage;if(ds.getItem("door")){ds.removeItem("door");if(location.pathname==="/worldview"&&!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.dataset.door="in"}}catch(e){}`;
+
 const INTRO_GATE = `try{var d=document.documentElement,s=sessionStorage;d.dataset.intro=location.pathname==="/"&&!location.hash&&!s.getItem("intro-seen")&&!matchMedia("(prefers-reduced-motion: reduce)").matches?"play":"seen";s.setItem("intro-seen","1");if(d.dataset.intro==="play"){var l=document.createElement("link");l.rel="preload";l.as="image";l.href=${JSON.stringify(ATLAS)};l.setAttribute("fetchpriority","high");document.head.appendChild(l);var k=function(){d.dataset.introSkip="";d.dataset.intro="seen"};["pointerdown","keydown","wheel","touchstart"].forEach(function(e){addEventListener(e,k,{once:true,passive:true})})}}catch(e){}`;
 
 export default function RootLayout({ children, modal }: LayoutProps<"/">) {
@@ -57,7 +63,7 @@ export default function RootLayout({ children, modal }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: INTRO_GATE }} />
+        <script dangerouslySetInnerHTML={{ __html: INTRO_GATE + DOOR_GATE }} />
       </head>
       <body className="min-h-full flex flex-col">
         <RoughDefs />

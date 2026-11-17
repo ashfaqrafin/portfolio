@@ -1,49 +1,57 @@
 import Link from "next/link";
+import { ViewTransition } from "react";
 import type { ArticlePageData } from "@/lib/blog/data";
 import { formatDate } from "@/lib/blog/format";
 import { REL_LABEL } from "@/lib/blog/graph";
 import { fullBody } from "@/lib/blog/quickread";
 import { TOPIC_ANNOT, TOPIC_LABEL } from "@/lib/blog/topics";
+import { LIFT_UP, liftName } from "../threadboard/lift";
 import Markdown from "../threadboard/Markdown";
 import "./article.css";
 import ReadingProgress from "./ReadingProgress";
 
 /* The full article page. Links to other articles are plain <a> on purpose: a
-   <Link> to /blog/<slug> would be intercepted into the quick-read popup. */
+   <Link> to /blog/<slug> would be intercepted into the quick-read popup.
+
+   Its title box is the article's card, grown (threadboard/lift.ts): back to
+   the board, it shrinks onto its pin again. Arriving from the quick read, the
+   popup's title block grows into it (art-head's view-transition-name). */
 export default function ArticleView({ data }: { data: ArticlePageData }) {
   const { article: a, relations, prev, next } = data;
   return (
     <>
       <ReadingProgress target=".art" />
       <article className="sheet art" data-topic={a.topic} data-no-cut>
-        <Link className="art-back" href="/blog">
+        <Link className="art-back stitch" href="/blog">
           <span aria-hidden="true">&larr;</span> back to the board
         </Link>
 
-        <header className="art-head">
-          <div className="art-skin" aria-hidden="true">
-            {a.topic === "linux" && <span className="art-skin-path">~/threads/{a.slug}.md</span>}
-          </div>
-          <p className="art-kicker">
-            <span>{TOPIC_LABEL[a.topic]}</span>
-            <span aria-hidden="true">&middot;</span>
-            <time dateTime={a.date}>{formatDate(a.date)}</time>
-            <span aria-hidden="true">&middot;</span>
-            <span>{a.readMins} min read</span>
-          </p>
-          <h1 className="art-title">
-            {a.topic === "linux" && <span className="art-prompt" aria-hidden="true">$ </span>}
-            {a.title}
-          </h1>
-          {a.excerpt && <p className="art-excerpt">{a.excerpt}</p>}
-          {a.tags.length > 0 && (
-            <ul className="art-tags" aria-label="Tags">
-              {a.tags.map((t) => (
-                <li key={t}>#{t}</li>
-              ))}
-            </ul>
-          )}
-        </header>
+        <ViewTransition name={liftName(a.slug)} share={LIFT_UP} default="none">
+          <header className="art-head">
+            <div className="art-skin" aria-hidden="true">
+              {a.topic === "linux" && <span className="art-skin-path">~/threads/{a.slug}.md</span>}
+            </div>
+            <p className="art-kicker">
+              <span>{TOPIC_LABEL[a.topic]}</span>
+              <span aria-hidden="true">&middot;</span>
+              <time dateTime={a.date}>{formatDate(a.date)}</time>
+              <span aria-hidden="true">&middot;</span>
+              <span>{a.readMins} min read</span>
+            </p>
+            <h1 className="art-title">
+              {a.topic === "linux" && <span className="art-prompt" aria-hidden="true">$ </span>}
+              {a.title}
+            </h1>
+            {a.excerpt && <p className="art-excerpt">{a.excerpt}</p>}
+            {a.tags.length > 0 && (
+              <ul className="art-tags" aria-label="Tags">
+                {a.tags.map((t) => (
+                  <li key={t}>#{t}</li>
+                ))}
+              </ul>
+            )}
+          </header>
+        </ViewTransition>
 
         <Markdown source={fullBody(a.body)} className="md art-body" />
 
@@ -65,7 +73,9 @@ export default function ArticleView({ data }: { data: ArticlePageData }) {
                         {r.note && <em> &middot; {r.note}</em>}
                         {r.kind === "topic" && r.shared.length > 0 && <em> &middot; {r.shared.map((t) => `#${t}`).join(" ")}</em>}
                       </span>
-                      <span className="art-thread-title">{r.title}</span>
+                      <span className="art-thread-title">
+                        <span className="stitch-in">{r.title}</span>
+                      </span>
                       <span className="art-thread-meta">
                         {TOPIC_LABEL[r.topic]} &middot; {formatDate(r.date)}
                       </span>
@@ -82,7 +92,9 @@ export default function ArticleView({ data }: { data: ArticlePageData }) {
             {prev ? (
               <a href={`/blog/${prev.slug}`} rel="prev">
                 <span className="art-pager-k">&larr; older</span>
-                <span className="art-pager-t">{prev.title}</span>
+                <span className="art-pager-t">
+                  <span className="stitch-in">{prev.title}</span>
+                </span>
               </a>
             ) : (
               <span />
@@ -90,14 +102,16 @@ export default function ArticleView({ data }: { data: ArticlePageData }) {
             {next ? (
               <a href={`/blog/${next.slug}`} rel="next" className="art-pager-next">
                 <span className="art-pager-k">newer &rarr;</span>
-                <span className="art-pager-t">{next.title}</span>
+                <span className="art-pager-t">
+                  <span className="stitch-in">{next.title}</span>
+                </span>
               </a>
             ) : (
               <span />
             )}
           </nav>
 
-          <Link className="art-board" href="/blog">
+          <Link className="art-board stitch" href="/blog">
             See every thread on the board
           </Link>
         </footer>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FocusEvent, type FormEvent } from "react";
 import Pipeline from "./Pipeline";
 import "../site/site.css";
 import "./contact.css";
@@ -18,7 +18,14 @@ import "./pipeline.css";
 
    POSTs to app/api/contact (validated, rate-limited, honeypot) and lands in the
    owner's studio inbox. Without JavaScript the form can't send, so the direct
-   links below it are always there. */
+   links below it are always there.
+
+   The fields are sewn (contact.css). Each rests on a pencil line; given focus,
+   a running stitch is sewn along it, a needle leading the thread, and the
+   inquiry's box is sewn all the way round. A field filled in stays sewn, in a
+   quieter thread; one left empty is unpicked. A field that won't do pulls its
+   stitch tight: the cloth puckers along it, and the field draws in a little and
+   lets go, every time it's tried. Put right, it lies flat again. */
 
 const MAX = 600;
 const MIN = 10;
@@ -61,6 +68,51 @@ function localCheck(message: string, via: Via, reply: string): Fields {
   return f;
 }
 
+/** The inquiry's box, sewn round from its top-left corner as it takes focus:
+   the frame's four stitched edges (::before) and the needle leading them
+   (::after) on one clock, each edge's share of the time its share of the way
+   round, so the needle is always at the thread's end. Only an empty box is
+   sewn; one already filled in is sewn already. */
+function sewRound(box: HTMLElement) {
+  if (!box.animate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (box.hasAttribute("data-filled") || box.hasAttribute("data-invalid")) return;
+  const W = box.offsetWidth;
+  const H = box.offsetHeight;
+  const a = W / (2 * (W + H)); // the top edge done
+  const b = 0.5; // and the right
+  const c = 1 - H / (2 * (W + H)); // and the bottom
+  const t = 0.002; // the needle turns the corner
+  const S = 2;
+  const timing = { duration: 1250, easing: "cubic-bezier(0.45, 0.05, 0.3, 1)" };
+  const sizes = (top: number, right: number, bottom: number, left: number) =>
+    `${top}px ${S}px, ${S}px ${right}px, ${bottom}px ${S}px, ${S}px ${left}px`;
+  box.animate(
+    [
+      { offset: 0, backgroundSize: sizes(0, 0, 0, 0) },
+      { offset: a, backgroundSize: sizes(W, 0, 0, 0) },
+      { offset: b, backgroundSize: sizes(W, H, 0, 0) },
+      { offset: c, backgroundSize: sizes(W, H, W, 0) },
+      { offset: 1, backgroundSize: sizes(W, H, W, H) },
+    ],
+    { ...timing, pseudoElement: "::before" },
+  );
+  const at = (x: number, y: number, deg: number) => `translate(${x}px, ${y}px) rotate(${deg}deg)`;
+  box.animate(
+    [
+      { offset: 0, transform: at(0, 0, 0), opacity: 1 },
+      { offset: a, transform: at(W, 0, 0) },
+      { offset: a + t, transform: at(W, 0, 90) },
+      { offset: b, transform: at(W, H, 90) },
+      { offset: b + t, transform: at(W, H, 180) },
+      { offset: c, transform: at(0, H, 180) },
+      { offset: c + t, transform: at(0, H, 270) },
+      { offset: 0.97, opacity: 1 },
+      { offset: 1, transform: at(0, 0, 270), opacity: 0 },
+    ],
+    { ...timing, pseudoElement: "::after" },
+  );
+}
+
 function Icon({ via }: { via: Via }) {
   const d = {
     email: "M3 6h18v12H3zM3 7l9 7 9-7",
@@ -89,6 +141,8 @@ export default function Contact() {
   const [receivedAt, setReceivedAt] = useState("");
   // a refused packet stays on stage for a moment ("returned to sender") before the form returns
   const [bounced, setBounced] = useState(false);
+  // each try that doesn't go: a field that won't do pulls its stitch tight again (contact.css)
+  const [snags, setSnags] = useState(0);
   const shownAt = useRef(0);
   const sceneRef = useRef<HTMLDivElement>(null);
   const alive = useRef(true);
@@ -112,6 +166,7 @@ export default function Contact() {
     setFields(local);
     setError("");
     if (Object.keys(local).length) {
+      setSnags((n) => n + 1);
       document.getElementById(`${uid}-${Object.keys(local)[0]}`)?.focus();
       return;
     }
@@ -161,6 +216,7 @@ export default function Contact() {
       setPhase("returned");
       setError(res.error ?? "Something went wrong.");
       setFields(res.fields ?? {});
+      if (res.fields && Object.keys(res.fields).length) setSnags((n) => n + 1);
       setBounced(true);
       if (!(await step(1600))) return;
       setBounced(false);
@@ -187,6 +243,20 @@ export default function Contact() {
   const stage = phase === "sending" || phase === "sent" || bounced;
   const errId = (k: keyof Fields) => (fields[k] ? `${uid}-${k}-err` : undefined);
   const snippet = message.trim().slice(0, 30) + (message.trim().length > 30 ? "…" : "");
+  /** a field's seam: filled in (sewn), wrong (puckered), and which try it's on */
+  const seam = (value: string, k: keyof Fields) => ({
+    "data-filled": value.trim() ? "" : undefined,
+    "data-invalid": fields[k] ? "" : undefined,
+    "data-snag": snags % 2 ? "b" : "a",
+  });
+  /** put right, a field's error goes (and its seam lies flat) as soon as it's typed */
+  const mend = (k: keyof Fields, ok: boolean) => {
+    if (fields[k] && ok) setFields((f) => ({ ...f, [k]: undefined }));
+  };
+  const onBoxFocus = (e: FocusEvent<HTMLTextAreaElement>) => {
+    const box = e.currentTarget.parentElement;
+    if (box) sewRound(box);
+  };
 
   return (
     <section className="sheet ct" aria-labelledby={`${uid}-h`} data-phase={phase}>
@@ -229,19 +299,25 @@ export default function Contact() {
               <label className="ct-label-k" htmlFor={`${uid}-message`}>
                 <span>1.</span> Your inquiry
               </label>
-              <textarea
-                id={`${uid}-message`}
-                className="ct-textarea"
-                value={message}
-                maxLength={MAX}
-                rows={6}
-                placeholder="What are you making, and where could I help?"
-                onChange={(e) => setMessage(e.target.value)}
-                aria-invalid={!!fields.message || undefined}
-                aria-describedby={[`${uid}-count`, errId("message")].filter(Boolean).join(" ")}
-                disabled={busy}
-                required
-              />
+              <span className="ct-sew ct-sew-box" {...seam(message, "message")}>
+                <textarea
+                  id={`${uid}-message`}
+                  className="ct-textarea"
+                  value={message}
+                  maxLength={MAX}
+                  rows={6}
+                  placeholder="What are you making, and where could I help?"
+                  onFocus={onBoxFocus}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                    mend("message", e.target.value.trim().length >= MIN);
+                  }}
+                  aria-invalid={!!fields.message || undefined}
+                  aria-describedby={[`${uid}-count`, errId("message")].filter(Boolean).join(" ")}
+                  disabled={busy}
+                  required
+                />
+              </span>
               <p className="ct-count" id={`${uid}-count`} data-low={left < 60 || undefined}>
                 {message.length} / {MAX}
               </p>
@@ -278,19 +354,24 @@ export default function Contact() {
               <label className="ct-sr" htmlFor={`${uid}-reply`}>
                 {VIA[via].field}
               </label>
-              <input
-                id={`${uid}-reply`}
-                className="ct-input"
-                type={VIA[via].type}
-                inputMode={VIA[via].mode}
-                autoComplete={VIA[via].auto}
-                value={reply}
-                placeholder={VIA[via].placeholder}
-                onChange={(e) => setReply(e.target.value)}
-                aria-invalid={!!fields.reply || undefined}
-                aria-describedby={errId("reply")}
-                maxLength={254}
-              />
+              <span className="ct-sew ct-sew-line" {...seam(reply, "reply")}>
+                <input
+                  id={`${uid}-reply`}
+                  className="ct-input"
+                  type={VIA[via].type}
+                  inputMode={VIA[via].mode}
+                  autoComplete={VIA[via].auto}
+                  value={reply}
+                  placeholder={VIA[via].placeholder}
+                  onChange={(e) => {
+                    setReply(e.target.value);
+                    mend("reply", !localCheck(message, via, e.target.value).reply);
+                  }}
+                  aria-invalid={!!fields.reply || undefined}
+                  aria-describedby={errId("reply")}
+                  maxLength={254}
+                />
+              </span>
               {fields.reply && (
                 <p className="ct-err" id={errId("reply")}>
                   {fields.reply}
@@ -299,15 +380,20 @@ export default function Contact() {
               <label className="ct-label-s" htmlFor={`${uid}-name`}>
                 Your name <span>(optional)</span>
               </label>
-              <input
-                id={`${uid}-name`}
-                className="ct-input"
-                value={name}
-                autoComplete="name"
-                maxLength={60}
-                onChange={(e) => setName(e.target.value)}
-                aria-invalid={!!fields.name || undefined}
-              />
+              <span className="ct-sew ct-sew-line" {...seam(name, "name")}>
+                <input
+                  id={`${uid}-name`}
+                  className="ct-input"
+                  value={name}
+                  autoComplete="name"
+                  maxLength={60}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    mend("name", true);
+                  }}
+                  aria-invalid={!!fields.name || undefined}
+                />
+              </span>
             </fieldset>
 
             {/* honeypot: hidden from people and assistive tech; bots fill it in */}
@@ -369,7 +455,7 @@ export default function Contact() {
         <span>Or write directly</span>
         {DIRECT.map((d) => (
           <a key={d.href} className="ct-pill" href={d.href} target={d.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer">
-            {d.label}
+            <span className="stitch-in">{d.label}</span>
             <span className="ct-arrow" aria-hidden="true">
               &#8599;
             </span>

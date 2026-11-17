@@ -3,6 +3,7 @@ import Crossroads from "./components/crossroads/Crossroads";
 import Contact from "./components/contact/Contact";
 import Hero from "./components/hero/Hero";
 import ProjectsSection from "./components/projects/ProjectsSection";
+import ChapterNav from "./components/site/ChapterNav";
 import ChapterSeam from "./components/site/ChapterSeam";
 import WorldDoor from "./components/site/WorldDoor";
 import Study from "./components/study/Study";
@@ -12,6 +13,8 @@ export default function Home() {
     <>
       <Crossroads />
       <main className="home flex flex-1 flex-col">
+        {/* the masthead: at the top of the hero, and at the top of the window all the way down */}
+        <ChapterNav />
         <Hero />
         <ChapterSeam id="blog" no="01" title="The archive" line="Every lane leaves a thread. Here’s where they all lead.">
           <BlogSection />
